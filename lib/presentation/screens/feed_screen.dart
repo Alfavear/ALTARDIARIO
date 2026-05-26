@@ -1,0 +1,80 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../views/app_providers.dart';
+import '../../views/reflexion.dart';
+import '../../theme/app_theme.dart';
+
+class FeedScreen extends ConsumerWidget {
+  const FeedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reflexionesAsync = ref.watch(reflexionesStreamProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Altar Comunitario'),
+        centerTitle: true,
+      ),
+      body: reflexionesAsync.when(
+        data: (reflexiones) => reflexiones.isEmpty
+            ? const Center(child: Text('Aún no hay reflexiones hoy. ¡Sé el primero!'))
+            : ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: reflexiones.length,
+                itemBuilder: (context, index) => _ReflexionCard(reflexion: reflexiones[index]),
+              ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error al cargar el feed: $err')),
+      ),
+    );
+  }
+}
+
+class _ReflexionCard extends StatelessWidget {
+  final Reflexion reflexion;
+  const _ReflexionCard({required this.reflexion});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(reflexion.userName, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                Text(
+                  DateFormat('HH:mm').format(reflexion.fecha),
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(color: AppTheme.scaffoldBg, borderRadius: BorderRadius.circular(4)),
+              child: Text(reflexion.pasajeDia, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+            ),
+            const SizedBox(height: 12),
+            Text(reflexion.texto, style: const TextStyle(fontSize: 15, height: 1.4)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.favorite_border, size: 18, color: AppTheme.textSecondary),
+                const SizedBox(width: 4),
+                Text('${reflexion.likes}', style: const TextStyle(color: AppTheme.textSecondary)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
