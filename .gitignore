@@ -1,0 +1,55 @@
+# Archivos de Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Archivos de Android
+android/local.properties
+android/**/generated/
+android/app/src/main/res/values/strings.xml
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+
+# Archivos de Firebase (Privacidad y Seguridad)
+# Se recomienda no subir estos archivos a repositorios públicos
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Archivos de iOS y macOS
+ios/Pods/
+ios/.generated/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+macos/Pods/
+macos/Flutter/ephemeral/
+
+# Archivos de IDE y Editores
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.history/
+
+# Archivos del sistema
+.DS_Store
+thumbs.db
+desktop.ini
+
+# Logs
+*.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Paquetes y dependencias (Node/Web si aplica)
+node_modules/
+.env

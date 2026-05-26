@@ -1,31 +1,41 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PeticionOracion {
   final String id;
-  final String usuarioId;
-  final String texto;
+  final String userId;
+  final String userName;
+  final String motivo;
   final DateTime fecha;
-  final List<String> oradoPor;
+  final int oracionesCount;
 
   PeticionOracion({
     required this.id,
-    required this.usuarioId,
-    required this.texto,
+    required this.userId,
+    required this.userName,
+    required this.motivo,
     required this.fecha,
-    this.oradoPor = const [],
+    this.oracionesCount = 0,
   });
 
-  factory PeticionOracion.fromMap(Map<String, dynamic> map) => PeticionOracion(
-        id: map['id'],
-        usuarioId: map['usuarioId'],
-        texto: map['texto'],
-        fecha: DateTime.parse(map['fecha']),
-        oradoPor: List<String>.from(map['oradoPor'] ?? []),
-      );
+  factory PeticionOracion.fromFirestore(DocumentSnapshot doc) {
+    Map data = doc.data() as Map<String, dynamic>;
+    return PeticionOracion(
+      id: doc.id,
+      userId: data['userId'] ?? '',
+      userName: data['userName'] ?? 'Anónimo',
+      motivo: data['motivo'] ?? '',
+      fecha: (data['fecha'] as Timestamp).toDate(),
+      oracionesCount: data['oracionesCount'] ?? 0,
+    );
+  }
 
-  Map<String, dynamic> toMap() => {
-        'id': id,
-        'usuarioId': usuarioId,
-        'texto': texto,
-        'fecha': fecha.toIso8601String(),
-        'oradoPor': oradoPor,
-      };
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'userName': userName,
+      'motivo': motivo,
+      'fecha': Timestamp.fromDate(fecha),
+      'oracionesCount': oracionesCount,
+    };
+  }
 }

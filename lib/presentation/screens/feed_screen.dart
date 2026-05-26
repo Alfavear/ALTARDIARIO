@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../views/app_providers.dart';
 import '../../views/reflexion.dart';
 import '../../theme/app_theme.dart';
+import 'chat_screen.dart';
 
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
@@ -20,10 +21,13 @@ class FeedScreen extends ConsumerWidget {
       body: reflexionesAsync.when(
         data: (reflexiones) => reflexiones.isEmpty
             ? const Center(child: Text('Aún no hay reflexiones hoy. ¡Sé el primero!'))
-            : ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: reflexiones.length,
-                itemBuilder: (context, index) => _ReflexionCard(reflexion: reflexiones[index]),
+            : RefreshIndicator(
+                onRefresh: () => ref.refresh(reflexionesStreamProvider.future),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: reflexiones.length,
+                  itemBuilder: (context, index) => _ReflexionCard(reflexion: reflexiones[index]),
+                ),
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error al cargar el feed: $err')),
@@ -32,12 +36,12 @@ class FeedScreen extends ConsumerWidget {
   }
 }
 
-class _ReflexionCard extends StatelessWidget {
+class _ReflexionCard extends ConsumerWidget {
   final Reflexion reflexion;
   const _ReflexionCard({required this.reflexion});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -67,9 +71,36 @@ class _ReflexionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.favorite_border, size: 18, color: AppTheme.textSecondary),
+                IconButton(
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.favorite_border, size: 20, color: AppTheme.textSecondary),
+                  onPressed: () {
+                    ref.read(firestoreServiceProvider).toggleLike(reflexion.id, reflexion.likes);
+                  },
+                ),
                 const SizedBox(width: 4),
                 Text('${reflexion.likes}', style: const TextStyle(color: AppTheme.textSecondary)),
+                const Spacer(),
+                if (currentUser != null && currentUser.uid != reflexion.userId)
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline, size: 20, color: AppTheme.primaryBlue),
+                    onPressed: () {
+                      // Generar Chat ID único: combinando UIDs ordenados alfabéticamente
+                      final ids = [currentUser.uid, reflexion.userId]..sort();
+                      final chatId = ids.join('_');
+                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            chatId: chatId,
+                            otherUserName: reflexion.userName,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ],

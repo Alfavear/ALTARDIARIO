@@ -1,3 +1,40 @@
+## 2026-05-27 (Fase 4: Perfil y Sincronización)
+
+- **Desarrollo de PerfilScreen**: Se implementa la vista de perfil con estadísticas reales (rachas, lecturas) y el historial de reflexiones del usuario.
+- **Sincronización Cloud**: Se añade `syncProgress` en `FirestoreService` para respaldar el progreso local en la base de datos de Firebase.
+- **Consolidación de Identidad**: Integración de `userReflexionesProvider` para mostrar contenido personalizado.
+- **Siguiente paso**: Preparar el despliegue y pulir detalles de UI/UX (Fase 5).
+
+## 2026-05-27 (User Provider y Fase 3: Oración)
+
+- **Perfil en Tiempo Real**: Implementación de `userProfileProvider` para gestionar la identidad y relaciones del usuario (siguiendo/seguidores).
+- **Comunidad de Oración**: Finalización de la **Fase 3** con la creación de `OracionScreen`.
+- **Interacción de Apoyo**: Implementación de la lógica "Amén" para incrementar el contador de oraciones en peticiones compartidas.
+- **Siguiente paso**: Avanzar a la **Fase 4** implementando la pantalla de Perfil completa con estadísticas y sincronización de progreso.
+
+## 2026-05-27 (Interacción Social Directa)
+
+- **Seguimiento de Usuarios**: Se añade botón de "Seguir" en `FeedScreen` vinculado a `toggleFollow`.
+- **Chat Privado**: Implementación de `ChatScreen` con suscripción en tiempo real a mensajes.
+- **Navegación**: Se conecta el feed con el chat privado mediante una lógica de `chatId` compartido.
+- **UI del Feed**: Mejora visual en la tarjeta de reflexión incluyendo el avatar del autor.
+- **Siguiente paso**: Implementar la **Fase 3** (Peticiones de Oración) y la sincronización de perfiles.
+
+## 2026-05-27 (Expansión Social: Seguidores y Chat)
+
+- **Nuevos Requerimientos**: Se decide añadir un sistema de seguidores y mensajería interna.
+- **Modelado de Datos**: Creación de los modelos `Usuario` (con listas de siguiendo/seguidores) y `Message`.
+- **Lógica de Red**: Implementación de `toggleFollow` y gestión de chats en `FirestoreService`.
+- **Infraestructura de Chat**: Configuración de `messagesStreamProvider` para suscripción en tiempo real a conversaciones.
+- **Siguiente paso**: Diseñar la interfaz de la bandeja de entrada y la vista de chat privado.
+
+## 2026-05-27 (Interacciones y Preparación de Oración)
+
+- **Interactividad en Feed**: Se implementa `RefreshIndicator` para actualización manual y se habilita el botón de "Like" conectándolo con Firestore.
+- **Refactorización UI**: `_ReflexionCard` migrado a `ConsumerWidget` para acceso directo a proveedores de estado.
+- **Inicio Fase 3**: Creación del modelo `PeticionOracion` en `lib/data/models/`.
+- **Siguiente paso**: Implementar `OracionScreen` y los métodos de Firestore para gestionar peticiones de oración.
+
 ## 2026-05-27 (Navegación Global)
 
 - **Implementación de MainNavigationView**: Se crea el contenedor principal con `BottomNavigationBar` para alternar entre Calendario, Feed, Oración y Perfil.
