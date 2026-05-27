@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/reflexion.dart';
-import '../../services/firestore_service.dart';
-import 'firestore_provider.dart';
+import '../../data/services/firestore_service.dart'; // Correcto
+import 'app_providers.dart'; // Correcto
 
 final reflexionesStreamProvider = StreamProvider.autoDispose<List<Reflexion>>((ref) {
   final firestore = ref.watch(firestoreServiceProvider);
@@ -18,14 +18,20 @@ class ReflexionesNotifier {
 
   ReflexionesNotifier(this._firestore);
 
-  Future<void> publicarReflexion(String usuarioId, String texto) async {
+  Future<void> publicarReflexion({
+    required String userId,
+    required String userName,
+    required String texto,
+    required String pasajeDia,
+  }) async {
     final reflexion = Reflexion(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      usuarioId: usuarioId,
+      id: '', // Firestore genera el ID automáticamente
+      userId: userId,
+      userName: userName,
       texto: texto,
+      pasajeDia: pasajeDia,
       fecha: DateTime.now(),
-      likes: [],
-      comentarios: [],
+      likes: 0,
     );
     await _firestore.publicarReflexion(reflexion);
   }

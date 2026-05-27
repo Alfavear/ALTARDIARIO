@@ -1,7 +1,7 @@
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
-import 'storage_service.dart';
 
 /// Servicio de notificaciones locales para recordatorios diarios de lectura.
 class NotificationService {
@@ -102,11 +102,13 @@ class NotificationService {
     );
 
     await _plugin.zonedSchedule(
-      0,
-      '📖 altarDiario',
-      '¡No olvides tu lectura de hoy! Mantén tu racha activa 🔥',
-      scheduledDate,
-      details,
+      0, // id
+      '📖 altarDiario', // title
+      '¡No olvides tu lectura de hoy! Mantén tu racha activa 🔥', // body
+      scheduledDate, // scheduledDate
+      details, // notificationDetails
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -133,10 +135,4 @@ class NotificationService {
   static Future<void> cancelAll() async {
     await _plugin.cancelAll();
   }
-}
-
-// Clase Color mínima para usarla en AndroidNotificationDetails sin importar flutter
-class Color {
-  final int value;
-  const Color(this.value);
 }

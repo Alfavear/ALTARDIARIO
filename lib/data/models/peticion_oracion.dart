@@ -29,6 +29,17 @@ class PeticionOracion {
     );
   }
 
+  factory PeticionOracion.fromMap(Map<String, dynamic> data) {
+    return PeticionOracion(
+      id: data['id'] ?? '',
+      userId: data['userId'] ?? '',
+      userName: data['userName'] ?? 'Anónimo',
+      motivo: data['motivo'] ?? '',
+      fecha: data['fecha'] != null ? (data['fecha'] as Timestamp).toDate() : DateTime.now(),
+      oracionesCount: data['oracionesCount'] ?? 0,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,

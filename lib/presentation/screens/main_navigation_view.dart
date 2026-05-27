@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
-import '../../views/calendario_view.dart';
-import 'feed_screen.dart';
-import 'oracion_screen.dart';
-import 'perfil_screen.dart';
+import '../../core/theme/app_theme.dart'; // Correcto
+import 'calendario_view.dart'; // Correcto
+import 'feed_screen.dart'; // Correcto
+import 'oracion_screen.dart'; // Correcto
+import 'perfil_screen.dart'; // Correcto
 
 class MainNavigationView extends StatefulWidget {
   const MainNavigationView({super.key});
@@ -39,7 +39,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -51,7 +51,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           selectedItemColor: AppTheme.primaryBlue,
-          unselectedItemColor: AppTheme.textSecondary.withOpacity(0.6),
+          unselectedItemColor: AppTheme.textSecondary.withValues(alpha: 0.6),
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           items: const [

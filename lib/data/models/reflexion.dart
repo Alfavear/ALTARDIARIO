@@ -1,35 +1,38 @@
 class Reflexion {
   final String id;
-  final String usuarioId;
+  final String userId;
+  final String userName;
   final String texto;
+  final String pasajeDia;
   final DateTime fecha;
-  final List<String> likes;
-  final List<String> comentarios;
+  final int likes;
 
   Reflexion({
     required this.id,
-    required this.usuarioId,
+    required this.userId,
+    required this.userName,
     required this.texto,
+    required this.pasajeDia,
     required this.fecha,
-    this.likes = const [],
-    this.comentarios = const [],
+    this.likes = 0,
   });
 
   factory Reflexion.fromMap(Map<String, dynamic> map) => Reflexion(
-        id: map['id'],
-        usuarioId: map['usuarioId'],
-        texto: map['texto'],
-        fecha: DateTime.parse(map['fecha']),
-        likes: List<String>.from(map['likes'] ?? []),
-        comentarios: List<String>.from(map['comentarios'] ?? []),
+        id: map['id'] ?? '',
+        userId: map['userId'] ?? '',
+        userName: map['userName'] ?? 'Anónimo',
+        texto: map['texto'] ?? '',
+        pasajeDia: map['pasajeDia'] ?? '',
+        fecha: map['fecha'] != null ? DateTime.parse(map['fecha']) : DateTime.now(),
+        likes: map['likes'] ?? 0,
       );
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'usuarioId': usuarioId,
+        'userId': userId,
+        'userName': userName,
         'texto': texto,
+        'pasajeDia': pasajeDia,
         'fecha': fecha.toIso8601String(),
         'likes': likes,
-        'comentarios': comentarios,
       };
 }

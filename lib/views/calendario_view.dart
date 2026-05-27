@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
-import '../models/lectura_dia.dart';
-import '../providers/app_providers.dart';
+import '../data/models/lectura_dia.dart';
+import '../presentation/providers/app_providers.dart';
+import '../presentation/screens/bible_reader_screen.dart';
 import '../presentation/screens/publicar_reflexion_screen.dart';
 
 class CalendarioView extends ConsumerStatefulWidget {
@@ -90,7 +91,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
               Text(
                 'Tu hábito diario con Dios',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 13,
                 ),
               ),
@@ -113,7 +114,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       ),
                       child: Text(
@@ -148,7 +149,6 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
   Widget _buildStreakBanner() {
     final storageService = ref.watch(storageProvider);
     final streak = storageService.calcularRacha();
-    final maxStreak = storageService.getMaxStreak();
     final totalCompletadas = storageService.getTotalCompletadas();
 
     return Padding(
@@ -191,7 +191,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                         style: TextStyle(
                           fontSize: 11,
                           color: streak > 0
-                              ? Colors.white.withOpacity(0.85)
+                              ? Colors.white.withValues(alpha: 0.85)
                               : AppTheme.textSecondary,
                         ),
                       ),
@@ -334,7 +334,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
 
     if (isCompleted) {
       bgColor = AppTheme.completedGreenLight;
-      borderColor = AppTheme.completedGreen.withOpacity(0.4);
+      borderColor = AppTheme.completedGreen.withValues(alpha: 0.4);
       dayNumColor = AppTheme.completedGreen;
     } else if (isToday) {
       bgColor = AppTheme.todayHighlight;
@@ -342,11 +342,11 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
       dayNumColor = AppTheme.primaryBlue;
     } else if (isPast) {
       bgColor = Colors.white;
-      borderColor = Colors.red.withOpacity(0.15);
+      borderColor = Colors.red.withValues(alpha: 0.15);
       dayNumColor = AppTheme.textSecondary;
     } else {
       bgColor = Colors.white;
-      borderColor = Colors.grey.withOpacity(0.12);
+      borderColor = Colors.grey.withValues(alpha: 0.12);
       dayNumColor = AppTheme.textPrimary;
     }
 
@@ -406,7 +406,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                       height: 1.2,
                       fontWeight: FontWeight.w400,
                       color: isCompleted
-                          ? AppTheme.completedGreen.withOpacity(0.8)
+                          ? AppTheme.completedGreen.withValues(alpha: 0.8)
                           : AppTheme.textSecondary,
                     ),
                     maxLines: 4,
@@ -482,8 +482,8 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                       border: Border.all(
                         color: isCompleted
-                            ? AppTheme.completedGreen.withOpacity(0.3)
-                            : Colors.grey.withOpacity(0.15),
+                            ? AppTheme.completedGreen.withValues(alpha: 0.3)
+                            : Colors.grey.withValues(alpha: 0.15),
                       ),
                     ),
                     child: Column(
@@ -590,7 +590,34 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                   // Botón de leer online
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BibleReaderScreen(
+                              pasajes: lectura.pasajes,
+                              fechaClave: lectura.fechaClave,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        ),
+                      ),
+                      child: const Text('📖 LEER EN LA APP', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
                     child: OutlinedButton.icon(
                       onPressed: () => _openBibleOnline(lectura.pasajes),
                       icon: const Icon(Icons.open_in_new, size: 18),

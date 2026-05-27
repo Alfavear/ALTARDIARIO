@@ -23,6 +23,15 @@ class Message {
     );
   }
 
+  factory Message.fromMap(Map<String, dynamic> data) {
+    return Message(
+      id: data['id'] ?? '',
+      senderId: data['senderId'] ?? '',
+      text: data['text'] ?? '',
+      timestamp: data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
+    );
+  }
+
   Map<String, dynamic> toMap() => {
     'senderId': senderId,
     'text': text,

@@ -2,13 +2,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/storage_service.dart';
 import '../services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart';
 import '../data/models/message.dart';
 import '../data/models/usuario.dart';
 import '../data/models/peticion_oracion.dart';
+import '../data/models/reflexion.dart';
 
 // Proveedor para StorageService (debe inicializarse en el main con un override)
 final storageProvider = Provider<StorageService>((ref) {
   throw UnimplementedError('storageProvider no ha sido inicializado');
+});
+
+// Proveedor para el servicio de autenticación
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
 });
 
 // Proveedor para el estado de autenticación
@@ -31,8 +38,8 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
 });
 
 // Stream de reflexiones para el Feed
-final reflexionesStreamProvider = StreamProvider((ref) {
-  return ref.watch(firestoreServiceProvider).getReflexiones();
+final reflexionesStreamProvider = StreamProvider<List<Reflexion>>((ref) {
+  return ref.watch(firestoreServiceProvider).reflexionesStream();
 });
 
 // Stream de reflexiones propias del usuario
@@ -47,5 +54,5 @@ final messagesStreamProvider = StreamProvider.family<List<Message>, String>((ref
 
 // Stream de peticiones de oración
 final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
-  return ref.watch(firestoreServiceProvider).getPeticionesOracion();
+  return ref.watch(firestoreServiceProvider).peticionesStream();
 });

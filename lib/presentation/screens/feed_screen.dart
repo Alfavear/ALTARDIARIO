@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../views/app_providers.dart';
-import '../../views/reflexion.dart';
-import '../../theme/app_theme.dart';
+import '../providers/app_providers.dart'; // Correcto
+import '../../data/models/reflexion.dart';
+import '../../core/theme/app_theme.dart';
 import 'chat_screen.dart';
 
 class FeedScreen extends ConsumerWidget {
@@ -42,6 +42,8 @@ class _ReflexionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authStateProvider).value;
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

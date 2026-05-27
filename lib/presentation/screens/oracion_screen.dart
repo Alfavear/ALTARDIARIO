@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../theme/app_theme.dart';
-import '../../views/app_providers.dart';
+import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
 import '../../data/models/peticion_oracion.dart';
 
 class OracionScreen extends ConsumerWidget {
@@ -106,8 +106,8 @@ class _PeticionCard extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppTheme.accentGold.withOpacity(0.2),
-                  child: Text(peticion.userName[0], style: const TextStyle(color: AppTheme.accentGold)),
+                  backgroundColor: AppTheme.accentGold.withValues(alpha: 0.2),
+                  child: Text(peticion.userName.isNotEmpty ? peticion.userName[0] : '?', style: const TextStyle(color: AppTheme.accentGold)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(

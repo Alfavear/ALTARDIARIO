@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -16,8 +17,24 @@ class AuthService {
   }
 
   // Iniciar sesión con Google
-  // (Requiere configuración adicional en Android/iOS)
-  // Future<User?> signInWithGoogle() async { ... }
+  Future<User?> signInWithGoogle() async {
+    // Iniciar el flujo de autenticación de Google
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) return null; // El usuario canceló
+
+    // Obtener detalles de autenticación de la petición
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    // Crear una nueva credencial
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    // Una vez logueado, devolver el UserCredential
+    final UserCredential userCredential = await _auth.signInWithCredential(credential);
+    return userCredential.user;
+  }
 
   // Cerrar sesión
   Future<void> signOut() async {

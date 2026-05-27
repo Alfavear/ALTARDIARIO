@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../views/app_providers.dart';
-import '../../theme/app_theme.dart';
+import '../providers/app_providers.dart';
+import '../../core/theme/app_theme.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -67,7 +67,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
-                        crossAxisAlignment: isMe ? CrossAlignment.end : CrossAlignment.start,
+                        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
                           Text(
                             msg.text,

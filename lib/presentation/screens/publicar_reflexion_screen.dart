@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../views/app_providers.dart';
-import '../../views/reflexion.dart';
-import '../../theme/app_theme.dart';
+import '../providers/app_providers.dart';
+import '../../data/models/reflexion.dart';
+import '../../core/theme/app_theme.dart';
 
 class PublicarReflexionScreen extends ConsumerStatefulWidget {
   final String pasajeDia;

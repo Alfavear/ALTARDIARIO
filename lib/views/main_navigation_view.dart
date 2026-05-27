@@ -19,8 +19,8 @@ class _MainNavigationViewState extends State<MainNavigationView> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      CalendarioView(storageService: widget.storageService),
-      AnualView(storageService: widget.storageService),
+      const CalendarioView(),
+      const AnualView(),
     ];
 
     return Scaffold(
@@ -33,7 +33,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -82,7 +82,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryBlue.withOpacity(0.1)
+              ? AppTheme.primaryBlue.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         ),

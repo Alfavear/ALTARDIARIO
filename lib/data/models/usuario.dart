@@ -29,6 +29,17 @@ class Usuario {
     );
   }
 
+  factory Usuario.fromMap(Map<String, dynamic> data) {
+    return Usuario(
+      id: data['id'] ?? '',
+      nombre: data['nombre'] ?? '',
+      email: data['email'] ?? '',
+      fotoUrl: data['fotoUrl'] ?? '',
+      siguiendo: List<String>.from(data['siguiendo'] ?? []),
+      seguidores: List<String>.from(data['seguidores'] ?? []),
+    );
+  }
+
   Map<String, dynamic> toMap() => {
     'nombre': nombre,
     'email': email,

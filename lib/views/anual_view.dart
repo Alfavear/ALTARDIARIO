@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
-import '../services/storage_service.dart';
+import '../presentation/providers/app_providers.dart';
+import '../data/services/storage_service.dart';
 
-class AnualView extends StatelessWidget {
-  final StorageService storageService;
-
-  const AnualView({super.key, required this.storageService});
+class AnualView extends ConsumerWidget {
+  const AnualView({super.key});
 
   final List<String> _monthNames = const [
     'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
@@ -13,7 +13,9 @@ class AnualView extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final storageService = ref.watch(storageProvider);
+    
     final progreso = storageService.getProgreso();
     final total = storageService.getTotalCompletadas();
     final streak = storageService.calcularRacha();
@@ -47,7 +49,7 @@ class AnualView extends StatelessWidget {
                 mainAxisSpacing: 8,
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildMiniMonth(context, index + 1),
+                (context, index) => _buildMiniMonth(context, index + 1, storageService),
                 childCount: 12,
               ),
             ),
@@ -84,7 +86,7 @@ class AnualView extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: progreso,
                     strokeWidth: 8,
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                         AppTheme.accentGold),
                     strokeCap: StrokeCap.round,
@@ -124,7 +126,7 @@ class AnualView extends StatelessWidget {
                 Text(
                   '$total de 365 lecturas',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 14,
                   ),
                 ),
@@ -135,7 +137,7 @@ class AnualView extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progreso,
                     minHeight: 6,
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                         AppTheme.accentGold),
                   ),
@@ -174,9 +176,9 @@ class AnualView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(
           children: [
@@ -204,7 +206,7 @@ class AnualView extends StatelessWidget {
   }
 
   /// Mini-calendario de un mes (mapa de calor simplificado).
-  Widget _buildMiniMonth(BuildContext context, int mes) {
+  Widget _buildMiniMonth(BuildContext context, int mes, StorageService storageService) {
     final year = DateTime.now().year;
     final lecturas = storageService.getLecturasMes(mes);
     final completadasSet = {
@@ -220,13 +222,13 @@ class AnualView extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isCurrentMonth
-            ? AppTheme.primaryBlue.withOpacity(0.04)
+            ? AppTheme.primaryBlue.withValues(alpha: 0.04)
             : Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: Border.all(
           color: isCurrentMonth
-              ? AppTheme.primaryBlue.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.12),
+              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.12),
           width: isCurrentMonth ? 1.5 : 1,
         ),
         boxShadow: AppTheme.softShadow,
