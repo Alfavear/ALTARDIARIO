@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/app_theme.dart'; // Correcto
-import '../providers/app_providers.dart'; // Correcto
-import '../../data/services/storage_service.dart'; // Correcto
+import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
+import '../../data/services/storage_service.dart';
 
 class AnualView extends ConsumerWidget {
   const AnualView({super.key});
 
-  final List<String> _monthNames = const [
+  static const List<String> _monthNames = [
     'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storageService = ref.watch(storageProvider);
-    
+
     final progreso = storageService.getProgreso();
     final total = storageService.getTotalCompletadas();
     final streak = storageService.calcularRacha();
@@ -24,15 +24,15 @@ class AnualView extends ConsumerWidget {
     return SafeArea(
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _buildProgressHeader(context, progreso, total)),
-          SliverToBoxAdapter(child: _buildStatsRow(streak, maxStreak, total)),
+          SliverToBoxAdapter(
+              child: _buildProgressHeader(context, progreso, total)),
+          SliverToBoxAdapter(
+              child: _buildStatsRow(streak, maxStreak, total)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-              child: Text(
-                'Progreso por mes',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              child: Text('Progreso por mes',
+                  style: Theme.of(context).textTheme.titleLarge),
             ),
           ),
           SliverPadding(
@@ -45,7 +45,8 @@ class AnualView extends ConsumerWidget {
                 mainAxisSpacing: 8,
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildMiniMonth(context, index + 1, storageService),
+                (context, index) =>
+                    _buildMiniMonth(context, index + 1, storageService),
                 childCount: 12,
               ),
             ),
@@ -56,7 +57,8 @@ class AnualView extends ConsumerWidget {
     );
   }
 
-  Widget _buildProgressHeader(BuildContext context, double progreso, int total) {
+  Widget _buildProgressHeader(
+      BuildContext context, double progreso, int total) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       padding: const EdgeInsets.all(24),
@@ -80,13 +82,17 @@ class AnualView extends ConsumerWidget {
                     value: progreso,
                     strokeWidth: 8,
                     backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppTheme.accentGold),
                     strokeCap: StrokeCap.round,
                   ),
                 ),
                 Text(
                   '${(progreso * 100).toInt()}%',
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -96,9 +102,16 @@ class AnualView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Progreso Anual', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                const Text('Progreso Anual',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('$total de 365 lecturas', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14)),
+                Text('$total de 365 lecturas',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 14)),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -106,7 +119,8 @@ class AnualView extends ConsumerWidget {
                     value: progreso,
                     minHeight: 6,
                     backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppTheme.accentGold),
                   ),
                 ),
               ],
@@ -124,15 +138,18 @@ class AnualView extends ConsumerWidget {
         children: [
           _buildStatCard('🔥', '$streak', 'Racha', AppTheme.streakOrange),
           const SizedBox(width: 8),
-          _buildStatCard('🏆', '$maxStreak', 'Máx. racha', AppTheme.accentGold),
+          _buildStatCard(
+              '🏆', '$maxStreak', 'Máx. racha', AppTheme.accentGold),
           const SizedBox(width: 8),
-          _buildStatCard('📖', '${365 - total}', 'Pendientes', AppTheme.primaryBlue),
+          _buildStatCard(
+              '📖', '${365 - total}', 'Pendientes', AppTheme.primaryBlue),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String emoji, String value, String label, Color color) {
+  Widget _buildStatCard(
+      String emoji, String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -145,18 +162,28 @@ class AnualView extends ConsumerWidget {
           children: [
             Text(emoji, style: const TextStyle(fontSize: 20)),
             const SizedBox(height: 4),
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+            Text(value,
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: color)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMiniMonth(BuildContext context, int mes, StorageService storageService) {
+  Widget _buildMiniMonth(
+      BuildContext context, int mes, StorageService storageService) {
     final year = DateTime.now().year;
     final lecturas = storageService.getLecturasMes(mes);
-    final completadasSet = {for (var l in lecturas) if (l.completada) l.dia};
+    final completadasSet = {
+      for (var l in lecturas)
+        if (l.completada) l.dia
+    };
     final daysInMonth = DateTime(year, mes + 1, 0).day;
     final firstDayWeekday = DateTime(year, mes, 1).weekday % 7;
     final progresoMes = storageService.getProgresoMes(mes);
@@ -165,10 +192,14 @@ class AnualView extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isCurrentMonth ? AppTheme.primaryBlue.withValues(alpha: 0.04) : Colors.white,
+        color: isCurrentMonth
+            ? AppTheme.primaryBlue.withValues(alpha: 0.04)
+            : Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: Border.all(
-          color: isCurrentMonth ? AppTheme.primaryBlue.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.12),
+          color: isCurrentMonth
+              ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.12),
           width: isCurrentMonth ? 1.5 : 1,
         ),
         boxShadow: AppTheme.softShadow,
@@ -184,7 +215,9 @@ class AnualView extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: isCurrentMonth ? AppTheme.primaryBlue : AppTheme.textPrimary,
+                  color: isCurrentMonth
+                      ? AppTheme.primaryBlue
+                      : AppTheme.textPrimary,
                 ),
               ),
               Text(
@@ -192,7 +225,9 @@ class AnualView extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: progresoMes >= 1.0 ? AppTheme.completedGreen : AppTheme.textSecondary,
+                  color: progresoMes >= 1.0
+                      ? AppTheme.completedGreen
+                      : AppTheme.textSecondary,
                 ),
               ),
             ],
@@ -201,14 +236,17 @@ class AnualView extends ConsumerWidget {
           Expanded(
             child: GridView.builder(
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 crossAxisSpacing: 2,
                 mainAxisSpacing: 2,
               ),
               itemCount: firstDayWeekday + daysInMonth,
               itemBuilder: (context, index) {
-                if (index < firstDayWeekday) return const SizedBox.shrink();
+                if (index < firstDayWeekday) {
+                  return const SizedBox.shrink();
+                }
                 final day = index - firstDayWeekday + 1;
                 final isCompleted = completadasSet.contains(day);
                 final isToday = isCurrentMonth && DateTime.now().day == day;
@@ -221,7 +259,6 @@ class AnualView extends ConsumerWidget {
                             ? AppTheme.accentGold
                             : AppTheme.pendingGray,
                     borderRadius: BorderRadius.circular(2),
-                    border: isToday && !isCompleted ? Border.all(color: AppTheme.accentGold, width: 1) : null,
                   ),
                 );
               },

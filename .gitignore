@@ -1,4 +1,4 @@
-# Flutter/Dart
+# Dart / Flutter
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -6,41 +6,54 @@
 .pub-cache/
 .pub/
 build/
+*.g.dart
+*.freezed.dart
+
+# Firebase (¡NO subir estas claves!)
+google-services.json
+GoogleService-Info.plist
+lib/firebase_options.dart
 
 # Android
-**/android/**/generated/
-**/android/gen/
-**/android/out/
+android/local.properties
+android/.gradle/
+android/key.properties
 *.jks
 *.keystore
-key.properties
 
 # iOS
-*.xcworkspace
-/*/Flutter/Generated.xcconfig
-/*/Flutter/flutter_export_environment.sh
-/*/ServiceDefinitions.json
-Runner/Flavor.xcconfig
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner/GeneratedPluginRegistrant.*
+*.xcworkspace/xcuserdata
 
-# Web
-node_modules/
-.pnpm-debug.log*
+# macOS
+macos/Pods/
+macos/Flutter/GeneratedPluginRegistrant.swift
 
-# IDEs
+# IDE
 .idea/
 .vscode/
 *.iml
 *.ipr
 *.iws
-
-# Logs
-*.log
-
-# OS
 .DS_Store
 
-# Firebase (Opcional: puedes ignorar las opciones si contienen secretos sensibles)
-# lib/firebase_options.dart
+# Node (scripts de utilidad)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# SharedPreferences / Local data
-*.db
+# Archivos de cobertura
+coverage/
+lcov.info
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*.swo
