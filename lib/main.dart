@@ -28,11 +28,15 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final storageService = StorageService(prefs);
   
-  // Cargamos el plan de lectura desde el JSON
-  await storageService.loadPlan();
+  try {
+    await storageService.loadPlan();
+  } catch (e) {
+    debugPrint("Error al cargar el plan de lectura: $e");
+  }
   
   await NotificationService.init();
   await NotificationService.requestPermissions();
+  await NotificationService.scheduleDailyReminder();
   await initializeDateFormatting('es', null);
 
   runApp(

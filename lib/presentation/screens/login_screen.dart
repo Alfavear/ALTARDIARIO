@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 
@@ -56,7 +55,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.auto_awesome, size: 80, color: AppTheme.accentGold),
+                const Icon(Icons.auto_awesome,
+                    size: 80, color: AppTheme.accentGold),
                 const SizedBox(height: 24),
                 const Text(
                   'altarDiario',

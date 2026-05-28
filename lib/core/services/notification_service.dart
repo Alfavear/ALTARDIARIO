@@ -102,11 +102,11 @@ class NotificationService {
     );
 
     await _plugin.zonedSchedule(
-      0, // id
-      '📖 altarDiario', // title
-      '¡No olvides tu lectura de hoy! Mantén tu racha activa 🔥', // body
-      scheduledDate, // scheduledDate
-      details, // notificationDetails
+      0,
+      '📖 altarDiario',
+      '¡No olvides tu lectura de hoy! Mantén tu racha activa 🔥',
+      scheduledDate,
+      details,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

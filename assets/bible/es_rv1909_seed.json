@@ -1,0 +1,72 @@
+{
+  "version": "rv1909",
+  "name": "Reina Valera 1909",
+  "language": "es",
+  "books": [
+    {
+      "id": 1,
+      "name": "Génesis",
+      "chapters": [
+        {
+          "number": 1,
+          "verses": [
+            {
+              "number": 1,
+              "text": "En el principio crió Dios los cielos y la tierra."
+            },
+            {
+              "number": 2,
+              "text": "Y la tierra estaba desordenada y vacía, y las tinieblas estaban sobre la haz del abismo, y el Espíritu de Dios se movía sobre la haz de las aguas."
+            },
+            {
+              "number": 3,
+              "text": "Y dijo Dios: Sea la luz: y fué la luz."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Salmos",
+      "chapters": [
+        {
+          "number": 23,
+          "verses": [
+            {
+              "number": 1,
+              "text": "Jehová es mi pastor; nada me faltará."
+            },
+            {
+              "number": 2,
+              "text": "En lugares de delicados pastos me hará yacer: junto á aguas de reposo me pastoreará."
+            },
+            {
+              "number": 3,
+              "text": "Confortará mi alma; guiaráme por sendas de justicia por amor de su nombre."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "name": "Juan",
+      "chapters": [
+        {
+          "number": 3,
+          "verses": [
+            {
+              "number": 16,
+              "text": "Porque de tal manera amó Dios al mundo, que ha dado á su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna."
+            },
+            {
+              "number": 17,
+              "text": "Porque no envió Dios á su Hijo al mundo, para que condene al mundo, mas para que el mundo sea salvo por él."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

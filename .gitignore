@@ -12,7 +12,6 @@ build/
 # Firebase (¡NO subir estas claves!)
 google-services.json
 GoogleService-Info.plist
-lib/firebase_options.dart
 
 # Android
 android/local.properties

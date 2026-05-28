@@ -3,6 +3,7 @@ import '../models/reflexion.dart';
 import '../models/peticion_oracion.dart';
 import '../models/usuario.dart';
 import '../models/message.dart';
+import '../models/bible_models.dart';
 
 /// Servicio centralizado para todas las operaciones con Firestore.
 class FirestoreService {
@@ -21,13 +22,17 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _chats =>
       _firestore.collection('chats');
 
+  CollectionReference<Map<String, dynamic>> _bibleHighlights(String userId) =>
+      _usuarios.doc(userId).collection('bible_highlights');
+
+  CollectionReference<Map<String, dynamic>> _bibleNotes(String userId) =>
+      _usuarios.doc(userId).collection('bible_notes');
+
   // ── Reflexiones ──────────────────────────────────────────────────────────
 
   Stream<List<Reflexion>> reflexionesStream() {
-    return _reflexiones
-        .orderBy('fecha', descending: true)
-        .snapshots()
-        .map((s) => s.docs
+    return _reflexiones.orderBy('fecha', descending: true).snapshots().map(
+        (s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -47,22 +52,20 @@ class FirestoreService {
   }
 
   Future<void> toggleLike(String reflexionId, int currentLikes) async {
-    await _reflexiones
-        .doc(reflexionId)
-        .update({'likes': currentLikes + 1});
+    await _reflexiones.doc(reflexionId).update({'likes': currentLikes + 1});
   }
 
   // ── Usuarios ─────────────────────────────────────────────────────────────
 
   Stream<Usuario?> getUsuario(String uid) {
-    return _usuarios
-        .doc(uid)
-        .snapshots()
-        .map((d) => d.exists ? Usuario.fromMap({'id': d.id, ...d.data()!}) : null);
+    return _usuarios.doc(uid).snapshots().map(
+        (d) => d.exists ? Usuario.fromMap({'id': d.id, ...d.data()!}) : null);
   }
 
   Future<void> crearOActualizarUsuario(Usuario usuario) async {
-    await _usuarios.doc(usuario.id).set(usuario.toMap(), SetOptions(merge: true));
+    await _usuarios
+        .doc(usuario.id)
+        .set(usuario.toMap(), SetOptions(merge: true));
   }
 
   Future<void> toggleFollow(
@@ -71,15 +74,19 @@ class FirestoreService {
     final targetDoc = _usuarios.doc(targetUserId);
 
     if (isFollowing) {
-      await currentDoc
-          .update({'siguiendo': FieldValue.arrayRemove([targetUserId])});
-      await targetDoc
-          .update({'seguidores': FieldValue.arrayRemove([currentUserId])});
+      await currentDoc.update({
+        'siguiendo': FieldValue.arrayRemove([targetUserId])
+      });
+      await targetDoc.update({
+        'seguidores': FieldValue.arrayRemove([currentUserId])
+      });
     } else {
-      await currentDoc
-          .update({'siguiendo': FieldValue.arrayUnion([targetUserId])});
-      await targetDoc
-          .update({'seguidores': FieldValue.arrayUnion([currentUserId])});
+      await currentDoc.update({
+        'siguiendo': FieldValue.arrayUnion([targetUserId])
+      });
+      await targetDoc.update({
+        'seguidores': FieldValue.arrayUnion([currentUserId])
+      });
     }
   }
 
@@ -93,13 +100,87 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  // â”€â”€ Biblia: Subrayados y Notas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  Future<void> syncBibleHighlight(
+    String userId,
+    BibleHighlight highlight,
+  ) async {
+    await _bibleHighlights(userId).doc(highlight.id).set(
+          highlight.toFirestoreMap(),
+          SetOptions(merge: true),
+        );
+  }
+
+  Future<List<BibleHighlight>> getBibleHighlightsForAnchors(
+    String userId,
+    List<BibleChapterAnchor> anchors,
+  ) async {
+    final highlights = <BibleHighlight>[];
+    for (final anchor in anchors) {
+      final snapshot = await _bibleHighlights(userId)
+          .where('version', isEqualTo: anchor.version)
+          .where('bookId', isEqualTo: anchor.bookId)
+          .where('chapter', isEqualTo: anchor.chapter)
+          .get();
+
+      highlights.addAll(snapshot.docs.map((doc) {
+        return BibleHighlight.fromFirestoreMap(
+          id: doc.id,
+          userId: userId,
+          map: doc.data(),
+        );
+      }));
+    }
+    return highlights;
+  }
+
+  Future<void> deleteBibleHighlight(
+    String userId,
+    String highlightId,
+  ) async {
+    await _bibleHighlights(userId).doc(highlightId).delete();
+  }
+
+  Future<void> syncBibleNote(String userId, BibleNote note) async {
+    await _bibleNotes(userId).doc(note.id).set(
+          note.toFirestoreMap(),
+          SetOptions(merge: true),
+        );
+  }
+
+  Future<List<BibleNote>> getBibleNotesForAnchors(
+    String userId,
+    List<BibleChapterAnchor> anchors,
+  ) async {
+    final notes = <BibleNote>[];
+    for (final anchor in anchors) {
+      final snapshot = await _bibleNotes(userId)
+          .where('version', isEqualTo: anchor.version)
+          .where('bookId', isEqualTo: anchor.bookId)
+          .where('chapter', isEqualTo: anchor.chapter)
+          .get();
+
+      notes.addAll(snapshot.docs.map((doc) {
+        return BibleNote.fromFirestoreMap(
+          id: doc.id,
+          userId: userId,
+          map: doc.data(),
+        );
+      }));
+    }
+    return notes;
+  }
+
+  Future<void> deleteBibleNote(String userId, String noteId) async {
+    await _bibleNotes(userId).doc(noteId).delete();
+  }
+
   // ── Peticiones de Oración ────────────────────────────────────────────────
 
   Stream<List<PeticionOracion>> peticionesStream() {
-    return _peticiones
-        .orderBy('fecha', descending: true)
-        .snapshots()
-        .map((s) => s.docs
+    return _peticiones.orderBy('fecha', descending: true).snapshots().map((s) =>
+        s.docs
             .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -122,12 +203,12 @@ class FirestoreService {
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map((d) => Message.fromMap({'id': d.id, ...d.data()})).toList());
+        .map((s) => s.docs
+            .map((d) => Message.fromMap({'id': d.id, ...d.data()}))
+            .toList());
   }
 
-  Future<void> sendMessage(
-      String chatId, String senderId, String text) async {
+  Future<void> sendMessage(String chatId, String senderId, String text) async {
     await _chats.doc(chatId).collection('messages').add({
       'senderId': senderId,
       'text': text,
