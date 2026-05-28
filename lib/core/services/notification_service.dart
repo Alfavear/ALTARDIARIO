@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' show Color;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -12,7 +13,7 @@ class NotificationService {
 
   /// Inicializa el plugin de notificaciones.
   static Future<void> init() async {
-    if (_initialized) return;
+    if (kIsWeb || _initialized) return;
 
     tz_data.initializeTimeZones();
 
@@ -43,6 +44,8 @@ class NotificationService {
 
   /// Solicita permisos de notificación (necesario en Android 13+ e iOS).
   static Future<bool> requestPermissions() async {
+    if (kIsWeb) return true;
+
     // Android
     final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
         _plugin.resolvePlatformSpecificImplementation<
@@ -70,6 +73,8 @@ class NotificationService {
 
   /// Programa un recordatorio diario a las 8:00 PM si el usuario no ha leído hoy.
   static Future<void> scheduleDailyReminder() async {
+    if (kIsWeb) return;
+
     await _plugin.cancelAll();
 
     final tz.TZDateTime scheduledDate = _nextInstanceOf(20, 0);
@@ -133,6 +138,7 @@ class NotificationService {
 
   /// Cancela todas las notificaciones programadas.
   static Future<void> cancelAll() async {
+    if (kIsWeb) return;
     await _plugin.cancelAll();
   }
 }

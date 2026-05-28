@@ -73,4 +73,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'altardiario-ec25f.firebasestorage.app',
     measurementId: 'G-W055154PD9',
   );
+
 }

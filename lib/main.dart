@@ -19,10 +19,10 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } catch (e, stack) {
-    debugPrint("Error al inicializar Firebase: $e");
-    debugPrint(stack.toString());
-    // Podrías mostrar una pantalla de error aquí si Firebase es vital
+  } catch (e) {
+    debugPrint("⚠️ Advertencia: Error al inicializar Firebase: $e");
+    // En web, esto puede fallar por bloqueadores de rastreo o config 400.
+    // Intentamos continuar para que la app cargue al menos la UI local.
   }
 
   final prefs = await SharedPreferences.getInstance();
@@ -34,9 +34,13 @@ void main() async {
     debugPrint("Error al cargar el plan de lectura: $e");
   }
   
-  await NotificationService.init();
-  await NotificationService.requestPermissions();
-  await NotificationService.scheduleDailyReminder();
+  try {
+    await NotificationService.init();
+    await NotificationService.requestPermissions();
+    await NotificationService.scheduleDailyReminder();
+  } catch (e) {
+    debugPrint("Servicio de notificaciones no disponible: $e");
+  }
   await initializeDateFormatting('es', null);
 
   runApp(
