@@ -21,6 +21,12 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
+    Future<void> pumpAndClearTimer(WidgetTester tester) async {
+      // El SplashScreen tiene un timer de 2500ms para navegar
+      // Lo dejamos expirar para que no quede pendiente
+      await tester.pump(const Duration(milliseconds: 3000));
+    }
+
     testWidgets('renderiza logo y título', (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       final storageService = StorageService(prefs);
@@ -30,6 +36,8 @@ void main() {
 
       expect(find.text('altarDiario'), findsOneWidget);
       expect(find.text('Tu hábito diario con Dios'), findsOneWidget);
+
+      await pumpAndClearTimer(tester);
     });
 
     testWidgets('tiene gradiente azul en el fondo', (WidgetTester tester) async {
@@ -40,6 +48,8 @@ void main() {
 
       expect(find.byType(Container), findsWidgets);
       expect(find.byType(Scaffold), findsOneWidget);
+
+      await pumpAndClearTimer(tester);
     });
 
     testWidgets('animación escala el logo', (WidgetTester tester) async {
@@ -48,14 +58,14 @@ void main() {
 
       await tester.pumpWidget(createSplashScreen(storageService));
 
-      // Al inicio la animación está en marcha
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(milliseconds: 1000));
-      await tester.pump(const Duration(milliseconds: 1500));
 
       // No debe haber errores durante las animaciones
       expect(tester.takeException(), isNull);
+
+      await pumpAndClearTimer(tester);
     });
   });
 }

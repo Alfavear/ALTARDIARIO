@@ -199,12 +199,12 @@ class PerfilScreen extends ConsumerWidget {
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  authState.when(
-                    data: (user) {
-                      if (user == null) return const SizedBox.shrink();
-                      return ref
-                          .watch(userReflexionesProvider(user.uid))
-                          .when(
+                  (() {
+                    final uid = ref.watch(effectiveUserUidProvider);
+                    if (uid == null) return const SizedBox.shrink();
+                    return ref
+                        .watch(userReflexionesProvider(uid))
+                        .when(
                             data: (reflexiones) {
                               if (reflexiones.isEmpty) {
                                 return const Padding(
@@ -279,17 +279,13 @@ class PerfilScreen extends ConsumerWidget {
                                     ),
                                   );
                                 },
-                              );
-                            },
-                            loading: () => const Center(
-                                child: CircularProgressIndicator()),
-                            error: (e, _) => Text('Error: $e'),
-                          );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('Error: $e'),
-                  ),
+                        );
+                      },
+                      loading: () => const Center(
+                          child: CircularProgressIndicator()),
+                      error: (e, _) => Text('Error: $e'),
+                    );
+                  })(),
                 ],
               ),
             ),

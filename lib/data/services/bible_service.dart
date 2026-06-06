@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import '../models/bible_models.dart';
+import 'bible_download_service.dart';
 
 class ParsedPassage {
   final String reference;
@@ -35,6 +36,21 @@ class BibleService {
   static const String _seedAsset = 'assets/bible/es_rv1909_seed.json';
   static const String _databaseName = 'altar_diario_bible.db';
   static const int _databaseVersion = 1;
+
+  Future<List<BibleVersion>> getAllAvailableVersions() async {
+    final downloaded = await BibleDownloadService().getDownloadedVersions();
+    final seen = <String>{};
+    final versions = <BibleVersion>[...availableVersions];
+    for (final v in availableVersions) {
+      seen.add(v.id);
+    }
+    for (final v in downloaded) {
+      if (seen.add(v.id)) {
+        versions.add(v);
+      }
+    }
+    return versions;
+  }
 
   static const Map<String, int> _bookMap = {
     'genesis': 1,

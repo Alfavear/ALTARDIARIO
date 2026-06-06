@@ -55,7 +55,9 @@ class _ReflexionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(authStateProvider).value;
+    final currentUid = ref.watch(effectiveUserUidProvider);
+
+    final uid = currentUid;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -90,16 +92,15 @@ class _ReflexionCard extends ConsumerWidget {
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
                   icon: Icon(
-                    reflexion.isLikedBy(currentUser?.uid ?? '')
+                    reflexion.isLikedBy(uid ?? '')
                         ? Icons.favorite
                         : Icons.favorite_border,
                     size: 20,
-                    color: reflexion.isLikedBy(currentUser?.uid ?? '')
+                    color: reflexion.isLikedBy(uid ?? '')
                         ? AppTheme.streakOrange
                         : AppTheme.textSecondary,
                   ),
                   onPressed: () {
-                    final uid = currentUser?.uid;
                     if (uid == null) return;
                     final isLiked = reflexion.isLikedBy(uid);
                     ref.read(firestoreServiceProvider).toggleLike(reflexion.id, uid, isLiked);
@@ -108,12 +109,11 @@ class _ReflexionCard extends ConsumerWidget {
                 const SizedBox(width: 4),
                 Text('${reflexion.likes}', style: const TextStyle(color: AppTheme.textSecondary)),
                 const Spacer(),
-                if (currentUser != null && currentUser.uid != reflexion.userId)
+                if (uid != null && uid != reflexion.userId)
                   IconButton(
                     icon: const Icon(Icons.chat_bubble_outline, size: 20, color: AppTheme.primaryBlue),
                     onPressed: () {
-                      // Generar Chat ID único: combinando UIDs ordenados alfabéticamente
-                      final ids = [currentUser.uid, reflexion.userId]..sort();
+                      final ids = [uid, reflexion.userId]..sort();
                       final chatId = ids.join('_');
                       
                       Navigator.push(

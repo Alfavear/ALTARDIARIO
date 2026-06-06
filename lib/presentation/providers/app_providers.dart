@@ -17,9 +17,25 @@ final storageProvider = Provider<StorageService>((ref) {
 /// Servicio de autenticación.
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
-/// Stream de cambios en el estado de autenticación.
+/// Stream de cambios en el estado de autenticación (Firebase Auth).
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).userChanges;
+});
+
+/// UID local para modo demo/testing (sin Firebase).
+class LocalUidNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void setUid(String? uid) => state = uid;
+}
+
+final localUidProvider = NotifierProvider<LocalUidNotifier, String?>(LocalUidNotifier.new);
+
+/// UID efectivo: Firebase Auth primero, luego modo local.
+final effectiveUserUidProvider = Provider<String?>((ref) {
+  final fbUid = ref.watch(authStateProvider).value?.uid;
+  if (fbUid != null) return fbUid;
+  return ref.watch(localUidProvider);
 });
 
 /// Servicio de Firestore.
@@ -28,7 +44,7 @@ final firestoreServiceProvider =
 
 /// Perfil del usuario autenticado en Firestore.
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
-  final uid = ref.watch(authStateProvider).value?.uid;
+  final uid = ref.watch(effectiveUserUidProvider);
   if (uid == null) return Stream.value(null);
   return ref.watch(firestoreServiceProvider).getUsuario(uid);
 });
@@ -57,8 +73,8 @@ final messagesStreamProvider =
 
 /// Verifica si el usuario actual es el autor de un contenido.
 final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
-  final currentUser = ref.watch(authStateProvider).value;
-  return currentUser?.uid == authorId;
+  final uid = ref.watch(effectiveUserUidProvider);
+  return uid == authorId;
 });
 
 /// Lista de chats del usuario.

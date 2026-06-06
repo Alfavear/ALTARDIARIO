@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +16,10 @@ Widget createTestApp(StorageService storageService) {
 }
 
 void main() {
+  Future<void> pumpAndClearTimer(WidgetTester tester) async {
+    await tester.pump(const Duration(milliseconds: 3000));
+  }
+
   testWidgets('App muestra SplashScreen en inicio', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -24,6 +29,8 @@ void main() {
 
     expect(find.text('altarDiario'), findsOneWidget);
     expect(find.text('Tu hábito diario con Dios'), findsOneWidget);
+
+    await pumpAndClearTimer(tester);
   });
 
   testWidgets('App usa MaterialApp', (WidgetTester tester) async {
@@ -34,5 +41,7 @@ void main() {
     await tester.pumpWidget(createTestApp(storageService));
 
     expect(find.byType(MaterialApp), findsOneWidget);
+
+    await pumpAndClearTimer(tester);
   });
 }

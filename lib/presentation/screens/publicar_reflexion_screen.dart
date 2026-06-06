@@ -27,13 +27,13 @@ class _PublicarReflexionScreenState extends ConsumerState<PublicarReflexionScree
 
     setState(() => _isPublishing = true);
     
-    final user = ref.read(authStateProvider).value;
+    final uid = ref.read(effectiveUserUidProvider) ?? 'anonimo';
     final firestoreService = ref.read(firestoreServiceProvider);
 
     final nuevaReflexion = Reflexion(
-      id: '', // Firestore genera el ID automáticamente
-      userId: user?.uid ?? 'anonimo',
-      userName: user?.displayName ?? 'Usuario de Altar',
+      id: '',
+      userId: uid,
+      userName: 'Usuario de Altar',
       texto: _textController.text.trim(),
       pasajeDia: widget.pasajeDia,
       fecha: DateTime.now(),

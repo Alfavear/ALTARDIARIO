@@ -26,19 +26,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
     
-    final currentUser = ref.read(authStateProvider).value;
-    if (currentUser == null) return;
+    final currentUid = ref.read(effectiveUserUidProvider);
+    if (currentUid == null) return;
 
     final currentProfile = ref.read(userProfileProvider).value;
     final currentName = currentProfile?.nombre ?? 'Anónimo';
 
     ref.read(firestoreServiceProvider).sendMessage(
       widget.chatId,
-      currentUser.uid,
+      currentUid,
       _messageController.text.trim(),
-      participantIds: [currentUser.uid, widget.otherUserId],
+      participantIds: [currentUid, widget.otherUserId],
       participantNames: {
-        currentUser.uid: currentName,
+        currentUid: currentName,
         widget.otherUserId: widget.otherUserName,
       },
     );
@@ -49,7 +49,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(messagesStreamProvider(widget.chatId));
-    final currentUser = ref.watch(authStateProvider).value;
+    final currentUid = ref.watch(effectiveUserUidProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -65,7 +65,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
                   final msg = messages[index];
-                  final isMe = msg.senderId == currentUser?.uid;
+                  final isMe = msg.senderId == currentUid;
                   
                   return Align(
                     alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
@@ -17,11 +18,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInAnonymously() async {
     setState(() => _isLoading = true);
     try {
-      await ref.read(authServiceProvider).signInAnon();
+      final user = await ref.read(authServiceProvider).signInAnon();
+      if (user == null && mounted) {
+        // En modo local (web sin Firebase), el uid se guardó en SharedPreferences
+        final localUid = await ref.read(authServiceProvider).getLocalUid();
+        if (localUid != null) {
+          ref.read(localUidProvider.notifier).setUid(localUid);
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al iniciar sesión: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInDemo() async {
+    setState(() => _isLoading = true);
+    try {
+      final uid = await ref.read(authServiceProvider).signInLocal();
+      ref.read(localUidProvider.notifier).setUid(uid);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error en modo demo: $e')),
         );
       }
     } finally {
@@ -37,6 +61,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al conectar con Google: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authServiceProvider).signInWithApple();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al conectar con Apple: $e')),
         );
       }
     } finally {
@@ -97,6 +136,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (defaultTargetPlatform == TargetPlatform.iOS ||
+                      defaultTargetPlatform == TargetPlatform.macOS)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _signInWithApple,
+                          icon: const Icon(Icons.apple),
+                          label: const Text('CONTINUAR CON APPLE'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _signInDemo,
+                      icon: const Icon(Icons.phone_android_outlined, size: 20),
+                      label: const Text('MODO DEMO (sin conexión)'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white38),
                       ),
                     ),
                   ),

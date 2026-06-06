@@ -43,16 +43,20 @@ void main() {
       expect(find.text('365'), findsOneWidget); // pendientes
     });
 
-    testWidgets('renderiza grid de 12 meses', (WidgetTester tester) async {
+    testWidgets('renderiza meses iniciales visibles', (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       final storageService = StorageService(prefs);
 
       await tester.pumpWidget(createAnualView(storageService));
       await tester.pumpAndSettle();
 
-      // Buscar nombres de meses
+      // Los primeros meses deben estar visibles sin scroll
       expect(find.text('Ene'), findsOneWidget);
-      expect(find.text('Dic'), findsOneWidget);
+      expect(find.text('Feb'), findsOneWidget);
+
+      // Hacemos scroll hacia abajo para ver meses posteriores
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1000));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('renderiza circular progress indicator', (WidgetTester tester) async {

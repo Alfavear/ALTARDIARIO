@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../widgets/app_logo_widget.dart';
 import '../providers/app_providers.dart';
@@ -54,18 +53,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  void _navigateAfterSplash() {
+  void _navigateAfterSplash() async {
     final authAsync = ref.read(authStateProvider);
-    User? user;
-    if (authAsync.hasValue) {
-      user = authAsync.value;
+    final hasFirebaseUser = authAsync.hasValue && authAsync.value != null;
+    final localUid = await ref.read(authServiceProvider).getLocalUid();
+    final hasLocalUser = localUid != null;
+
+    if (hasFirebaseUser || hasLocalUser) {
+      if (hasLocalUser && !hasFirebaseUser) {
+        ref.read(localUidProvider.notifier).setUid(localUid);
+      }
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainNavigationView()),
+      );
+    } else {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) =>
-            user != null ? const MainNavigationView() : const LoginScreen(),
-      ),
-    );
   }
 
   @override

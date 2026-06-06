@@ -28,11 +28,11 @@ class OracionScreen extends ConsumerWidget {
             onPressed: () async {
               if (controller.text.trim().isEmpty) return;
               
-              final user = ref.read(authStateProvider).value;
+              final uid = ref.read(effectiveUserUidProvider) ?? 'anonimo';
               final nuevaPeticion = PeticionOracion(
                 id: '',
-                userId: user?.uid ?? 'anonimo',
-                userName: user?.displayName ?? 'Usuario de Altar',
+                userId: uid,
+                userName: 'Usuario de Altar',
                 motivo: controller.text.trim(),
                 fecha: DateTime.now(),
               );

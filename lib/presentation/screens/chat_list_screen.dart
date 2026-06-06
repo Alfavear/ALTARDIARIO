@@ -10,9 +10,9 @@ class ChatListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(authStateProvider).value;
-    final chatsAsync = currentUser != null
-        ? ref.watch(chatListProvider(currentUser.uid))
+    final currentUid = ref.watch(effectiveUserUidProvider);
+    final chatsAsync = currentUid != null
+        ? ref.watch(chatListProvider(currentUid))
         : const AsyncLoading<List<Map<String, dynamic>>>();
 
     return Scaffold(
@@ -58,7 +58,7 @@ class ChatListScreen extends ConsumerWidget {
               String otherName = 'Usuario';
               String otherId = '';
               for (final pid in participantIds) {
-                if (pid.toString() != currentUser?.uid) {
+                if (pid.toString() != currentUid) {
                   otherId = pid.toString();
                   otherName = participantNames[otherId]?.toString() ?? 'Usuario';
                 }

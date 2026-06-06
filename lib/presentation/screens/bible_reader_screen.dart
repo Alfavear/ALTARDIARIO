@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/bible_models.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
+import 'bible_versions_screen.dart';
 
 class BibleReaderScreen extends ConsumerStatefulWidget {
   final String pasajes;
@@ -23,6 +24,7 @@ class BibleReaderScreen extends ConsumerStatefulWidget {
 class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   final BibleService _bibleService = BibleService();
   BibleVersion _selectedVersion = BibleService.availableVersions.first;
+  List<BibleVersion> _versions = BibleService.availableVersions;
   bool _isLoading = true;
   List<BiblePassage> _passages = [];
   List<BibleHighlight> _highlights = [];
@@ -43,14 +45,28 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     _loadText();
   }
 
+  Future<void> _loadVersions() async {
+    final versions = await _bibleService.getAllAvailableVersions();
+    if (!mounted) return;
+    setState(() {
+      _versions = versions;
+      final exists = versions.any((v) => v.id == _selectedVersion.id);
+      if (!exists) {
+        _selectedVersion = versions.first;
+      }
+    });
+  }
+
   Future<void> _loadText() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
+    _loadVersions();
+
     try {
-      final userId = ref.read(authStateProvider).value?.uid;
+      final userId = ref.read(effectiveUserUidProvider);
       final passages = await _bibleService.getPassageText(
         widget.pasajes,
         version: _selectedVersion.id,
@@ -136,21 +152,56 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             tooltip: 'Versión bíblica',
             icon: const Icon(Icons.translate),
             onSelected: (version) {
+              if (version.id == '_manage_') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BibleVersionsScreen(),
+                  ),
+                );
+                return;
+              }
               setState(() => _selectedVersion = version);
               _loadText();
             },
-            itemBuilder: (context) => BibleService.availableVersions.map((v) {
-              return PopupMenuItem(
-                value: v,
+            itemBuilder: (context) => [
+              ..._versions.map((v) {
+                return PopupMenuItem(
+                  value: v,
+                  child: Row(
+                    children: [
+                      Icon(
+                        v.id == _selectedVersion.id
+                            ? Icons.offline_pin
+                            : Icons.check_circle_outline,
+                        size: 18,
+                        color: v.id == _selectedVersion.id
+                            ? AppTheme.primaryBlue
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(v.name)),
+                    ],
+                  ),
+                );
+              }),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: BibleVersion(
+                  id: '_manage_',
+                  name: 'Gestionar versiones...',
+                  lang: '',
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.offline_pin, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(v.name)),
+                    Icon(Icons.settings, size: 18),
+                    SizedBox(width: 8),
+                    Text('Gestionar versiones...',
+                        style: TextStyle(color: AppTheme.primaryBlue)),
                   ],
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ],
       ),
@@ -479,7 +530,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   Future<void> _saveHighlight(BibleVerse verse, String colorHex) async {
-    final userId = ref.read(authStateProvider).value?.uid;
+    final userId = ref.read(effectiveUserUidProvider);
     final highlight = await _bibleService.saveHighlight(
       verse: verse,
       colorHex: colorHex,
@@ -497,7 +548,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   Future<void> _deleteHighlight(String highlightId) async {
-    final userId = ref.read(authStateProvider).value?.uid;
+    final userId = ref.read(effectiveUserUidProvider);
     await _bibleService.deleteHighlight(highlightId);
     if (userId != null) {
       try {
@@ -514,7 +565,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     String body, {
     BibleNote? existingNote,
   }) async {
-    final userId = ref.read(authStateProvider).value?.uid;
+    final userId = ref.read(effectiveUserUidProvider);
     final note = await _bibleService.saveNote(
       verse: verse,
       body: body,
