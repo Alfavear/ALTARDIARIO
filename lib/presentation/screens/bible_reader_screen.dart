@@ -46,12 +46,14 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   @override
   void initState() {
     super.initState();
-    _loadVersions();
     _autoDownloadDefault();
   }
 
   Future<void> _autoDownloadDefault() async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      _loadText();
+      return;
+    }
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
@@ -90,9 +92,9 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
       _errorMessage = null;
     });
 
-    _loadVersions();
-
     try {
+      await _loadVersions();
+
       final userId = ref.read(effectiveUserUidProvider);
       final passages = await _bibleService.getPassageText(
         widget.pasajes,
