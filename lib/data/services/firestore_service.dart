@@ -5,22 +5,32 @@ import '../models/usuario.dart';
 import '../models/message.dart';
 import '../models/bible_models.dart';
 
-/// Servicio centralizado para todas las operaciones con Firestore.
 class FirestoreService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore? _firestore;
 
-  // ── Colecciones ──────────────────────────────────────────────────────────
+  FirestoreService() : _firestore = _initFirestore();
+
+  static FirebaseFirestore? _initFirestore() {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool get _available => _firestore != null;
+
   CollectionReference<Map<String, dynamic>> get _reflexiones =>
-      _firestore.collection('reflexiones');
+      _firestore!.collection('reflexiones');
 
   CollectionReference<Map<String, dynamic>> get _peticiones =>
-      _firestore.collection('peticiones_oracion');
+      _firestore!.collection('peticiones_oracion');
 
   CollectionReference<Map<String, dynamic>> get _usuarios =>
-      _firestore.collection('usuarios');
+      _firestore!.collection('usuarios');
 
   CollectionReference<Map<String, dynamic>> get _chats =>
-      _firestore.collection('chats');
+      _firestore!.collection('chats');
 
   CollectionReference<Map<String, dynamic>> _bibleHighlights(String userId) =>
       _usuarios.doc(userId).collection('bible_highlights');
@@ -31,27 +41,31 @@ class FirestoreService {
   // ── Reflexiones ──────────────────────────────────────────────────────────
 
   Stream<List<Reflexion>> reflexionesStream() {
+    if (!_available) return Stream.value([]);
     return _reflexiones.orderBy('fecha', descending: true).snapshots().map(
         (s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
-            .toList());
+            .toList()).handleError((_) => <Reflexion>[]);
   }
 
   Stream<List<Reflexion>> getUserReflexiones(String userId) {
+    if (!_available) return Stream.value([]);
     return _reflexiones
         .where('userId', isEqualTo: userId)
         .orderBy('fecha', descending: true)
         .snapshots()
         .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
-            .toList());
+            .toList()).handleError((_) => <Reflexion>[]);
   }
 
   Future<void> publicarReflexion(Reflexion reflexion) async {
+    if (!_available) return;
     await _reflexiones.add(reflexion.toMap());
   }
 
   Future<void> toggleLike(String reflexionId, String userId, bool isLiked) async {
+    if (!_available) return;
     if (isLiked) {
       await _reflexiones.doc(reflexionId).update({
         'likes': FieldValue.increment(-1),
@@ -68,11 +82,13 @@ class FirestoreService {
   // ── Usuarios ─────────────────────────────────────────────────────────────
 
   Stream<Usuario?> getUsuario(String uid) {
+    if (!_available) return Stream.value(null);
     return _usuarios.doc(uid).snapshots().map(
         (d) => d.exists ? Usuario.fromMap({'id': d.id, ...d.data()!}) : null);
   }
 
   Future<void> crearOActualizarUsuario(Usuario usuario) async {
+    if (!_available) return;
     await _usuarios
         .doc(usuario.id)
         .set(usuario.toMap(), SetOptions(merge: true));
@@ -80,6 +96,7 @@ class FirestoreService {
 
   Future<void> toggleFollow(
       String currentUserId, String targetUserId, bool isFollowing) async {
+    if (!_available) return;
     final currentDoc = _usuarios.doc(currentUserId);
     final targetDoc = _usuarios.doc(targetUserId);
 
@@ -100,9 +117,9 @@ class FirestoreService {
     }
   }
 
-  /// Sincroniza el progreso local de lectura en la nube.
   Future<void> syncProgress(
       String userId, List<String> completedDates, int maxStreak) async {
+    if (!_available) return;
     await _usuarios.doc(userId).set({
       'progresoLectura': completedDates,
       'maxStreak': maxStreak,
@@ -110,12 +127,13 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  // â”€â”€ Biblia: Subrayados y Notas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Biblia: Subrayados y Notas ──────────────────────────────────────────────
 
   Future<void> syncBibleHighlight(
     String userId,
     BibleHighlight highlight,
   ) async {
+    if (!_available) return;
     await _bibleHighlights(userId).doc(highlight.id).set(
           highlight.toFirestoreMap(),
           SetOptions(merge: true),
@@ -126,6 +144,7 @@ class FirestoreService {
     String userId,
     List<BibleChapterAnchor> anchors,
   ) async {
+    if (!_available) return [];
     final highlights = <BibleHighlight>[];
     for (final anchor in anchors) {
       final snapshot = await _bibleHighlights(userId)
@@ -149,10 +168,12 @@ class FirestoreService {
     String userId,
     String highlightId,
   ) async {
+    if (!_available) return;
     await _bibleHighlights(userId).doc(highlightId).delete();
   }
 
   Future<void> syncBibleNote(String userId, BibleNote note) async {
+    if (!_available) return;
     await _bibleNotes(userId).doc(note.id).set(
           note.toFirestoreMap(),
           SetOptions(merge: true),
@@ -163,6 +184,7 @@ class FirestoreService {
     String userId,
     List<BibleChapterAnchor> anchors,
   ) async {
+    if (!_available) return [];
     final notes = <BibleNote>[];
     for (final anchor in anchors) {
       final snapshot = await _bibleNotes(userId)
@@ -183,12 +205,14 @@ class FirestoreService {
   }
 
   Future<void> deleteBibleNote(String userId, String noteId) async {
+    if (!_available) return;
     await _bibleNotes(userId).doc(noteId).delete();
   }
 
   // ── Peticiones de Oración ────────────────────────────────────────────────
 
   Stream<List<PeticionOracion>> peticionesStream() {
+    if (!_available) return Stream.value([]);
     return _peticiones.orderBy('fecha', descending: true).snapshots().map((s) =>
         s.docs
             .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
@@ -196,10 +220,12 @@ class FirestoreService {
   }
 
   Future<void> crearPeticionOracion(PeticionOracion peticion) async {
+    if (!_available) return;
     await _peticiones.add(peticion.toMap());
   }
 
   Future<void> apoyarPeticion(String peticionId) async {
+    if (!_available) return;
     await _peticiones
         .doc(peticionId)
         .update({'oracionesCount': FieldValue.increment(1)});
@@ -208,6 +234,7 @@ class FirestoreService {
   // ── Chat ─────────────────────────────────────────────────────────────────
 
   Stream<List<Message>> getMessages(String chatId) {
+    if (!_available) return Stream.value([]);
     return _chats
         .doc(chatId)
         .collection('messages')
@@ -225,6 +252,7 @@ class FirestoreService {
     List<String>? participantIds,
     Map<String, String>? participantNames,
   }) async {
+    if (!_available) return;
     await _chats.doc(chatId).collection('messages').add({
       'senderId': senderId,
       'text': text,
@@ -239,8 +267,8 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  /// Obtiene los chats donde el usuario participa.
   Stream<List<Map<String, dynamic>>> getUserChats(String userId) {
+    if (!_available) return Stream.value([]);
     return _chats
         .where('participantIds', arrayContains: userId)
         .orderBy('lastUpdate', descending: true)

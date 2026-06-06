@@ -71,13 +71,16 @@ class NotificationService {
     return true;
   }
 
-  /// Programa un recordatorio diario a las 8:00 PM si el usuario no ha leído hoy.
-  static Future<void> scheduleDailyReminder() async {
+  /// Programa un recordatorio diario a la hora configurada.
+  static Future<void> scheduleDailyReminder({
+    int hour = 20,
+    int minute = 0,
+  }) async {
     if (kIsWeb) return;
 
     await _plugin.cancelAll();
 
-    final tz.TZDateTime scheduledDate = _nextInstanceOf(20, 0);
+    final tz.TZDateTime scheduledDate = _nextInstanceOf(hour, minute);
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(

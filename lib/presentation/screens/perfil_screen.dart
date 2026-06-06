@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/notification_service.dart';
+import '../../data/services/storage_service.dart';
 import '../providers/app_providers.dart';
 
 class PerfilScreen extends ConsumerWidget {
@@ -192,6 +194,48 @@ class PerfilScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
 
+                  // ── Recordatorio diario ──────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusMedium),
+                      boxShadow: AppTheme.softShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.notifications_outlined,
+                            color: AppTheme.primaryBlue),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Recordatorio diario',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15)),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${storageService.getNotificationHour().toString().padLeft(2, '0')}:${storageService.getNotificationMinute().toString().padLeft(2, '0')}',
+                                style: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _pickNotificationTime(
+                              context, storageService),
+                          child: const Text('CAMBIAR'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   // ── Reflexiones del usuario ─────────────────────────────
                   const Text(
                     'Mis Reflexiones',
@@ -283,7 +327,16 @@ class PerfilScreen extends ConsumerWidget {
                       },
                       loading: () => const Center(
                           child: CircularProgressIndicator()),
-                      error: (e, _) => Text('Error: $e'),
+                      error: (e, _) => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text(
+                            'No se pudieron cargar tus reflexiones.\nVerifica que Firebase Console tenga los índices necesarios.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppTheme.textSecondary),
+                          ),
+                        ),
+                      ),
                     );
                   })(),
                 ],
@@ -292,6 +345,22 @@ class PerfilScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+Future<void> _pickNotificationTime(
+    BuildContext context, StorageService storage) async {
+  final initial = TimeOfDay(
+    hour: storage.getNotificationHour(),
+    minute: storage.getNotificationMinute(),
+  );
+  final picked = await showTimePicker(context: context, initialTime: initial);
+  if (picked != null) {
+    await storage.setNotificationTime(picked.hour, picked.minute);
+    await NotificationService.scheduleDailyReminder(
+      hour: picked.hour,
+      minute: picked.minute,
     );
   }
 }

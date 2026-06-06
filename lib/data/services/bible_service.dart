@@ -29,27 +29,63 @@ class ParsedPassage {
 }
 
 class BibleService {
-  static const List<BibleVersion> availableVersions = [
-    BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es'),
-  ];
+  static List<BibleVersion> get availableVersions {
+    if (kIsWeb) {
+      return [
+        const BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es'),
+      ];
+    }
+    return [
+      const BibleVersion(id: 'rv1960', name: 'Reina-Valera 1960', lang: 'es'),
+      const BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es'),
+    ];
+  }
 
   static const String _seedAsset = 'assets/bible/es_rv1909_seed.json';
   static const String _databaseName = 'altar_diario_bible.db';
   static const int _databaseVersion = 1;
 
   Future<List<BibleVersion>> getAllAvailableVersions() async {
-    final downloaded = await BibleDownloadService().getDownloadedVersions();
-    final seen = <String>{};
-    final versions = <BibleVersion>[...availableVersions];
-    for (final v in availableVersions) {
-      seen.add(v.id);
+    if (kIsWeb) {
+      return List.unmodifiable(availableVersions);
     }
-    for (final v in downloaded) {
-      if (seen.add(v.id)) {
-        versions.add(v);
+    try {
+      final downloaded = await BibleDownloadService().getDownloadedVersions();
+      final seen = <String>{};
+      final versions = <BibleVersion>[...availableVersions];
+      for (final v in availableVersions) {
+        seen.add(v.id);
       }
+      for (final v in downloaded) {
+        if (seen.add(v.id)) {
+          versions.add(v);
+        }
+      }
+      return versions;
+    } catch (_) {
+      return List.unmodifiable(availableVersions);
     }
-    return versions;
+  }
+
+  Future<void> ensureDefaultDownloaded({
+    void Function(int current, int total)? onProgress,
+  }) async {
+    final db = await _db;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM bible_verses WHERE version = ?',
+        ['rv1960'],
+      ),
+    );
+    if (count != null && count > 0) return;
+    try {
+      await BibleDownloadService().downloadVersion(
+        'rv1960',
+        onProgress: onProgress,
+      );
+    } catch (_) {
+      // RV1960 no disponible — RV1909 seed queda como fallback
+    }
   }
 
   static const Map<String, int> _bookMap = {

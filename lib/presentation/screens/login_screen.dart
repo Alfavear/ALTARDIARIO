@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import '../widgets/app_logo_widget.dart';
+import 'main_navigation_view.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,12 +21,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final user = await ref.read(authServiceProvider).signInAnon();
       if (user == null && mounted) {
-        // En modo local (web sin Firebase), el uid se guardó en SharedPreferences
         final localUid = await ref.read(authServiceProvider).getLocalUid();
         if (localUid != null) {
           ref.read(localUidProvider.notifier).setUid(localUid);
         }
       }
+      if (mounted) _navigateToMain();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -42,6 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final uid = await ref.read(authServiceProvider).signInLocal();
       ref.read(localUidProvider.notifier).setUid(uid);
+      if (mounted) _navigateToMain();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -51,6 +53,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _navigateToMain() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const MainNavigationView()),
+    );
   }
 
   Future<void> _signInWithGoogle() async {

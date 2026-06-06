@@ -33,7 +33,10 @@ void main() async {
   try {
     await NotificationService.init();
     await NotificationService.requestPermissions();
-    await NotificationService.scheduleDailyReminder();
+    await NotificationService.scheduleDailyReminder(
+      hour: storageService.getNotificationHour(),
+      minute: storageService.getNotificationMinute(),
+    );
   } catch (e) {
     debugPrint("Servicio de notificaciones no disponible: $e");
   }

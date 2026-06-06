@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,6 +27,9 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   BibleVersion _selectedVersion = BibleService.availableVersions.first;
   List<BibleVersion> _versions = BibleService.availableVersions;
   bool _isLoading = true;
+  bool _isDownloading = false;
+  int _downloadProgress = 0;
+  int _downloadTotal = 0;
   List<BiblePassage> _passages = [];
   List<BibleHighlight> _highlights = [];
   List<BibleNote> _notes = [];
@@ -42,7 +46,30 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   @override
   void initState() {
     super.initState();
-    _loadText();
+    _loadVersions();
+    _autoDownloadDefault();
+  }
+
+  Future<void> _autoDownloadDefault() async {
+    if (kIsWeb) return;
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0;
+    });
+    await _bibleService.ensureDefaultDownloaded(
+      onProgress: (current, total) {
+        if (mounted) {
+          setState(() {
+            _downloadProgress = current;
+            _downloadTotal = total;
+          });
+        }
+      },
+    );
+    if (mounted) {
+      setState(() => _isDownloading = false);
+      _loadText();
+    }
   }
 
   Future<void> _loadVersions() async {
@@ -210,6 +237,31 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   Widget _buildBody(bool isCompleted) {
+    if (_isDownloading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: AppTheme.primaryBlue),
+              const SizedBox(height: 24),
+              const Text(
+                'Descargando Reina-Valera 1960…',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              if (_downloadTotal > 0)
+                Text(
+                  '$_downloadProgress de $_downloadTotal versículos',
+                  style: const TextStyle(color: AppTheme.textSecondary),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_isLoading) {
       return const Center(
           child: CircularProgressIndicator(color: AppTheme.primaryBlue));

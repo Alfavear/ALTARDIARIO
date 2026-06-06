@@ -160,4 +160,15 @@ class StorageService {
       await _prefs.setInt(_keyMaxStreak, current);
     }
   }
+
+  static const String _keyNotifHour = 'notification_hour';
+  static const String _keyNotifMin = 'notification_minute';
+
+  int getNotificationHour() => _prefs.getInt(_keyNotifHour) ?? 20;
+  int getNotificationMinute() => _prefs.getInt(_keyNotifMin) ?? 0;
+
+  Future<void> setNotificationTime(int hour, int minute) async {
+    await _prefs.setInt(_keyNotifHour, hour);
+    await _prefs.setInt(_keyNotifMin, minute);
+  }
 }
