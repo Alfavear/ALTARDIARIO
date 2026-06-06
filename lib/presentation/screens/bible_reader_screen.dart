@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,10 +49,6 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   Future<void> _autoDownloadDefault() async {
-    if (kIsWeb) {
-      _loadText();
-      return;
-    }
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;

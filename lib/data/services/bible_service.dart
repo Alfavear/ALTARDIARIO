@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -30,11 +31,6 @@ class ParsedPassage {
 
 class BibleService {
   static List<BibleVersion> get availableVersions {
-    if (kIsWeb) {
-      return [
-        const BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es'),
-      ];
-    }
     return [
       const BibleVersion(id: 'rv1960', name: 'Reina-Valera 1960', lang: 'es'),
       const BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es'),
@@ -70,15 +66,19 @@ class BibleService {
   Future<void> ensureDefaultDownloaded({
     void Function(int current, int total)? onProgress,
   }) async {
-    final db = await _db;
-    final count = Sqflite.firstIntValue(
-      await db.rawQuery(
-        'SELECT COUNT(*) FROM bible_verses WHERE version = ?',
-        ['rv1960'],
-      ),
-    );
-    if (count != null && count > 0) return;
+    if (kIsWeb) {
+      await _loadWebRV1960(onProgress: onProgress);
+      return;
+    }
     try {
+      final db = await _db;
+      final count = Sqflite.firstIntValue(
+        await db.rawQuery(
+          'SELECT COUNT(*) FROM bible_verses WHERE version = ?',
+          ['rv1960'],
+        ),
+      );
+      if (count != null && count > 0) return;
       await BibleDownloadService().downloadVersion(
         'rv1960',
         onProgress: onProgress,
@@ -86,6 +86,67 @@ class BibleService {
     } catch (_) {
       // RV1960 no disponible — RV1909 seed queda como fallback
     }
+  }
+
+  static const String _bollsBase = 'https://bolls.life';
+
+  Future<void> _loadWebRV1960({
+    void Function(int current, int total)? onProgress,
+  }) async {
+    if (_webLoadedRV1960) return;
+
+    final bookNames = await _fetchWebBookNames();
+    if (bookNames.isEmpty) return;
+
+    final response = await http.get(
+      Uri.parse('$_bollsBase/static/translations/rv1960.json'),
+    );
+    if (response.statusCode != 200) return;
+
+    final verses = jsonDecode(response.body) as List<dynamic>;
+    final total = verses.length;
+
+    for (var i = 0; i < total; i++) {
+      final v = verses[i] as Map<String, dynamic>;
+      final bookId = v['book'] as int;
+      final chapter = v['chapter'] as int;
+      final verse = v['verse'] as int;
+      final text = _stripHtml(v['text'] as String);
+      final bookName = bookNames[bookId] ?? 'Book $bookId';
+      final key = 'rv1960:$bookId:$chapter:$verse';
+      _memoryVerses[key] = [
+        {
+          'version': 'rv1960',
+          'book_id': bookId,
+          'book_name': bookName,
+          'chapter': chapter,
+          'verse': verse,
+          'text': text,
+        }
+      ];
+      if (i % 1000 == 0 || i == total - 1) {
+        onProgress?.call(i + 1, total);
+      }
+    }
+    _webLoadedRV1960 = true;
+  }
+
+  Future<Map<int, String>> _fetchWebBookNames() async {
+    final response = await http.get(
+      Uri.parse('$_bollsBase/get-books/rv1960/'),
+    );
+    if (response.statusCode != 200) return {};
+    final books = jsonDecode(response.body) as List<dynamic>;
+    return {
+      for (final b in books) b['bookid'] as int: b['name'] as String,
+    };
+  }
+
+  String _stripHtml(String html) {
+    return html
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   static const Map<String, int> _bookMap = {
@@ -185,12 +246,13 @@ class BibleService {
   );
 
   Database? _database;
-  bool _memoryMode = false;
+  static bool _memoryMode = false;
 
-  // Almacenamiento en memoria para web
-  final _memoryVerses = <String, List<Map<String, Object?>>>{};
-  final _memoryHighlights = <BibleHighlight>[];
-  final _memoryNotes = <BibleNote>[];
+  // Almacenamiento en memoria para web (estático para persistir entre instancias)
+  static final _memoryVerses = <String, List<Map<String, Object?>>>{};
+  static final _memoryHighlights = <BibleHighlight>[];
+  static final _memoryNotes = <BibleNote>[];
+  static bool _webLoadedRV1960 = false;
 
   Future<List<BiblePassage>> getPassageText(
     String query, {
