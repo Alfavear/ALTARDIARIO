@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/lectura_dia.dart';
 import '../providers/app_providers.dart';
+import '../widgets/app_logo_widget.dart';
+import 'anual_view.dart';
 import 'bible_reader_screen.dart';
 import 'publicar_reflexion_screen.dart';
 
@@ -74,73 +76,67 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
       ),
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-          child: Column(
-            children: [
-              // Título de la app
-              Text(
-                'altarDiario',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Tu hábito diario con Dios',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Selector de mes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
-                    onPressed: _currentMonthIndex > 0
-                        ? () => _pageController.previousPage(
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeInOut,
-                            )
-                        : null,
-                  ),
-                  GestureDetector(
-                    onTap: _goToCurrentMonth,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                      ),
-                      child: Text(
-                        '${_monthNames[_currentMonthIndex]} $_year',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              children: [
+                const AppLogoWidget(size: 44),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, color: Colors.white, size: 26),
+                      onPressed: _currentMonthIndex > 0
+                          ? () => _pageController.previousPage(
+                                duration: const Duration(milliseconds: 350),
+                                curve: Curves.easeInOut,
+                              )
+                          : null,
+                    ),
+                    GestureDetector(
+                      onTap: _goToCurrentMonth,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${_monthNames[_currentMonthIndex]} $_year',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.today_rounded,
+                              size: 16,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right, color: Colors.white, size: 28),
-                    onPressed: _currentMonthIndex < 11
-                        ? () => _pageController.nextPage(
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeInOut,
-                            )
-                        : null,
-                  ),
-                ],
-              ),
-            ],
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, color: Colors.white, size: 26),
+                      onPressed: _currentMonthIndex < 11
+                          ? () => _pageController.nextPage(
+                                duration: const Duration(milliseconds: 350),
+                                curve: Curves.easeInOut,
+                              )
+                          : null,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
       ),
     );
   }
@@ -152,13 +148,12 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
     final totalCompletadas = storageService.getTotalCompletadas();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
         children: [
-          // Racha actual
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 gradient: streak > 0
                     ? AppTheme.streakGradient
@@ -172,16 +167,16 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                 children: [
                   Text(
                     streak > 0 ? '🔥' : '💤',
-                    style: const TextStyle(fontSize: 22),
+                    style: const TextStyle(fontSize: 18),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         '$streak ${streak == 1 ? 'día' : 'días'}',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: streak > 0 ? Colors.white : AppTheme.textPrimary,
                         ),
@@ -189,7 +184,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                       Text(
                         'Racha actual',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: streak > 0
                               ? Colors.white.withValues(alpha: 0.85)
                               : AppTheme.textSecondary,
@@ -202,40 +197,49 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
             ),
           ),
           const SizedBox(width: 8),
-          // Progreso total
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppTheme.completedGreenLight,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('📖', style: TextStyle(fontSize: 22)),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$totalCompletadas/365',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.completedGreen,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AnualView()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.completedGreenLight,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('📖', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 6),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$totalCompletadas/365',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.completedGreen,
+                          ),
                         ),
-                      ),
-                      const Text(
-                        'Lecturas',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
+                        const Text(
+                          'Ver más',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.chevron_right, size: 16, color: AppTheme.textSecondary),
+                  ],
+                ),
               ),
             ),
           ),
@@ -289,9 +293,9 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 7,
-          childAspectRatio: 0.58,
-          crossAxisSpacing: 3,
-          mainAxisSpacing: 3,
+          childAspectRatio: 0.95,
+          crossAxisSpacing: 4,
+          mainAxisSpacing: 4,
         ),
         itemCount: startWeekday + daysInMonth,
         itemBuilder: (context, index) {
@@ -328,30 +332,32 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
     required bool isCompleted,
     required bool isPast,
   }) {
+    final hasLectura = lectura != null;
+
     Color bgColor;
     Color borderColor;
     Color dayNumColor;
 
     if (isCompleted) {
       bgColor = AppTheme.completedGreenLight;
-      borderColor = AppTheme.completedGreen.withValues(alpha: 0.4);
+      borderColor = AppTheme.completedGreen.withValues(alpha: 0.3);
       dayNumColor = AppTheme.completedGreen;
     } else if (isToday) {
       bgColor = AppTheme.todayHighlight;
       borderColor = AppTheme.accentGold;
-      dayNumColor = AppTheme.primaryBlue;
+      dayNumColor = AppTheme.accentGold;
     } else if (isPast) {
-      bgColor = Colors.white;
-      borderColor = Colors.red.withValues(alpha: 0.15);
+      bgColor = AppTheme.missedDayBg;
+      borderColor = Colors.red.withValues(alpha: 0.08);
       dayNumColor = AppTheme.textSecondary;
     } else {
       bgColor = Colors.white;
-      borderColor = Colors.grey.withValues(alpha: 0.12);
+      borderColor = Colors.grey.withValues(alpha: 0.08);
       dayNumColor = AppTheme.textPrimary;
     }
 
     return GestureDetector(
-      onTap: lectura != null
+      onTap: hasLectura
           ? () => _showLecturaBottomSheet(context, lectura, mes, dayNum)
           : null,
       child: AnimatedContainer(
@@ -365,56 +371,55 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
             width: isToday ? 2.0 : 1.0,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(3),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Número del día y check
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$dayNum',
-                    style: TextStyle(
-                      fontSize: isToday ? 14 : 12,
-                      fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
-                      color: dayNumColor,
-                    ),
-                  ),
-                  if (isCompleted)
-                    const Icon(Icons.check_circle, color: AppTheme.completedGreen, size: 14),
-                  if (isToday && !isCompleted)
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.accentGold,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$dayNum',
+              style: TextStyle(
+                fontSize: isToday ? 18 : 14,
+                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                color: dayNumColor,
               ),
-              const SizedBox(height: 2),
-              // Pasajes bíblicos
-              if (lectura != null)
-                Expanded(
-                  child: Text(
-                    lectura.pasajes,
-                    style: TextStyle(
-                      fontSize: 7.5,
-                      height: 1.2,
-                      fontWeight: FontWeight.w400,
-                      color: isCompleted
-                          ? AppTheme.completedGreen.withValues(alpha: 0.8)
-                          : AppTheme.textSecondary,
-                    ),
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+            ),
+            const SizedBox(height: 6),
+            if (isCompleted)
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: AppTheme.completedGreen,
+                  shape: BoxShape.circle,
                 ),
-            ],
-          ),
+              )
+            else if (isToday)
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentGold,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.accentGold.withValues(alpha: 0.4),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              )
+            else if (isPast)
+              Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
+              )
+            else
+              const SizedBox(height: 6),
+          ],
         ),
       ),
     );
@@ -424,8 +429,10 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
   void _showLecturaBottomSheet(
       BuildContext context, LecturaDia lectura, int mes, int dayNum) {
     final fecha = DateTime(_year, mes, dayNum);
-    final fechaFormateada = DateFormat("EEEE, d 'de' MMMM 'del' yyyy", 'es')
+    final fechaFormateada = DateFormat("EEEE, d 'de' MMMM", 'es')
         .format(fecha);
+    final diaCapitalizado =
+        fechaFormateada[0].toUpperCase() + fechaFormateada.substring(1);
 
     showModalBottomSheet(
       context: context,
@@ -449,42 +456,46 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Indicador de arrastre
                   Center(
                     child: Container(
                       width: 40,
                       height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
+                      margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                  // Fecha formateada
-                  Text(
-                    fechaFormateada,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 16,
+                        color: AppTheme.textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        diaCapitalizado,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  // Pasajes
+                  const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppTheme.completedGreenLight
-                          : AppTheme.scaffoldBg,
+                      gradient: isCompleted
+                          ? AppTheme.completedGradient
+                          : null,
+                      color: isCompleted ? null : AppTheme.scaffoldBg,
                       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                      border: Border.all(
-                        color: isCompleted
-                            ? AppTheme.completedGreen.withValues(alpha: 0.3)
-                            : Colors.grey.withValues(alpha: 0.15),
-                      ),
+                      boxShadow: isCompleted ? AppTheme.softShadow : null,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,58 +504,64 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                           children: [
                             Icon(
                               Icons.menu_book_rounded,
-                              size: 20,
+                              size: 22,
                               color: isCompleted
-                                  ? AppTheme.completedGreen
+                                  ? Colors.white
                                   : AppTheme.primaryBlue,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Text(
                               'Lectura del día',
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
                                 color: isCompleted
-                                    ? AppTheme.completedGreen
+                                    ? Colors.white
                                     : AppTheme.primaryBlue,
                               ),
                             ),
+                            if (isCompleted) ...[
+                              const Spacer(),
+                              Icon(
+                                Icons.check_circle,
+                                size: 20,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ],
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 14),
                         Text(
                           lectura.pasajes,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: isCompleted
+                                ? Colors.white
+                                : AppTheme.textPrimary,
                             height: 1.4,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  // Botón de marcar como leído
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 54,
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         await storageService.toggleLectura(lectura.fechaClave);
-                        
-                        // Si se marcó como completado, ofrecer publicar reflexión
                         final ahoraCompletado = storageService.isDiaCompletado(lectura.fechaClave);
-                        
+
                         if (mounted) {
                           setModalState(() {});
-                          setState(() {}); // Actualizar el calendario
-                          
+                          setState(() {});
+
                           if (ahoraCompletado) {
-                            // Pequeño delay para dejar que la UI se actualice
-                            Future.delayed(const Duration(milliseconds: 300), () {
+                            Future.delayed(const Duration(milliseconds: 400), () {
                               if (context.mounted) {
-                                Navigator.pop(context); // Cerrar bottom sheet actual
+                                Navigator.pop(context);
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -562,15 +579,15 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                         isCompleted
                             ? Icons.replay_rounded
                             : Icons.check_circle_outline,
-                        size: 22,
+                        size: 24,
                       ),
                       label: Text(
                         isCompleted
                             ? 'Marcar como pendiente'
-                            : 'Marcar como leído ✓',
+                            : 'Marcar como leído',
                         style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -587,11 +604,10 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Botón de leer online
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
+                    height: 48,
+                    child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -604,33 +620,42 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                        ),
-                      ),
-                      child: const Text('📖 LEER EN LA APP', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _openBibleOnline(lectura.pasajes),
-                      icon: const Icon(Icons.open_in_new, size: 18),
+                      icon: const Icon(Icons.book_rounded, size: 20),
                       label: const Text(
-                        'Leer pasajes en línea',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        'Leer en la app',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primaryBlue,
-                        side: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+                        side: BorderSide(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(AppTheme.radiusMedium),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _openBibleOnline(lectura.pasajes),
+                      icon: Icon(
+                        Icons.open_in_new,
+                        size: 16,
+                        color: AppTheme.textSecondary,
+                      ),
+                      label: Text(
+                        'Leer pasajes en línea',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                     ),

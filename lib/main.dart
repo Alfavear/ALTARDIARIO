@@ -3,14 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'core/theme/app_theme.dart'; // Correcto
-import 'core/services/notification_service.dart'; // Correcto
-import 'data/services/storage_service.dart'; // Correcto
+import 'core/theme/app_theme.dart';
+import 'core/services/notification_service.dart';
+import 'data/services/storage_service.dart';
 import 'presentation/providers/app_providers.dart';
-import 'presentation/screens/main_navigation_view.dart';
-import 'presentation/screens/login_screen.dart';
-// Si el archivo no existe, debes ejecutar 'flutterfire configure'
-import 'firebase_options.dart'; 
+import 'presentation/screens/splash_screen.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,19 +19,17 @@ void main() async {
     );
   } catch (e) {
     debugPrint("⚠️ Advertencia: Error al inicializar Firebase: $e");
-    // En web, esto puede fallar por bloqueadores de rastreo o config 400.
-    // Intentamos continuar para que la app cargue al menos la UI local.
   }
 
   final prefs = await SharedPreferences.getInstance();
   final storageService = StorageService(prefs);
-  
+
   try {
     await storageService.loadPlan();
   } catch (e) {
     debugPrint("Error al cargar el plan de lectura: $e");
   }
-  
+
   try {
     await NotificationService.init();
     await NotificationService.requestPermissions();
@@ -58,19 +54,11 @@ class AltarDiarioApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-
     return MaterialApp(
       title: 'altarDiario',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: authState.when(
-        data: (user) => user != null ? const MainNavigationView() : const LoginScreen(),
-        loading: () => const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-        error: (err, stack) => const LoginScreen(),
-      ),
+      home: const SplashScreen(),
       builder: (context, child) {
         return MediaQuery(
           data:

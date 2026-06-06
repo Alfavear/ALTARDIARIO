@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
+import '../widgets/app_logo_widget.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -55,21 +56,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.auto_awesome,
-                    size: 80, color: AppTheme.accentGold),
-                const SizedBox(height: 24),
+                const AppLogoWidget(size: 100),
+                const SizedBox(height: 20),
                 const Text(
                   'altarDiario',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 42,
+                    fontSize: 36,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1,
                   ),
                 ),
                 const Text(
                   'Tu hábito diario con Dios',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(color: Colors.white70, fontSize: 15),
                 ),
                 const SizedBox(height: 60),
                 if (_isLoading)

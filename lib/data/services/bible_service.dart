@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
@@ -132,12 +133,18 @@ class BibleService {
   );
 
   Database? _database;
+  bool _memoryMode = false;
+
+  // Almacenamiento en memoria para web
+  final _memoryVerses = <String, List<Map<String, Object?>>>{};
+  final _memoryHighlights = <BibleHighlight>[];
+  final _memoryNotes = <BibleNote>[];
 
   Future<List<BiblePassage>> getPassageText(
     String query, {
     String version = 'rv1909',
   }) async {
-    final db = await _db;
+    await _initialized;
     final passages =
         query.split(';').map((p) => p.trim()).where((p) => p.isNotEmpty);
     final results = <BiblePassage>[];
@@ -153,7 +160,9 @@ class BibleService {
         continue;
       }
 
-      final rows = await _queryPassage(db, parsed, version);
+      final rows = _memoryMode
+          ? _queryPassageMemory(parsed, version)
+          : await _queryPassage(await _db, parsed, version);
       results.add(BiblePassage(
         reference: passage,
         verses: rows.map(BibleVerse.fromMap).toList(),
@@ -170,10 +179,22 @@ class BibleService {
     List<BiblePassage> passages, {
     String? userId,
   }) async {
-    final db = await _db;
+    await _initialized;
     final anchors = _chapterAnchors(passages);
     if (anchors.isEmpty) return const [];
 
+    if (_memoryMode) {
+      final highlights = <BibleHighlight>[];
+      final anchorKeys = anchors.map((a) => a.key).toSet();
+      for (final h in _memoryHighlights) {
+        if (anchorKeys.contains(h.anchor)) {
+          highlights.add(h);
+        }
+      }
+      return highlights;
+    }
+
+    final db = await _db;
     final highlights = <BibleHighlight>[];
     for (final anchor in anchors) {
       final rows = await db.query(
@@ -190,6 +211,14 @@ class BibleService {
 
   Future<void> upsertSyncedHighlights(List<BibleHighlight> highlights) async {
     if (highlights.isEmpty) return;
+    await _initialized;
+    if (_memoryMode) {
+      for (final highlight in highlights) {
+        _memoryHighlights.removeWhere((h) => h.id == highlight.id);
+        _memoryHighlights.add(highlight);
+      }
+      return;
+    }
     final db = await _db;
     final batch = db.batch();
     for (final highlight in highlights) {
@@ -206,10 +235,22 @@ class BibleService {
     List<BiblePassage> passages, {
     String? userId,
   }) async {
-    final db = await _db;
+    await _initialized;
     final anchors = _chapterAnchors(passages);
     if (anchors.isEmpty) return const [];
 
+    if (_memoryMode) {
+      final notes = <BibleNote>[];
+      final anchorKeys = anchors.map((a) => a.key).toSet();
+      for (final n in _memoryNotes) {
+        if (anchorKeys.contains(n.anchor)) {
+          notes.add(n);
+        }
+      }
+      return notes;
+    }
+
+    final db = await _db;
     final notes = <BibleNote>[];
     for (final anchor in anchors) {
       final rows = await db.query(
@@ -226,6 +267,14 @@ class BibleService {
 
   Future<void> upsertSyncedNotes(List<BibleNote> notes) async {
     if (notes.isEmpty) return;
+    await _initialized;
+    if (_memoryMode) {
+      for (final note in notes) {
+        _memoryNotes.removeWhere((n) => n.id == note.id);
+        _memoryNotes.add(note);
+      }
+      return;
+    }
     final db = await _db;
     final batch = db.batch();
     for (final note in notes) {
@@ -243,6 +292,7 @@ class BibleService {
     required String colorHex,
     String? userId,
   }) async {
+    await _initialized;
     final now = DateTime.now();
     final highlight = BibleHighlight(
       id: _localId('highlight'),
@@ -257,6 +307,11 @@ class BibleService {
       updatedAt: now,
       syncStatus: userId == null ? 'local' : 'pending',
     );
+    if (_memoryMode) {
+      _memoryHighlights.removeWhere((h) => h.anchor == highlight.anchor && h.verseStart == highlight.verseStart);
+      _memoryHighlights.add(highlight);
+      return highlight;
+    }
     final db = await _db;
     await db.delete(
       'bible_highlights',
@@ -280,6 +335,11 @@ class BibleService {
   }
 
   Future<void> deleteHighlight(String highlightId) async {
+    await _initialized;
+    if (_memoryMode) {
+      _memoryHighlights.removeWhere((h) => h.id == highlightId);
+      return;
+    }
     final db = await _db;
     await db.delete(
       'bible_highlights',
@@ -294,6 +354,7 @@ class BibleService {
     String? userId,
     BibleNote? existingNote,
   }) async {
+    await _initialized;
     final now = DateTime.now();
     final note = BibleNote(
       id: existingNote?.id ?? _localId('note'),
@@ -308,6 +369,11 @@ class BibleService {
       updatedAt: now,
       syncStatus: userId == null ? 'local' : 'pending',
     );
+    if (_memoryMode) {
+      _memoryNotes.removeWhere((n) => n.id == note.id);
+      _memoryNotes.add(note);
+      return note;
+    }
     final db = await _db;
     await db.insert(
       'bible_notes',
@@ -318,6 +384,11 @@ class BibleService {
   }
 
   Future<void> deleteNote(String noteId) async {
+    await _initialized;
+    if (_memoryMode) {
+      _memoryNotes.removeWhere((n) => n.id == noteId);
+      return;
+    }
     final db = await _db;
     await db.delete(
       'bible_notes',
@@ -327,6 +398,8 @@ class BibleService {
   }
 
   Future<void> markHighlightSynced(String highlightId) async {
+    await _initialized;
+    if (_memoryMode) return;
     final db = await _db;
     await db.update(
       'bible_highlights',
@@ -337,6 +410,8 @@ class BibleService {
   }
 
   Future<void> markNoteSynced(String noteId) async {
+    await _initialized;
+    if (_memoryMode) return;
     final db = await _db;
     await db.update(
       'bible_notes',
@@ -457,8 +532,18 @@ class BibleService {
     return names[id] ?? 'Libro $id';
   }
 
+  Future<bool> get _initialized async {
+    if (kIsWeb) {
+      if (!_memoryMode) await _initMemoryStore();
+      return _memoryMode;
+    }
+    await _db;
+    return true;
+  }
+
   Future<Database> get _db async {
     if (_database != null) return _database!;
+    if (kIsWeb) throw UnsupportedError('Use in-memory storage on web');
     final dbPath = await getDatabasesPath();
     _database = await openDatabase(
       p.join(dbPath, _databaseName),
@@ -467,6 +552,34 @@ class BibleService {
       onOpen: _seedIfNeeded,
     );
     return _database!;
+  }
+
+  Future<void> _initMemoryStore() async {
+    if (_memoryMode) return;
+    _memoryMode = true;
+
+    final rawJson = await rootBundle.loadString(_seedAsset);
+    final data = jsonDecode(rawJson) as Map<String, dynamic>;
+    final version = data['version'] as String;
+
+    for (final book in data['books'] as List<dynamic>) {
+      final bookMap = book as Map<String, dynamic>;
+      final bookId = bookMap['id'] as int;
+      final bookName = bookMap['name'] as String;
+      for (final chapter in bookMap['chapters'] as List<dynamic>) {
+        final chapterMap = chapter as Map<String, dynamic>;
+        final chapterNumber = chapterMap['number'] as int;
+        for (final verse in chapterMap['verses'] as List<dynamic>) {
+          final verseMap = verse as Map<String, dynamic>;
+          final verseNumber = verseMap['number'] as int;
+          final verseText = verseMap['text'] as String;
+          final key = '$version:$bookId:$chapterNumber:$verseNumber';
+          _memoryVerses[key] = [
+            {'version': version, 'book_id': bookId, 'book_name': bookName, 'chapter': chapterNumber, 'verse': verseNumber, 'text': verseText}
+          ];
+        }
+      }
+    }
   }
 
   Future<void> _createSchema(Database db, int version) async {
@@ -614,6 +727,62 @@ class BibleService {
       ],
       orderBy: 'verse ASC',
     );
+  }
+
+  List<Map<String, Object?>> _queryPassageMemory(
+    ParsedPassage passage,
+    String version,
+  ) {
+    final results = <Map<String, Object?>>[];
+
+    if (passage.verseStart == null) {
+      final start = passage.chapterStart;
+      final end = passage.chapterEnd ?? start;
+      for (var ch = start; ch <= end; ch++) {
+        final prefix = '$version:${passage.bookId}:$ch:';
+        _memoryVerses.forEach((key, verses) {
+          if (key.startsWith(prefix)) {
+            results.addAll(verses);
+          }
+        });
+      }
+    } else if (passage.chapterEnd != null && passage.verseEnd != null) {
+      final chEnd = passage.chapterEnd!;
+      for (var ch = passage.chapterStart; ch <= chEnd; ch++) {
+        final prefix = '$version:${passage.bookId}:$ch:';
+        _memoryVerses.forEach((key, verses) {
+          if (key.startsWith(prefix)) {
+            for (final v in verses) {
+              final vn = v['verse'] as int;
+              if (ch == passage.chapterStart && vn < passage.verseStart!) continue;
+              if (ch == passage.chapterEnd && vn > passage.verseEnd!) continue;
+              results.add(v);
+            }
+          }
+        });
+      }
+    } else {
+      final prefix = '$version:${passage.bookId}:${passage.chapterStart}:';
+      _memoryVerses.forEach((key, verses) {
+        if (key.startsWith(prefix)) {
+          for (final v in verses) {
+            final vn = v['verse'] as int;
+            if (vn >= passage.verseStart! && (passage.verseEnd == null || vn <= passage.verseEnd!)) {
+              results.add(v);
+            }
+          }
+        }
+      });
+    }
+
+    results.sort((a, b) {
+      final chA = a['chapter'] as int;
+      final chB = b['chapter'] as int;
+      if (chA != chB) return chA.compareTo(chB);
+      return (a['verse'] as int).compareTo(b['verse'] as int);
+    });
+
+    return results;
   }
 
   int _mapBookToId(String name) {

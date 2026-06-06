@@ -17,6 +17,7 @@ class AppTheme {
   static const Color todayHighlight = Color(0xFFFFF3E0);
   static const Color streakOrange = Color(0xFFFF6D00);
   static const Color streakOrangeLight = Color(0xFFFFAB40);
+  static const Color missedDayBg = Color(0xFFFFF8F8);
 
   // === Colores de fondo y superficie ===
   static const Color scaffoldBg = Color(0xFFF8F9FE);

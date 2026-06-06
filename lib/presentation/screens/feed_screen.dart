@@ -5,6 +5,7 @@ import '../providers/app_providers.dart'; // Correcto
 import '../../data/models/reflexion.dart';
 import '../../core/theme/app_theme.dart';
 import 'chat_screen.dart';
+import 'chat_list_screen.dart';
 
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
@@ -17,6 +18,18 @@ class FeedScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Altar Comunitario'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Mensajes',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatListScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: reflexionesAsync.when(
         data: (reflexiones) => reflexiones.isEmpty
@@ -76,9 +89,20 @@ class _ReflexionCard extends ConsumerWidget {
                 IconButton(
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.favorite_border, size: 20, color: AppTheme.textSecondary),
+                  icon: Icon(
+                    reflexion.isLikedBy(currentUser?.uid ?? '')
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    size: 20,
+                    color: reflexion.isLikedBy(currentUser?.uid ?? '')
+                        ? AppTheme.streakOrange
+                        : AppTheme.textSecondary,
+                  ),
                   onPressed: () {
-                    ref.read(firestoreServiceProvider).toggleLike(reflexion.id, reflexion.likes);
+                    final uid = currentUser?.uid;
+                    if (uid == null) return;
+                    final isLiked = reflexion.isLikedBy(uid);
+                    ref.read(firestoreServiceProvider).toggleLike(reflexion.id, uid, isLiked);
                   },
                 ),
                 const SizedBox(width: 4),
@@ -97,6 +121,7 @@ class _ReflexionCard extends ConsumerWidget {
                         MaterialPageRoute(
                           builder: (context) => ChatScreen(
                             chatId: chatId,
+                            otherUserId: reflexion.userId,
                             otherUserName: reflexion.userName,
                           ),
                         ),

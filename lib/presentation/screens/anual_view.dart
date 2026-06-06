@@ -31,8 +31,15 @@ class AnualView extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-              child: Text('Progreso por mes',
-                  style: Theme.of(context).textTheme.titleLarge),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month_rounded,
+                      size: 20, color: AppTheme.primaryBlue),
+                  const SizedBox(width: 8),
+                  Text('Progreso por mes',
+                      style: Theme.of(context).textTheme.titleLarge),
+                ],
+              ),
             ),
           ),
           SliverPadding(
@@ -102,17 +109,24 @@ class AnualView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Progreso Anual',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700)),
+                const Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded,
+                        color: Colors.white, size: 18),
+                    SizedBox(width: 6),
+                    Text('Progreso Anual',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 Text('$total de 365 lecturas',
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 14)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -133,10 +147,10 @@ class AnualView extends ConsumerWidget {
 
   Widget _buildStatsRow(int streak, int maxStreak, int total) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          _buildStatCard('🔥', '$streak', 'Racha', AppTheme.streakOrange),
+          _buildStatCard('🔥', '$streak', 'Racha actual', AppTheme.streakOrange),
           const SizedBox(width: 8),
           _buildStatCard(
               '🏆', '$maxStreak', 'Máx. racha', AppTheme.accentGold),
@@ -152,7 +166,7 @@ class AnualView extends ConsumerWidget {
       String emoji, String value, String label, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
@@ -160,16 +174,19 @@ class AnualView extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 4),
+            Text(emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 6),
             Text(value,
                 style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: color)),
+            const SizedBox(height: 2),
             Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AppTheme.textSecondary)),
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondary)),
           ],
         ),
       ),
@@ -190,7 +207,7 @@ class AnualView extends ConsumerWidget {
     final isCurrentMonth = DateTime.now().month == mes;
 
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isCurrentMonth
             ? AppTheme.primaryBlue.withValues(alpha: 0.04)
@@ -210,29 +227,52 @@ class AnualView extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                _monthNames[mes - 1],
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isCurrentMonth
-                      ? AppTheme.primaryBlue
-                      : AppTheme.textPrimary,
-                ),
+              Row(
+                children: [
+                  if (isCurrentMonth)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(right: 4),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryBlue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  Text(
+                    _monthNames[mes - 1],
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isCurrentMonth
+                          ? AppTheme.primaryBlue
+                          : AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${(progresoMes * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
                   color: progresoMes >= 1.0
-                      ? AppTheme.completedGreen
-                      : AppTheme.textSecondary,
+                      ? AppTheme.completedGreen.withValues(alpha: 0.1)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${(progresoMes * 100).toInt()}%',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: progresoMes >= 1.0
+                        ? AppTheme.completedGreen
+                        : AppTheme.textSecondary,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Expanded(
             child: GridView.builder(
               physics: const NeverScrollableScrollPhysics(),
@@ -258,7 +298,7 @@ class AnualView extends ConsumerWidget {
                         : isToday
                             ? AppTheme.accentGold
                             : AppTheme.pendingGray,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 );
               },

@@ -1,11 +1,11 @@
 {
-    "name": "altar_diario",
-    "short_name": "altar_diario",
+    "name": "altarDiario",
+    "short_name": "altarDiario",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0D47A1",
+    "theme_color": "#1565C0",
+    "description": "Tu hábito diario con Dios - Plan de lectura bíblica anual.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

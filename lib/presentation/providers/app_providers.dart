@@ -60,3 +60,9 @@ final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
   final currentUser = ref.watch(authStateProvider).value;
   return currentUser?.uid == authorId;
 });
+
+/// Lista de chats del usuario.
+final chatListProvider =
+    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).getUserChats(userId);
+});

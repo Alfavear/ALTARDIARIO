@@ -185,6 +185,8 @@ class BibleHighlight {
         verse.verse >= verseStart &&
         verse.verse <= verseEnd;
   }
+
+  String get anchor => '$version:$bookId:$chapter';
 }
 
 class BibleNote {
@@ -283,6 +285,7 @@ class BibleNote {
   }
 
   String get reference => '$bookName $chapter:$verse';
+  String get anchor => '$version:$bookId:$chapter';
 }
 
 DateTime _readDate(Object? value) {

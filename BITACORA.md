@@ -1,3 +1,21 @@
+## 2026-06-06 (Fase 5: Pulido y Features Faltantes)
+
+- **✅ Encoding verificado**: `plan_lectura.json` está correctamente codificado en UTF-8 (falso positivo del análisis anterior — la terminal de PowerShell mostraba mal los caracteres pero los bytes `0xc3 0xa9` confirman UTF-8 válido).
+- **✅ AnualView conectado**: Se agrega `GestureDetector` en el banner de progreso del `CalendarioView` que navega a `AnualView`. El texto cambió de "Lecturas" a "Ver más" con un chevron `>` para indicar que es interactivo.
+- **✅ Sistema de Likes completo (like/unlike)**: 
+  - Se agrega campo `likedBy: List<String>` al modelo `Reflexion` con método `isLikedBy(userId)`.
+  - `FirestoreService.toggleLike` ahora usa `FieldValue.arrayUnion`/`arrayRemove` y `FieldValue.increment(1)`/`increment(-1)`.
+  - `FeedScreen` muestra corazón lleno (`favorite`) en naranja cuando el usuario ya dio like, o corazón vacío (`favorite_border`) en gris.
+- **✅ Lista de Chats (Inbox)**: 
+  - Se crea `ChatListScreen` con lista de conversaciones, última hora, y navegación al `ChatScreen`.
+  - `FirestoreService.sendMessage` ahora guarda `participantIds` (array) y `participantNames` (map uid→nombre) en el documento del chat.
+  - Se agrega `getUserChats()` que consulta con `arrayContains` sobre `participantIds`.
+  - Se agrega `chatListProvider` en `app_providers.dart`.
+  - Se agrega botón de chat en el AppBar del `FeedScreen` para acceder a la bandeja de entrada.
+  - `ChatScreen` ahora requiere `otherUserId` además de `otherUserName`.
+- **⏳ Firebase iOS/macOS**: Pendiente — requiere registrar las apps en Firebase Console (https://console.firebase.google.com) para obtener los `appId` y ejecutar `flutterfire configure`.
+- **❓ Próximos pasos**: Escribir tests, extraer widgets compartidos, configurar CI/CD, agregar reglas de seguridad a Firestore.
+
 ## 2026-05-27 (Fase 4: Perfil y Sincronización)
 
 - **Desarrollo de PerfilScreen**: Se implementa la vista de perfil con estadísticas reales (rachas, lecturas) y el historial de reflexiones del usuario.

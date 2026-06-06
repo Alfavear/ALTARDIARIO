@@ -51,8 +51,18 @@ class FirestoreService {
     await _reflexiones.add(reflexion.toMap());
   }
 
-  Future<void> toggleLike(String reflexionId, int currentLikes) async {
-    await _reflexiones.doc(reflexionId).update({'likes': currentLikes + 1});
+  Future<void> toggleLike(String reflexionId, String userId, bool isLiked) async {
+    if (isLiked) {
+      await _reflexiones.doc(reflexionId).update({
+        'likes': FieldValue.increment(-1),
+        'likedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      await _reflexiones.doc(reflexionId).update({
+        'likes': FieldValue.increment(1),
+        'likedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
   }
 
   // ── Usuarios ─────────────────────────────────────────────────────────────
@@ -208,13 +218,33 @@ class FirestoreService {
             .toList());
   }
 
-  Future<void> sendMessage(String chatId, String senderId, String text) async {
+  Future<void> sendMessage(
+    String chatId,
+    String senderId,
+    String text, {
+    List<String>? participantIds,
+    Map<String, String>? participantNames,
+  }) async {
     await _chats.doc(chatId).collection('messages').add({
       'senderId': senderId,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
     });
-    await _chats.doc(chatId).set(
-        {'lastUpdate': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    await _chats.doc(chatId).set({
+      'lastUpdate': FieldValue.serverTimestamp(),
+      'lastMessage': text,
+      'lastSenderId': senderId,
+      if (participantIds != null) 'participantIds': participantIds,
+      if (participantNames != null) 'participantNames': participantNames,
+    }, SetOptions(merge: true));
+  }
+
+  /// Obtiene los chats donde el usuario participa.
+  Stream<List<Map<String, dynamic>>> getUserChats(String userId) {
+    return _chats
+        .where('participantIds', arrayContains: userId)
+        .orderBy('lastUpdate', descending: true)
+        .snapshots()
+        .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
   }
 }

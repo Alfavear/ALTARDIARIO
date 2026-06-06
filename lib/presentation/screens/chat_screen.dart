@@ -6,11 +6,13 @@ import '../../core/theme/app_theme.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
+  final String otherUserId;
   final String otherUserName;
 
   const ChatScreen({
     super.key,
     required this.chatId,
+    required this.otherUserId,
     required this.otherUserName,
   });
 
@@ -27,10 +29,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final currentUser = ref.read(authStateProvider).value;
     if (currentUser == null) return;
 
+    final currentProfile = ref.read(userProfileProvider).value;
+    final currentName = currentProfile?.nombre ?? 'Anónimo';
+
     ref.read(firestoreServiceProvider).sendMessage(
       widget.chatId,
       currentUser.uid,
       _messageController.text.trim(),
+      participantIds: [currentUser.uid, widget.otherUserId],
+      participantNames: {
+        currentUser.uid: currentName,
+        widget.otherUserId: widget.otherUserName,
+      },
     );
     
     _messageController.clear();
