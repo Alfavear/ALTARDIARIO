@@ -591,18 +591,25 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _SmSegment(
-                      label: bookName.length > 10
-                          ? '${bookName.substring(0, 8)}…'
+                    _CarouselChip(
+                      icon: Icons.menu_book,
+                      label: bookName.length > 12
+                          ? '${bookName.substring(0, 10)}…'
                           : bookName,
                       onTap: _showBookSelector,
                     ),
-                    _SmSegment(
+                    _Chevron(),
+                    _CarouselChip(
+                      icon: Icons.collections_bookmark,
                       label: '$_selectedChapter',
+                      badge: 'Cap.',
                       onTap: _showChapterPicker,
                     ),
-                    _SmSegment(
+                    _Chevron(),
+                    _CarouselChip(
+                      icon: Icons.format_list_numbered,
                       label: verseRange,
+                      badge: 'Vers.',
                       onTap: _showVersePicker,
                     ),
                   ],
@@ -1163,11 +1170,30 @@ class _SmNavBtn extends StatelessWidget {
   }
 }
 
-class _SmSegment extends StatelessWidget {
+class _Chevron extends StatelessWidget {
+  const _Chevron();
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 3),
+      child: Icon(Icons.chevron_right,
+          size: 14, color: AppTheme.textSecondary),
+    );
+  }
+}
+
+class _CarouselChip extends StatelessWidget {
+  final IconData icon;
   final String label;
+  final String? badge;
   final VoidCallback? onTap;
 
-  const _SmSegment({required this.label, this.onTap});
+  const _CarouselChip({
+    required this.icon,
+    required this.label,
+    this.badge,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1175,21 +1201,33 @@ class _SmSegment extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: BoxDecoration(
             color: AppTheme.primaryBlue.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlue,
-              )),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: AppTheme.primaryBlue),
+              const SizedBox(height: 1),
+              if (badge != null)
+                Text(badge!,
+                    style: const TextStyle(
+                        fontSize: 7,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500)),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryBlue,
+                  )),
+            ],
+          ),
         ),
       ),
     );
