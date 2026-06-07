@@ -465,6 +465,9 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   Widget _buildChapterNav() {
+    final bookName = _bibleService.getBookNameFromId(_selectedBookId!);
+    final verseRange = _getVerseRange();
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -473,37 +476,172 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           child: Row(
             children: [
+              _NavButton(
+                icon: Icons.chevron_left,
+                label: 'Ant.',
+                onTap: _selectedChapter > 1
+                    ? () => _goToChapter(_selectedChapter - 1)
+                    : null,
+              ),
+              const SizedBox(width: 4),
               Expanded(
-                child: TextButton.icon(
-                  onPressed:
-                      _selectedChapter > 1 ? () => _goToChapter(_selectedChapter - 1) : null,
-                  icon: const Icon(Icons.chevron_left),
-                  label: const Text('Anterior'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _CarouselSegment(
+                      icon: Icons.menu_book,
+                      label: bookName.length > 12
+                          ? '${bookName.substring(0, 10)}…'
+                          : bookName,
+                      onTap: _showBookSelector,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(Icons.chevron_right,
+                          size: 14, color: AppTheme.textSecondary),
+                    ),
+                    _CarouselSegment(
+                      icon: Icons.collections_bookmark,
+                      label: '$_selectedChapter',
+                      badge: 'Cap.',
+                      onTap: _showChapterPicker,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(Icons.chevron_right,
+                          size: 14, color: AppTheme.textSecondary),
+                    ),
+                    _CarouselSegment(
+                      icon: Icons.format_list_numbered,
+                      label: verseRange,
+                      badge: 'Vers.',
+                      onTap: _showVersePicker,
+                    ),
+                  ],
                 ),
               ),
-              TextButton(
-                onPressed: _showChapterPicker,
-                child: Text('Cap. $_selectedChapter',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryBlue)),
-              ),
-              Expanded(
-                child: TextButton.icon(
-                  onPressed:
-                      _selectedChapter < _maxChapters ? () => _goToChapter(_selectedChapter + 1) : null,
-                  icon: const Icon(Icons.chevron_right),
-                  label: const Text('Siguiente'),
-                ),
+              const SizedBox(width: 4),
+              _NavButton(
+                icon: Icons.chevron_right,
+                label: 'Sig.',
+                onTap: _selectedChapter < _maxChapters
+                    ? () => _goToChapter(_selectedChapter + 1)
+                    : null,
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _getVerseRange() {
+    if (_passages.isEmpty) return '1-?';
+    final all = <int>[];
+    for (final p in _passages) {
+      for (final v in p.verses) {
+        all.add(v.verse);
+      }
+    }
+    if (all.isEmpty) return '?';
+    all.sort();
+    final min = all.first;
+    final max = all.last;
+    return min == max ? '$min' : '$min-$max';
+  }
+
+  void _showVersePicker() {
+    if (_passages.isEmpty) return;
+    final all = <int>[];
+    final verseMap = <int, String>{};
+    for (final p in _passages) {
+      for (final v in p.verses) {
+        all.add(v.verse);
+        verseMap[v.verse] = v.text;
+      }
+    }
+    all.sort();
+
+    final maxVer = all.isNotEmpty ? all.last : 50;
+    final rows = List.generate(maxVer, (i) => i + 1);
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Seleccionar versículo',
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            SizedBox(
+              height: 300,
+              child: GridView.builder(
+                padding: const EdgeInsets.all(12),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 8,
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  childAspectRatio: 1.2,
+                ),
+                itemCount: rows.length,
+                itemBuilder: (_, i) {
+                  final v = rows[i];
+                  final exists = verseMap.containsKey(v);
+                  final inRange = v >= (all.isNotEmpty ? all.first : 0) &&
+                      v <= (all.isNotEmpty ? all.last : 0);
+                  return Material(
+                    color: exists
+                        ? inRange
+                            ? AppTheme.primaryBlue.withValues(alpha: 0.15)
+                            : AppTheme.pendingGray
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: exists
+                          ? () {
+                              Navigator.pop(ctx);
+                              _scrollToVerse(v);
+                            }
+                          : null,
+                      child: Center(
+                        child: Text(
+                          '$v',
+                          style: TextStyle(
+                            fontWeight: (exists && inRange)
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: exists
+                                ? inRange
+                                    ? AppTheme.primaryBlue
+                                    : AppTheme.textSecondary
+                                : AppTheme.pendingGrayDark,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _scrollToVerse(int verse) {
+    final list = context.findRenderObject();
+    if (list == null) return;
   }
 
   void _showChapterPicker() {
@@ -915,5 +1053,97 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   Color _colorFromHex(String hex) {
     final normalized = hex.replaceFirst('#', '');
     return Color(int.parse('FF$normalized', radix: 16));
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _NavButton({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: onTap != null ? AppTheme.primaryBlue.withValues(alpha: 0.08) : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: onTap != null ? AppTheme.primaryBlue : AppTheme.pendingGrayDark),
+              const SizedBox(height: 2),
+              Text(label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: onTap != null ? AppTheme.primaryBlue : AppTheme.pendingGrayDark,
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CarouselSegment extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? badge;
+  final VoidCallback? onTap;
+
+  const _CarouselSegment({
+    required this.icon,
+    required this.label,
+    this.badge,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppTheme.primaryBlue),
+              const SizedBox(height: 2),
+              if (badge != null)
+                Text(badge!,
+                    style: const TextStyle(
+                        fontSize: 8,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500)),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryBlue,
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
