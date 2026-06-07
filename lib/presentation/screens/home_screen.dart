@@ -6,7 +6,6 @@ import '../../data/models/lectura_dia.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
-import '../widgets/app_logo_widget.dart';
 import 'bible_reader_screen.dart';
 import 'notes_screen.dart';
 
@@ -23,6 +22,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final BibleService _bibleService = BibleService();
   String? _verseText;
   String? _verseRef;
+  String? _passageTitle;
   bool _loadingVerse = true;
 
   @override
@@ -44,6 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           fechaClave: DateFormat('yyyy-MM-dd').format(now),
         ),
       );
+      _passageTitle = hoy.pasajes.split(';').first.trim();
       final pasaje = hoy.pasajes.split(';').first.trim();
       final passages = await _bibleService.getPassageText(pasaje);
       if (passages.isNotEmpty && passages.first.verses.isNotEmpty) {
@@ -74,264 +75,563 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final total = storage.getTotalCompletadas();
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 48, 20, 24),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      backgroundColor: AppTheme.scaffoldBg,
+      appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Row(
+          children: [
+            const Icon(Icons.local_fire_department,
+                color: Colors.white, size: 22),
+            const SizedBox(width: 8),
+            Text('AltarDiario',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20)),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined,
+                color: Colors.white),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        children: [
+          const Text('Mi Lectura Hoy',
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary)),
+          const SizedBox(height: 4),
+          const Text('Continúa tu camino de fe y reflexión.',
+              style: TextStyle(
+                  fontSize: 14, color: AppTheme.textSecondary)),
+          const SizedBox(height: 16),
+          _buildReadingCard(isCompleted),
+          const SizedBox(height: 16),
+          _buildStreakCard(racha),
+          const SizedBox(height: 24),
+          _buildUpcomingReadings(),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.menu_book_rounded,
+                  label: 'Devocional',
+                  color: AppTheme.primaryBlue,
+                  onTap: () => widget.onNavigateTo?.call(1),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const AppLogoWidget(size: 36),
-                      const SizedBox(width: 12),
-                      Text('AltarDiario',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Text('Verso del día',
-                      style: TextStyle(color: Colors.white70, fontSize: 13)),
-                  const SizedBox(height: 8),
-                  if (_loadingVerse)
-                    const SizedBox(
-                      height: 60,
-                      child: Center(
-                          child: CircularProgressIndicator(color: Colors.white)),
-                    )
-                  else if (_verseText != null) ...[
-                    Text('"$_verseText"',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontStyle: FontStyle.italic,
-                            height: 1.4)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(_verseRef ?? '',
-                            style:
-                                const TextStyle(color: Colors.white70, fontSize: 13)),
-                        const Spacer(),
-                        Text(
-                          isCompleted ? '✓ Completado' : 'Pendiente',
-                          style: TextStyle(
-                            color: isCompleted ? Colors.greenAccent : Colors.white54,
-                            fontSize: 12,
-                          ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.book_rounded,
+                  label: 'Biblia',
+                  color: AppTheme.primaryBlue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BibleReaderScreen(
+                          pasajes: 'Salmo 1',
+                          fechaClave:
+                              DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                          readOnly: true,
                         ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.forum_rounded,
+                  label: 'Comunidad',
+                  color: AppTheme.streakOrange,
+                  onTap: () => widget.onNavigateTo?.call(2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Oración',
+                  color: AppTheme.completedGreen,
+                  onTap: () => widget.onNavigateTo?.call(3),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _StatTile(
+                  icon: Icons.local_fire_department,
+                  label: 'Racha',
+                  value: '$racha días',
+                  color: AppTheme.streakOrange,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatTile(
+                  icon: Icons.check_circle,
+                  label: 'Completadas',
+                  value: '$total/365',
+                  color: isCompleted
+                      ? AppTheme.completedGreen
+                      : AppTheme.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotesScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppTheme.softShadow,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.note_alt_rounded,
+                        color: AppTheme.primaryBlue),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Mis Notas',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600)),
+                        Text('Apuntes, prédicas e ideas',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textSecondary)),
                       ],
                     ),
-                  ] else
-                    const Text('Hoy: abre tu devocional',
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  const Icon(Icons.chevron_right,
+                      color: AppTheme.textSecondary),
                 ],
               ),
             ),
           ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 24),
+          const Text('Últimas reflexiones',
+              style:
+                  TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          reflexionesAsync.when(
+            data: (reflexiones) {
+              final preview = reflexiones.take(3).toList();
+              if (preview.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                );
+              }
+              return Column(
                 children: [
+                  for (final r in preview)
+                    _ReflexionPreviewCard(reflexion: r),
+                  if (reflexiones.length > 3)
+                    TextButton(
+                      onPressed: () =>
+                          widget.onNavigateTo?.call(2),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Ver todas en Altar'),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_forward, size: 16),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+            loading: () => const SizedBox(
+              height: 80,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadingCard(bool isCompleted) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.softShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 120,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Icon(Icons.auto_stories,
+                      size: 48,
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.15)),
+                ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text('Plan Anual',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _passageTitle ?? 'Salmo 1',
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryBlue),
+                ),
+                const SizedBox(height: 8),
+                if (_loadingVerse)
+                  const SizedBox(
+                    height: 40,
+                    child: Center(
+                        child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2))),
+                  )
+                else if (_verseText != null)
                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ActionCard(
-                              icon: Icons.menu_book_rounded,
-                              label: 'Devocional',
-                              color: AppTheme.primaryBlue,
-                              onTap: () => widget.onNavigateTo?.call(1),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _ActionCard(
-                              icon: Icons.book_rounded,
-                              label: 'Biblia',
-                              color: AppTheme.primaryBlue,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => BibleReaderScreen(
-                                      pasajes: 'Salmo 1',
-                                      fechaClave: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                                      readOnly: true,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                      Text(
+                        '$_verseText',
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            height: 1.4,
+                            color: AppTheme.textSecondary),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ActionCard(
-                              icon: Icons.forum_rounded,
-                              label: 'Comunidad',
-                              color: AppTheme.streakOrange,
-                              onTap: () => widget.onNavigateTo?.call(2),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _ActionCard(
-                              icon: Icons.auto_awesome_rounded,
-                              label: 'Oración',
-                              color: AppTheme.completedGreen,
-                              onTap: () => widget.onNavigateTo?.call(3),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatTile(
-                          icon: Icons.local_fire_department,
-                          label: 'Racha',
-                          value: '$racha días',
-                          color: AppTheme.streakOrange,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatTile(
-                          icon: Icons.check_circle,
-                          label: 'Completadas',
-                          value: '$total/365',
-                          color:
-                              isCompleted ? AppTheme.completedGreen : AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotesScreen(),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.note_alt_rounded,
+                      if (_verseRef != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            _verseRef!,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: AppTheme.primaryBlue),
                           ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Mis Notas',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600)),
-                                Text('Apuntes, prédicas e ideas',
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.textSecondary)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right,
-                              color: AppTheme.textSecondary),
-                        ],
-                      ),
-                    ),
+                        ),
+                    ],
                   ),
-
-                  const SizedBox(height: 24),
-
-                  const Text('Últimas reflexiones',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  reflexionesAsync.when(
-                    data: (reflexiones) {
-                      final preview = reflexiones.take(3).toList();
-                      if (preview.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Text(
-                            'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.textSecondary),
-                          ),
-                        );
-                      }
-                      return Column(
-                        children: [
-                          for (final r in preview)
-                            _ReflexionPreviewCard(reflexion: r),
-                          if (reflexiones.length > 3)
-                            TextButton(
-                              onPressed: () => widget.onNavigateTo?.call(2),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('Ver todas en Altar'),
-                                  SizedBox(width: 4),
-                                  Icon(Icons.arrow_forward, size: 16),
-                                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text('Progreso del capítulo',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary)),
+                    const Spacer(),
+                    Text(
+                      isCompleted ? '100%' : '0%',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isCompleted
+                              ? AppTheme.completedGreen
+                              : AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: isCompleted ? 1.0 : 0.0,
+                    backgroundColor:
+                        AppTheme.primaryBlue.withValues(alpha: 0.1),
+                    color: AppTheme.completedGreen,
+                    minHeight: 6,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BibleReaderScreen(
+                                pasajes: _passageTitle ?? 'Salmo 1',
+                                fechaClave: DateFormat('yyyy-MM-dd')
+                                    .format(DateTime.now()),
+                                readOnly: true,
                               ),
                             ),
-                        ],
-                      );
-                    },
-                    loading: () => const SizedBox(
-                      height: 80,
-                      child: Center(child: CircularProgressIndicator()),
+                          );
+                        },
+                        icon: const Icon(Icons.menu_book,
+                            size: 18, color: Colors.white),
+                        label: const Text('Leer pasaje',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
                     ),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: isCompleted
+                              ? AppTheme.completedGreenLight
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isCompleted
+                                ? AppTheme.completedGreen
+                                : AppTheme.pendingGrayDark,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          color: isCompleted
+                              ? AppTheme.completedGreen
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStreakCard(int racha) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.streakOrange, AppTheme.streakOrangeLight],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.local_fire_department,
+                color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$racha Días de Racha',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800),
+              ),
+              const Text('¡Vas excelente! No rompas el hábito.',
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 13)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUpcomingReadings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Próximas Lecturas',
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700)),
+            TextButton(
+              onPressed: () {},
+              child: const Text('Ver plan',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primaryBlue)),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 100,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _MiniReadingCard(
+                day: 'Mañana',
+                passage: 'Génesis 1:11-20',
+              ),
+              _MiniReadingCard(
+                day: 'Miércoles',
+                passage: 'Génesis 1:21-31',
+              ),
+              _MiniReadingCard(
+                day: 'Jueves',
+                passage: 'Génesis 2:1-7',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniReadingCard extends StatelessWidget {
+  final String day;
+  final String passage;
+  const _MiniReadingCard({required this.day, required this.passage});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppTheme.pendingGrayDark.withValues(alpha: 0.3)),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(day.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                  letterSpacing: 1)),
+          const SizedBox(height: 6),
+          Text(passage,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryBlue)),
+          const Spacer(),
+          Row(
+            children: [
+              const Icon(Icons.schedule,
+                  size: 14, color: AppTheme.pendingGrayDark),
+              const SizedBox(width: 4),
+              const Text('Planificado',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.pendingGrayDark)),
+            ],
           ),
         ],
       ),
@@ -354,31 +654,29 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              boxShadow: AppTheme.softShadow,
-            ),
-            child: Column(
-              children: [
-                Icon(icon, color: color, size: 28),
-                const SizedBox(height: 8),
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: color)),
-              ],
-            ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            boxShadow: AppTheme.softShadow,
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 8),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: color)),
+            ],
           ),
         ),
       ),

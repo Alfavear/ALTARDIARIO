@@ -27,7 +27,7 @@ void main() {
 
     await tester.pumpWidget(createTestApp(storageService));
 
-    expect(find.text('altarDiario'), findsOneWidget);
+    expect(find.text('AltarDiario'), findsOneWidget);
     expect(find.text('Tu hábito diario con Dios'), findsOneWidget);
 
     await pumpAndClearTimer(tester);

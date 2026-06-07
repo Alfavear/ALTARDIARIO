@@ -1,3 +1,16 @@
+## 2026-06-06 (continuación — Google Stitch MCP + variables de entorno)
+
+### ✅ Google Stitch MCP integrado
+- **opencode.json** creado con MCP remoto de Google Stitch para convertir diseños a código Flutter.
+- **API key movida a variable de entorno** (`GOOGLE_STITCH_API_KEY`) por seguridad.
+- **`.env` creado** con la key (ignorado por git).
+- **`.env.example` actualizado** con la referencia a la nueva variable.
+- **`$PROFILE` de PowerShell** configurado con la variable persistente para que esté disponible al iniciar opencode.
+
+### ⏳ Próximo paso
+- **Probar Google Stitch**: pasar un diseño (captura, Figma) y ver qué genera.
+- **Seguir con mejoras de UI** usando los diseños convertidos.
+
 ## 2026-06-06 (continuación — Modo Demo, RV1960 en web, Firebase resiliente)
 
 ### ✅ Modo Demo offline

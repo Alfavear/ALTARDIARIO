@@ -551,10 +551,36 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
             children: [
               _buildOfflineBanner(),
               const SizedBox(height: 16),
+              if (_passages.isNotEmpty && _passages.first.verses.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    children: [
+                      Text(
+                        _passages.first.reference,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryBlue,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 48,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color:
+                              AppTheme.primaryBlueLight.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ..._passages.map(_buildPassage),
               if (!widget.readOnly && !isCompleted) _buildCompleteButton(),
             ],
@@ -562,6 +588,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         ),
         if (widget.readOnly && _selectedBookId != null)
           _buildChapterNav(),
+        if (widget.readOnly && _passages.isNotEmpty)
+          _buildReaderToolbar(),
       ],
     );
   }
@@ -624,6 +652,61 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildReaderToolbar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        boxShadow: AppTheme.mediumShadow,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _ToolbarBtn(
+            icon: Icons.text_decrease,
+            onTap: () {
+              if (_fontSize > 14) setState(() => _fontSize -= 2);
+            },
+          ),
+          _ToolbarBtn(
+            icon: Icons.text_increase,
+            onTap: () {
+              if (_fontSize < 28) setState(() => _fontSize += 2);
+            },
+          ),
+          Container(
+              width: 1, height: 24, color: AppTheme.pendingGrayDark),
+          GestureDetector(
+            onTap: () {},
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.translate,
+                    size: 18, color: AppTheme.primaryBlue),
+                const SizedBox(width: 4),
+                Text(
+                  _selectedVersion.id,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                const Icon(Icons.expand_more,
+                    size: 16, color: AppTheme.textSecondary),
+              ],
+            ),
+          ),
+          Container(
+              width: 1, height: 24, color: AppTheme.pendingGrayDark),
+          _ToolbarBtn(
+            icon: Icons.share,
+            onTap: () {},
+          ),
+        ],
       ),
     );
   }
@@ -825,7 +908,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
 
   Widget _buildPassage(BiblePassage passage) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.only(bottom: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -837,6 +920,17 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
               fontSize: 15,
             ),
           ),
+          if (passage.verses.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Container(
+              width: 48,
+              height: 3,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlueLight.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           if (!passage.hasText)
             _buildUnavailablePassage(passage)
@@ -873,8 +967,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
       borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
       onTap: () => _showVerseActions(verse, highlight, note),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: highlightColor,
           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -882,32 +976,35 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 32,
-              child: Text(
-                '${verse.verse}',
-                style: TextStyle(
-                  color: AppTheme.primaryBlue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: _fontSize * 0.72,
-                ),
+            Text(
+              '${verse.verse} ',
+              style: TextStyle(
+                color: AppTheme.primaryBlue,
+                fontWeight: FontWeight.bold,
+                fontSize: _fontSize * 0.65,
               ),
             ),
             Expanded(
-              child: Text(
-                verse.text,
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: _fontSize,
-                  height: 1.55,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: verse.text,
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: _fontSize,
+                        height: 1.65,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             if (note != null)
-              const Padding(
-                padding: EdgeInsets.only(left: 8, top: 3),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
                 child: Icon(Icons.sticky_note_2_outlined,
-                    size: 18, color: AppTheme.accentGold),
+                    size: 16, color: AppTheme.accentGold),
               ),
           ],
         ),
@@ -1143,6 +1240,27 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   Color _colorFromHex(String hex) {
     final normalized = hex.replaceFirst('#', '');
     return Color(int.parse('FF$normalized', radix: 16));
+  }
+}
+
+class _ToolbarBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _ToolbarBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 20, color: AppTheme.primaryBlue),
+        ),
+      ),
+    );
   }
 }
 
