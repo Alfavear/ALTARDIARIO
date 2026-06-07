@@ -5,8 +5,9 @@ import '../providers/app_providers.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
   final Note? existingNote;
+  final String? prefilledTitle;
 
-  const NoteEditorScreen({super.key, this.existingNote});
+  const NoteEditorScreen({super.key, this.existingNote, this.prefilledTitle});
 
   @override
   ConsumerState<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -20,7 +21,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _titleCtrl = TextEditingController(text: widget.existingNote?.title ?? '');
+    _titleCtrl = TextEditingController(
+        text: widget.existingNote?.title ?? widget.prefilledTitle ?? '');
     _contentCtrl =
         TextEditingController(text: widget.existingNote?.content ?? '');
   }

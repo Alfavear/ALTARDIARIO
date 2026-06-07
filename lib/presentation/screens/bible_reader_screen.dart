@@ -6,6 +6,8 @@ import '../../data/models/bible_models.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
 import 'bible_versions_screen.dart';
+import 'note_editor_screen.dart';
+import 'notes_screen.dart';
 
 class BibleReaderScreen extends ConsumerStatefulWidget {
   final String pasajes;
@@ -120,6 +122,100 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     setState(() => _selectedChapter = chapter);
     final name = _bibleService.getBookNameFromId(_selectedBookId!);
     await _navigateToPassage('$name $chapter');
+  }
+
+  void _showPassageNotes() {
+    final passageNotes = _notes.where((n) =>
+        _passages.any((p) => p.verses.any((v) =>
+            v.bookId == n.bookId && v.chapter == n.chapter))).toList();
+    final refStr = _bibleService.getBookNameFromId(_selectedBookId ?? 19);
+    final noteCount = passageNotes.length;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.note_alt_rounded, color: AppTheme.primaryBlue),
+                const SizedBox(width: 8),
+                Text('Notas — $refStr $_selectedChapter',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (noteCount == 0)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text('Sin notas en este pasaje.',
+                      style: TextStyle(color: AppTheme.textSecondary)),
+                ),
+              )
+            else
+              SizedBox(
+                height: noteCount > 3 ? 240 : noteCount * 80.0,
+                child: ListView(
+                  children: passageNotes.map((n) => _buildNoteTile(n)).toList(),
+                ),
+              ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NoteEditorScreen(
+                        existingNote: null,
+                        prefilledTitle: '$refStr $_selectedChapter',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Nueva nota'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotesScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                label: const Text('Todas las notas'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteTile(BibleNote n) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.sticky_note_2_outlined, size: 20, color: AppTheme.accentGold),
+      title: Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 14)),
+      subtitle: Text(n.reference,
+          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+    );
   }
 
   void _showBookSelector() {
@@ -315,6 +411,12 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         actions: [
           if (widget.readOnly)
             IconButton(
+              tooltip: 'Notas',
+              icon: const Icon(Icons.note_alt_outlined),
+              onPressed: _showPassageNotes,
+            ),
+          if (widget.readOnly)
+            IconButton(
               tooltip: 'Seleccionar libro',
               icon: const Icon(Icons.library_books_outlined),
               onPressed: _showBookSelector,
@@ -476,57 +578,38 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           child: Row(
             children: [
-              _NavButton(
+              _SmNavBtn(
                 icon: Icons.chevron_left,
-                label: 'Ant.',
                 onTap: _selectedChapter > 1
                     ? () => _goToChapter(_selectedChapter - 1)
                     : null,
               ),
-              const SizedBox(width: 4),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _CarouselSegment(
-                      icon: Icons.menu_book,
-                      label: bookName.length > 12
-                          ? '${bookName.substring(0, 10)}…'
+                    _SmSegment(
+                      label: bookName.length > 10
+                          ? '${bookName.substring(0, 8)}…'
                           : bookName,
                       onTap: _showBookSelector,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(Icons.chevron_right,
-                          size: 14, color: AppTheme.textSecondary),
-                    ),
-                    _CarouselSegment(
-                      icon: Icons.collections_bookmark,
+                    _SmSegment(
                       label: '$_selectedChapter',
-                      badge: 'Cap.',
                       onTap: _showChapterPicker,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(Icons.chevron_right,
-                          size: 14, color: AppTheme.textSecondary),
-                    ),
-                    _CarouselSegment(
-                      icon: Icons.format_list_numbered,
+                    _SmSegment(
                       label: verseRange,
-                      badge: 'Vers.',
                       onTap: _showVersePicker,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
-              _NavButton(
+              _SmNavBtn(
                 icon: Icons.chevron_right,
-                label: 'Sig.',
                 onTap: _selectedChapter < _maxChapters
                     ? () => _goToChapter(_selectedChapter + 1)
                     : null,
@@ -1056,58 +1139,35 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 }
 
-class _NavButton extends StatelessWidget {
+class _SmNavBtn extends StatelessWidget {
   final IconData icon;
-  final String label;
   final VoidCallback? onTap;
 
-  const _NavButton({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
+  const _SmNavBtn({required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: onTap != null ? AppTheme.primaryBlue.withValues(alpha: 0.08) : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(6),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: onTap != null ? AppTheme.primaryBlue : AppTheme.pendingGrayDark),
-              const SizedBox(height: 2),
-              Text(label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: onTap != null ? AppTheme.primaryBlue : AppTheme.pendingGrayDark,
-                  )),
-            ],
-          ),
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 20,
+              color: onTap != null ? AppTheme.primaryBlue : AppTheme.pendingGrayDark),
         ),
       ),
     );
   }
 }
 
-class _CarouselSegment extends StatelessWidget {
-  final IconData icon;
+class _SmSegment extends StatelessWidget {
   final String label;
-  final String? badge;
   final VoidCallback? onTap;
 
-  const _CarouselSegment({
-    required this.icon,
-    required this.label,
-    this.badge,
-    this.onTap,
-  });
+  const _SmSegment({required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1115,33 +1175,21 @@ class _CarouselSegment extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           decoration: BoxDecoration(
             color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: AppTheme.primaryBlue),
-              const SizedBox(height: 2),
-              if (badge != null)
-                Text(badge!,
-                    style: const TextStyle(
-                        fontSize: 8,
-                        color: AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500)),
-              Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlue,
-                  )),
-            ],
-          ),
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryBlue,
+              )),
         ),
       ),
     );
