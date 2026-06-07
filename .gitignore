@@ -9,6 +9,9 @@ build/
 *.g.dart
 *.freezed.dart
 
+# Variables de entorno (claves de API, secretos, etc.)
+.env
+
 # Firebase (¡NO subir estas claves!)
 google-services.json
 GoogleService-Info.plist
