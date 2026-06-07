@@ -46,6 +46,14 @@
 - No force pushes, no deletions
 - Se usó `gh api` para configurarlo vía API.
 
+### ✅ HomeScreen — Nueva pantalla de inicio
+- **Inicio** como primer tab (índice 0) del BottomNavigationBar con 5 tabs.
+- **Verso del día**: muestra el primer versículo de la lectura diaria, cambia cada día.
+- **Acciones rápidas**: Devocional → Calendario (tab 1), Comunidad → Altar (tab 2), Oración (tab 3).
+- **Estadísticas**: racha actual y lecturas completadas.
+- **Feed preview**: últimas 3 reflexiones de la comunidad.
+- PR: https://github.com/Alfavear/ALTARDIARIO/pull/2
+
 ### ⏳ Pendiente: Reglas en Firebase Console
 Ir a **Firebase Console → Firestore → Rules** y pegar el contenido de `firestore.rules` (o ejecutar `firebase deploy --only firestore:rules` si tienen Firebase CLI instalado).
 
