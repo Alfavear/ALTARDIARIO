@@ -26,6 +26,14 @@ class BibleDownloadService {
   static const String _databaseName = 'altar_diario_bible.db';
   static const int _batchSize = 1000;
 
+  // Mapa de ID de versión → slug de API (bolls.life es sensible a mayúsculas)
+  static const Map<String, String> _apiSlugs = {
+    'rv1960': 'RV1960',
+    'rv1909': 'RV1909',
+  };
+
+  String _apiSlug(String versionId) => _apiSlugs[versionId] ?? versionId;
+
   Database? _database;
 
   Future<Database> get _db async {
@@ -103,9 +111,10 @@ class BibleDownloadService {
     }
   }
 
-  Future<Map<int, String>> _fetchBookNames(String slug) async {
+  Future<Map<int, String>> _fetchBookNames(String versionId) async {
+    final apiSlug = _apiSlug(versionId);
     final response = await http.get(
-      Uri.parse('$_baseUrl/get-books/$slug/'),
+      Uri.parse('$_baseUrl/get-books/$apiSlug/'),
     );
     if (response.statusCode != 200) return {};
 
@@ -117,18 +126,19 @@ class BibleDownloadService {
   }
 
   Future<void> downloadVersion(
-    String slug, {
+    String versionId, {
     void Function(int current, int total)? onProgress,
   }) async {
     if (kIsWeb) throw UnsupportedError('Downloads not supported on web');
 
-    final bookNames = await _fetchBookNames(slug);
+    final apiSlug = _apiSlug(versionId);
+    final bookNames = await _fetchBookNames(versionId);
     if (bookNames.isEmpty) {
       throw Exception('No se pudieron obtener los libros de esta versión');
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/static/translations/$slug.json'),
+      Uri.parse('$_baseUrl/static/translations/$apiSlug.json'),
     );
     if (response.statusCode != 200) {
       throw Exception(
@@ -152,7 +162,7 @@ class BibleDownloadService {
       batch.insert(
         'bible_verses',
         {
-          'version': slug,
+          'version': versionId,
           'book_id': bookId,
           'book_name': bookName,
           'chapter': verse['chapter'] as int,

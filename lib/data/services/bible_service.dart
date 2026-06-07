@@ -80,7 +80,7 @@ class BibleService {
       );
       if (count != null && count > 0) return;
       await BibleDownloadService().downloadVersion(
-        'rv1960',
+        _apiSlugRV1960,
         onProgress: onProgress,
       );
     } catch (_) {
@@ -89,6 +89,7 @@ class BibleService {
   }
 
   static const String _bollsBase = 'https://bolls.life';
+  static const String _apiSlugRV1960 = 'RV1960';
 
   Future<void> _loadWebRV1960({
     void Function(int current, int total)? onProgress,
@@ -99,7 +100,7 @@ class BibleService {
     if (bookNames.isEmpty) return;
 
     final response = await http.get(
-      Uri.parse('$_bollsBase/static/translations/rv1960.json'),
+      Uri.parse('$_bollsBase/static/translations/$_apiSlugRV1960.json'),
     );
     if (response.statusCode != 200) return;
 
@@ -133,7 +134,7 @@ class BibleService {
 
   Future<Map<int, String>> _fetchWebBookNames() async {
     final response = await http.get(
-      Uri.parse('$_bollsBase/get-books/rv1960/'),
+      Uri.parse('$_bollsBase/get-books/$_apiSlugRV1960/'),
     );
     if (response.statusCode != 200) return {};
     final books = jsonDecode(response.body) as List<dynamic>;

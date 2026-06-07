@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart'; // Correcto
-import 'calendario_view.dart'; // Correcto
-import 'feed_screen.dart'; // Correcto
-import 'oracion_screen.dart'; // Correcto
-import 'perfil_screen.dart'; // Correcto
+import '../../core/theme/app_theme.dart';
+import 'calendario_view.dart';
+import 'feed_screen.dart';
+import 'home_screen.dart';
+import 'oracion_screen.dart';
+import 'perfil_screen.dart';
 
 class MainNavigationView extends StatefulWidget {
   const MainNavigationView({super.key});
@@ -15,17 +16,26 @@ class MainNavigationView extends StatefulWidget {
 class _MainNavigationViewState extends State<MainNavigationView> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const CalendarioView(),
-    const FeedScreen(),
-    const OracionScreen(),
-    const PerfilScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(onNavigateTo: _goToTab),
+      const CalendarioView(),
+      const FeedScreen(),
+      const OracionScreen(),
+      const PerfilScreen(),
+    ];
+  }
+
+  void _goToTab(int index) {
+    setState(() => _selectedIndex = index);
+  }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   @override
@@ -52,9 +62,15 @@ class _MainNavigationViewState extends State<MainNavigationView> {
           backgroundColor: Colors.white,
           selectedItemColor: AppTheme.primaryBlue,
           unselectedItemColor: AppTheme.textSecondary.withValues(alpha: 0.6),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          selectedLabelStyle:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Inicio',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_month_outlined),
               activeIcon: Icon(Icons.calendar_month),
