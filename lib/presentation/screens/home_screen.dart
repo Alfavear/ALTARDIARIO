@@ -7,6 +7,8 @@ import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
 import '../widgets/app_logo_widget.dart';
+import 'bible_reader_screen.dart';
+import 'notes_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int tabIndex)? onNavigateTo;
@@ -145,27 +147,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Column(
                     children: [
-                      _ActionCard(
-                        icon: Icons.menu_book_rounded,
-                        label: 'Devocional',
-                        color: AppTheme.primaryBlue,
-                        onTap: () => widget.onNavigateTo?.call(1),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.menu_book_rounded,
+                              label: 'Devocional',
+                              color: AppTheme.primaryBlue,
+                              onTap: () => widget.onNavigateTo?.call(1),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.book_rounded,
+                              label: 'Biblia',
+                              color: AppTheme.primaryBlue,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BibleReaderScreen(
+                                      pasajes: 'Salmo 1',
+                                      fechaClave: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      _ActionCard(
-                        icon: Icons.forum_rounded,
-                        label: 'Comunidad',
-                        color: AppTheme.streakOrange,
-                        onTap: () => widget.onNavigateTo?.call(2),
-                      ),
-                      const SizedBox(width: 12),
-                      _ActionCard(
-                        icon: Icons.auto_awesome_rounded,
-                        label: 'Oración',
-                        color: AppTheme.completedGreen,
-                        onTap: () => widget.onNavigateTo?.call(3),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.forum_rounded,
+                              label: 'Comunidad',
+                              color: AppTheme.streakOrange,
+                              onTap: () => widget.onNavigateTo?.call(2),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.auto_awesome_rounded,
+                              label: 'Oración',
+                              color: AppTheme.completedGreen,
+                              onTap: () => widget.onNavigateTo?.call(3),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -193,6 +228,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotesScreen(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.note_alt_rounded,
+                                color: AppTheme.primaryBlue),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Mis Notas',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600)),
+                                Text('Apuntes, prédicas e ideas',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.textSecondary)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right,
+                              color: AppTheme.textSecondary),
+                        ],
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 24),

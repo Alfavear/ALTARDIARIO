@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import '../models/lectura_dia.dart';
+import '../models/note.dart';
 
 /// Servicio para la persistencia local de datos de la aplicación.
 class StorageService {
@@ -170,5 +171,32 @@ class StorageService {
   Future<void> setNotificationTime(int hour, int minute) async {
     await _prefs.setInt(_keyNotifHour, hour);
     await _prefs.setInt(_keyNotifMin, minute);
+  }
+
+  // ── Notas ─────────────────────────────────────────────────────
+
+  static const String _keyNotes = 'user_notes';
+
+  Future<List<Note>> getNotes() async {
+    final json = _prefs.getString(_keyNotes);
+    if (json == null || json.isEmpty) return [];
+    return Note.decodeList(json);
+  }
+
+  Future<void> saveNote(Note note) async {
+    final notes = await getNotes();
+    final index = notes.indexWhere((n) => n.id == note.id);
+    if (index >= 0) {
+      notes[index] = note;
+    } else {
+      notes.add(note);
+    }
+    await _prefs.setString(_keyNotes, Note.encodeList(notes));
+  }
+
+  Future<void> deleteNote(String id) async {
+    final notes = await getNotes();
+    notes.removeWhere((n) => n.id == id);
+    await _prefs.setString(_keyNotes, Note.encodeList(notes));
   }
 }
