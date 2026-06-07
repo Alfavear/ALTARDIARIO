@@ -45,10 +45,10 @@ service cloud.firestore {
     // ── Chats ────────────────────────────────────────────────────
     match /chats/{chatId} {
       allow read: if request.auth != null
-        && resource.data.participantIds has request.auth.uid;
+        && request.auth.uid in resource.data.participantIds;
       allow create: if request.auth != null;
       allow write: if request.auth != null
-        && resource.data.participantIds has request.auth.uid;
+        && request.auth.uid in resource.data.participantIds;
 
       // Mensajes del chat
       match /messages/{messageId} {
