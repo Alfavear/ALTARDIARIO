@@ -40,21 +40,11 @@
 - **.gitignore**: agregado `.env` para futuras claves de API.
 - **.env.example**: template para variables de entorno.
 
-### ⏳ Pendiente: Branch Protection (GitHub)
-Ejecutar en terminal (requiere `gh` CLI instalado y autenticado):
-```powershell
-gh api repos/Alfavear/ALTARDIARIO/branches/main/protection --method PUT --input - <<'EOF'
-{
-  "required_status_checks": null,
-  "enforce_admins": true,
-  "required_pull_request_reviews": {
-    "required_approving_review_count": 1
-  },
-  "restrictions": null
-}
-EOF
-```
-O manualmente: GitHub → repo → Settings → Branches → Branch protection rule → `main` → tick "Require pull request reviews" y "Include administrators".
+### ✅ Branch Protection (GitHub) — activada
+- Require pull request reviews (1 approval)
+- Include administrators
+- No force pushes, no deletions
+- Se usó `gh api` para configurarlo vía API.
 
 ### ⏳ Pendiente: Reglas en Firebase Console
 Ir a **Firebase Console → Firestore → Rules** y pegar el contenido de `firestore.rules` (o ejecutar `firebase deploy --only firestore:rules` si tienen Firebase CLI instalado).
