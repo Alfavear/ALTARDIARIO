@@ -34,10 +34,34 @@
 - `fix: Bible reader colgaba en web por initState sin llamar a _loadText`
 - `feat: RV1960 en web via bolls.life API con progreso`
 
+### ✅ Seguridad agregada
+- **firestore.rules**: reglas con validación (`request.auth != null`, dueño del documento, participantes del chat).
+- **firestore.indexes.json**: índice compuesto para `reflexiones (userId ASC, fecha DESC)`.
+- **.gitignore**: agregado `.env` para futuras claves de API.
+- **.env.example**: template para variables de entorno.
+
+### ⏳ Pendiente: Branch Protection (GitHub)
+Ejecutar en terminal (requiere `gh` CLI instalado y autenticado):
+```powershell
+gh api repos/Alfavear/ALTARDIARIO/branches/main/protection --method PUT --input - <<'EOF'
+{
+  "required_status_checks": null,
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1
+  },
+  "restrictions": null
+}
+EOF
+```
+O manualmente: GitHub → repo → Settings → Branches → Branch protection rule → `main` → tick "Require pull request reviews" y "Include administrators".
+
+### ⏳ Pendiente: Reglas en Firebase Console
+Ir a **Firebase Console → Firestore → Rules** y pegar el contenido de `firestore.rules` (o ejecutar `firebase deploy --only firestore:rules` si tienen Firebase CLI instalado).
+
 ### ⏳ Pendiente / Próximos pasos
 - **Google Sign-In en web**: requiere configurar OAuth Client ID en Firebase Console → Authentication → Google → Web SDK configuration (URI de redirección). Probar en Chrome.
 - **Sign in with Apple**: requiere app iOS/macOS registrada; ejecutar `flutterfire configure --project=altardiario-ec25f --platforms=ios,macos`.
-- **Firestore Security Rules**: actualmente en modo test (expira en 30 días). Migrar a reglas con autenticación (`request.auth != null`) y validación de datos.
 - **BibleVersionsScreen**: gestor de versiones descargadas (buscar, descargar, eliminar). Funciona en nativo con sqflite; en web mostrar mensaje "no disponible".
 - **Rachas entre amigos**: requiere Firestore estable; pospuesto.
 - **Windows `flutter run`**: requiere Modo Desarrollador (symlinks).
