@@ -900,6 +900,26 @@ class BibleService {
     return results;
   }
 
+  int getBookIdFromName(String name) => _mapBookToId(name);
+
+  int getMaxChapter(int bookId) {
+    if (_memoryMode) {
+      int max = 0;
+      for (final key in _memoryVerses.keys) {
+        final parts = key.split(':');
+        if (parts.length >= 3 && parts[0] == 'rv1960') {
+          final bId = int.tryParse(parts[1]) ?? 0;
+          if (bId == bookId) {
+            final ch = int.tryParse(parts[2]) ?? 0;
+            if (ch > max) max = ch;
+          }
+        }
+      }
+      return max;
+    }
+    return 150;
+  }
+
   int _mapBookToId(String name) {
     final normalized =
         name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');

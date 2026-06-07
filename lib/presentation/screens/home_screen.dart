@@ -172,6 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     builder: (_) => BibleReaderScreen(
                                       pasajes: 'Salmo 1',
                                       fechaClave: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                      readOnly: true,
                                     ),
                                   ),
                                 );
