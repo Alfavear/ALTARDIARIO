@@ -1,20 +1,47 @@
-## 2026-06-06 (Fase 5: Pulido y Features Faltantes)
+## 2026-06-06 (continuación — Modo Demo, RV1960 en web, Firebase resiliente)
 
-- **✅ Encoding verificado**: `plan_lectura.json` está correctamente codificado en UTF-8 (falso positivo del análisis anterior — la terminal de PowerShell mostraba mal los caracteres pero los bytes `0xc3 0xa9` confirman UTF-8 válido).
-- **✅ AnualView conectado**: Se agrega `GestureDetector` en el banner de progreso del `CalendarioView` que navega a `AnualView`. El texto cambió de "Lecturas" a "Ver más" con un chevron `>` para indicar que es interactivo.
-- **✅ Sistema de Likes completo (like/unlike)**: 
-  - Se agrega campo `likedBy: List<String>` al modelo `Reflexion` con método `isLikedBy(userId)`.
-  - `FirestoreService.toggleLike` ahora usa `FieldValue.arrayUnion`/`arrayRemove` y `FieldValue.increment(1)`/`increment(-1)`.
-  - `FeedScreen` muestra corazón lleno (`favorite`) en naranja cuando el usuario ya dio like, o corazón vacío (`favorite_border`) en gris.
-- **✅ Lista de Chats (Inbox)**: 
-  - Se crea `ChatListScreen` con lista de conversaciones, última hora, y navegación al `ChatScreen`.
-  - `FirestoreService.sendMessage` ahora guarda `participantIds` (array) y `participantNames` (map uid→nombre) en el documento del chat.
-  - Se agrega `getUserChats()` que consulta con `arrayContains` sobre `participantIds`.
-  - Se agrega `chatListProvider` en `app_providers.dart`.
-  - Se agrega botón de chat en el AppBar del `FeedScreen` para acceder a la bandeja de entrada.
-  - `ChatScreen` ahora requiere `otherUserId` además de `otherUserName`.
-- **⏳ Firebase iOS/macOS**: Pendiente — requiere registrar las apps en Firebase Console (https://console.firebase.google.com) para obtener los `appId` y ejecutar `flutterfire configure`.
-- **❓ Próximos pasos**: Escribir tests, extraer widgets compartidos, configurar CI/CD, agregar reglas de seguridad a Firestore.
+### ✅ Modo Demo offline
+- **AuthService tolerante a Firebase caído**: `_initAuth()` con try/catch, `signInLocal()` genera uid persistido en SharedPreferences.
+- **FirestoreService tolerante**: mismo patrón, todos los métodos no-op cuando `!_available`.
+- **localUidProvider y effectiveUserUidProvider**: en `app_providers.dart` para unificar Firebase uid y local uid. Todas las pantallas migradas a `effectiveUserUidProvider`.
+- **SplashScreen**: chequea Firebase auth stream y local uid desde SharedPreferences.
+- **LoginScreen**: botón "MODO DEMO (sin conexión)" genera uid local y navega directamente a `MainNavigationView`.
+
+### ✅ RV1960 como versión por defecto
+- **availableVersions** incluye RV1960 como primera opción tanto en web como en nativo.
+- **ensureDefaultDownloaded()**: en nativo descarga desde bolls.life a SQLite con barra de progreso; en web **descarga desde bolls.life API a memoria estática** (`_memoryVerses` static) con progreso en lotes de 1000.
+- **Cache estático**: `_memoryVerses`, `_memoryHighlights`, `_memoryNotes` y `_memoryMode` se vuelven static para que persistan entre instancias de `BibleService` en web.
+- **Fix**: `_autoDownloadDefault()` ya no retorna temprano en web — ahora descarga RV1960 vía API y luego carga el texto. Se elimina el `kIsWeb` return que causaba pantalla de carga infinita.
+- **BibleReaderScreen**: muestra barra de progreso "Descargando Reina-Valera 1960… X de Y versículos" tanto en web como en nativo.
+
+### ✅ Recordatorio diario configurable
+- **PerfilScreen**: selector de hora con `showTimePicker`, persiste en SharedPreferences (`notification_hour`/`notification_minute`).
+- **NotificationService.scheduleDailyReminder()**: ahora acepta `hour` y `minute` como parámetros.
+- **main.dart**: pasa la hora guardada al programar la notificación.
+
+### ✅ Firebase resiliente y errores
+- **FirestoreService**: todos los métodos (`reflexionesStream`, `getUserReflexiones`, `peticionesStream`, etc.) protegidos con `if (!_available) return ...`. Streams usan `.handleError()` para devolver lista vacía en vez de crashear.
+- **PerfilScreen**: mensaje de error amigable "No se pudieron cargar tus reflexiones. Verifica que Firebase Console tenga los índices necesarios."
+
+### ✅ Firebase Console configurado
+- Authentication: Anónimo habilitado (funcionando en Chrome).
+- Firestore Database: creada en modo test.
+- **Índice compuesto creado** para `reflexiones WHERE userId = X ORDER BY fecha DESC` (necesario para "Mis Reflexiones").
+- Google Sign-In y Apple Sign-In: providers habilitados en Firebase Console.
+
+### ✅ Commits realizados (push a origin/main)
+- `fix: web-safe Bible (RV1909 only) and graceful Firestore error handling`
+- `fix: Bible reader colgaba en web por initState sin llamar a _loadText`
+- `feat: RV1960 en web via bolls.life API con progreso`
+
+### ⏳ Pendiente / Próximos pasos
+- **Google Sign-In en web**: requiere configurar OAuth Client ID en Firebase Console → Authentication → Google → Web SDK configuration (URI de redirección). Probar en Chrome.
+- **Sign in with Apple**: requiere app iOS/macOS registrada; ejecutar `flutterfire configure --project=altardiario-ec25f --platforms=ios,macos`.
+- **Firestore Security Rules**: actualmente en modo test (expira en 30 días). Migrar a reglas con autenticación (`request.auth != null`) y validación de datos.
+- **BibleVersionsScreen**: gestor de versiones descargadas (buscar, descargar, eliminar). Funciona en nativo con sqflite; en web mostrar mensaje "no disponible".
+- **Rachas entre amigos**: requiere Firestore estable; pospuesto.
+- **Windows `flutter run`**: requiere Modo Desarrollador (symlinks).
+- **Tests**: agregar tests para AuthService (local), FirestoreService (resiliencia), NotificationService (hora configurable).
 
 ## 2026-05-27 (Fase 4: Perfil y Sincronización)
 
