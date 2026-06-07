@@ -4,10 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Load keystore properties
+// Load keystore properties (opcional — para release builds)
 val keyPropertiesFile = rootProject.file("key.properties")
+val hasKeyProperties = keyPropertiesFile.exists()
 val keyProperties = java.util.Properties()
-if (keyPropertiesFile.exists()) {
+if (hasKeyProperties) {
     keyProperties.load(java.io.FileInputStream(keyPropertiesFile))
 }
 
@@ -29,19 +30,25 @@ android {
         versionName = flutter.versionName
     }
 
-    signingConfigs {
-        create("release") {
-            keyAlias = keyProperties["keyAlias"] as String
-            keyPassword = keyProperties["keyPassword"] as String
-            storeFile = keyProperties["storeFile"]?.let { file(it) }
-            storePassword = keyProperties["storePassword"] as String
+    if (hasKeyProperties) {
+        signingConfigs {
+            create("release") {
+                keyAlias = keyProperties["keyAlias"] as String
+                keyPassword = keyProperties["keyPassword"] as String
+                storeFile = keyProperties["storeFile"]?.let { file(it) }
+                storePassword = keyProperties["storePassword"] as String
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs["release"]
-            isMinifyEnabled = false
+            if (hasKeyProperties) {
+                signingConfig = signingConfigs["release"]!!
+                isMinifyEnabled = true
+            } else {
+                isMinifyEnabled = false
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
