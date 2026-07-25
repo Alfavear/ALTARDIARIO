@@ -8,6 +8,9 @@ import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
 import 'bible_reader_screen.dart';
 import 'notes_screen.dart';
+import 'public_profile_screen.dart';
+import 'amigos_rachas_screen.dart';
+import 'foro_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int tabIndex)? onNavigateTo;
@@ -68,13 +71,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final storage = ref.watch(storageProvider);
     final reflexionesAsync = ref.watch(reflexionesStreamProvider);
+    final focusMode = ref.watch(focusModeProvider);
     final now = DateTime.now();
     final dateKey = DateFormat('yyyy-MM-dd').format(now);
     final isCompleted = storage.isDiaCompletado(dateKey);
     final racha = storage.calcularRacha();
     final total = storage.getTotalCompletadas();
 
-    return Scaffold(
+    return PopScope(
+      canPop: !focusMode || isCompleted,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _showFocusModeWarning();
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
       appBar: AppBar(
         flexibleSpace: Container(
@@ -101,10 +110,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
+          if (focusMode)
+            const Padding(
+              padding: EdgeInsets.only(right: 4),
+              child: Icon(Icons.lock, color: Colors.white, size: 20),
+            ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
                 color: Colors.white),
-            onPressed: () {},
+            onPressed: () => _handleNavigate(4, isCompleted),
           ),
         ],
       ),
@@ -134,7 +148,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: Icons.menu_book_rounded,
                   label: 'Devocional',
                   color: AppTheme.primaryBlue,
-                  onTap: () => widget.onNavigateTo?.call(1),
+                  onTap: () => _handleNavigate(1, isCompleted),
                 ),
               ),
               const SizedBox(width: 12),
@@ -168,7 +182,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: Icons.forum_rounded,
                   label: 'Comunidad',
                   color: AppTheme.streakOrange,
-                  onTap: () => widget.onNavigateTo?.call(2),
+                  onTap: () => _handleNavigate(2, isCompleted),
                 ),
               ),
               const SizedBox(width: 12),
@@ -177,7 +191,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: Icons.auto_awesome_rounded,
                   label: 'Oración',
                   color: AppTheme.completedGreen,
-                  onTap: () => widget.onNavigateTo?.call(3),
+                  onTap: () => _handleNavigate(3, isCompleted),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.forum,
+                  label: 'Foro Bíblico',
+                  color: AppTheme.primaryBlue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const ForoScreen()),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.emoji_events_rounded,
+                  label: 'Rachas',
+                  color: AppTheme.streakOrange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              const AmigosRachasScreen()),
+                    );
+                  },
                 ),
               ),
             ],
@@ -206,7 +255,143 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const AmigosRachasScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppTheme.softShadow,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.streakOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.emoji_events_rounded,
+                        color: AppTheme.streakOrange),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Rachas entre Amigos',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600)),
+                        Text('Compite y motívate con tu comunidad',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right,
+                      color: AppTheme.textSecondary),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Consumer(builder: (_, ref2, __) {
+            final sugerenciasAsync = ref2.watch(sugerenciasAmistadProvider);
+            return sugerenciasAsync.when(
+              data: (usuarios) {
+                if (usuarios.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Personas que quizás conozcas',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: usuarios.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: 12),
+                        itemBuilder: (_, i) {
+                          final u = usuarios[i];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PublicProfileScreen(
+                                      userId: u.id),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 100,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusMedium),
+                                boxShadow: AppTheme.softShadow,
+                              ),
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: AppTheme.primaryBlue
+                                        .withValues(alpha: 0.12),
+                                    backgroundImage: u.fotoUrl.isNotEmpty
+                                        ? NetworkImage(u.fotoUrl)
+                                        : null,
+                                    child: u.fotoUrl.isEmpty
+                                        ? Text(
+                                            u.nombre.isNotEmpty
+                                                ? u.nombre[0]
+                                                    .toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    AppTheme.primaryBlue))
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(u.nombre,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            );
+          }),
+          const SizedBox(height: 16),
           InkWell(
             onTap: () {
               Navigator.push(
@@ -271,9 +456,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                );
-              }
+      ),
+      );
+  }
               return Column(
                 children: [
                   for (final r in preview)
@@ -281,7 +466,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   if (reflexiones.length > 3)
                     TextButton(
                       onPressed: () =>
-                          widget.onNavigateTo?.call(2),
+                          _handleNavigate(2, isCompleted),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -299,6 +484,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  void _handleNavigate(int tab, bool completed) {
+    final focusMode = ref.read(focusModeProvider);
+    if (focusMode && !completed) {
+      _showFocusModeWarning();
+      return;
+    }
+    widget.onNavigateTo?.call(tab);
+  }
+
+  void _showFocusModeWarning() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('🔒 Modo Enfoque'),
+        content: const Text(
+          'Aún no has completado tu lectura de hoy.\n\n'
+          'Termina tu devocional o desactiva el Modo Enfoque para navegar.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Seguir leyendo'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(focusModeProvider.notifier).toggle();
+            },
+            child: const Text('Desactivar'),
           ),
         ],
       ),
@@ -555,7 +776,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w700)),
             TextButton(
-              onPressed: () {},
+              onPressed: () => widget.onNavigateTo?.call(1),
               child: const Text('Ver plan',
                   style: TextStyle(
                       fontSize: 13,
@@ -772,9 +993,22 @@ class _ReflexionPreviewCard extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 11, color: AppTheme.textSecondary)),
                 const SizedBox(width: 16),
-                Text(reflexion.userName,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppTheme.textSecondary)),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PublicProfileScreen(
+                            userId: reflexion.userId),
+                      ),
+                    );
+                  },
+                  child: Text(reflexion.userName,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                          decoration: TextDecoration.underline)),
+                ),
               ],
             ),
           ],

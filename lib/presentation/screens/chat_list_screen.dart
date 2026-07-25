@@ -41,11 +41,19 @@ class ChatListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_square, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Nueva conversación — próximamente')),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Opciones — próximamente')),
+              );
+            },
           ),
         ],
       ),
@@ -70,7 +78,11 @@ class ChatListScreen extends ConsumerWidget {
                           fontSize: 14,
                           color: AppTheme.textSecondary)),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Función de limpiar — próximamente')),
+                      );
+                    },
                     child: const Text('Limpiar',
                         style: TextStyle(
                             fontSize: 13, color: AppTheme.primaryBlue)),
@@ -91,7 +103,11 @@ class ChatListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         backgroundColor: AppTheme.primaryBlue,
-        onPressed: () {},
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Nuevo chat — próximamente')),
+          );
+        },
         child: const Icon(Icons.add_comment, color: Colors.white),
       ),
     );

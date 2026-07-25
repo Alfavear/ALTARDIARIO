@@ -17,6 +17,10 @@ class NotesScreen extends ConsumerWidget {
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -33,12 +37,20 @@ class NotesScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: AppTheme.textSecondary),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Buscar notas — próximamente')),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
                 color: AppTheme.textSecondary),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notificaciones — próximamente')),
+              );
+            },
           ),
         ],
       ),

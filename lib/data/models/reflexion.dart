@@ -7,6 +7,9 @@ class Reflexion {
   final DateTime fecha;
   final int likes;
   final List<String> likedBy;
+  final int commentCount;
+  final Map<String, String> reactions; // userId -> emoji
+  final List<String> tags;
 
   Reflexion({
     required this.id,
@@ -17,6 +20,9 @@ class Reflexion {
     required this.fecha,
     this.likes = 0,
     this.likedBy = const [],
+    this.commentCount = 0,
+    this.reactions = const {},
+    this.tags = const [],
   });
 
   factory Reflexion.fromMap(Map<String, dynamic> map) => Reflexion(
@@ -25,9 +31,20 @@ class Reflexion {
         userName: map['userName'] ?? 'Anónimo',
         texto: map['texto'] ?? '',
         pasajeDia: map['pasajeDia'] ?? '',
-        fecha: map['fecha'] != null ? DateTime.parse(map['fecha']) : DateTime.now(),
+        fecha: map['fecha'] != null
+            ? DateTime.parse(map['fecha'])
+            : DateTime.now(),
         likes: map['likes'] ?? 0,
-        likedBy: map['likedBy'] != null ? List<String>.from(map['likedBy']) : [],
+        likedBy: map['likedBy'] != null
+            ? List<String>.from(map['likedBy'])
+            : [],
+        commentCount: map['commentCount'] ?? 0,
+        reactions: map['reactions'] != null
+            ? Map<String, String>.from(map['reactions'])
+            : {},
+        tags: map['tags'] != null
+            ? List<String>.from(map['tags'])
+            : [],
       );
 
   Map<String, dynamic> toMap() => {
@@ -38,9 +55,13 @@ class Reflexion {
         'fecha': fecha.toIso8601String(),
         'likes': likes,
         'likedBy': likedBy,
+        'commentCount': commentCount,
+        'reactions': reactions,
+        'tags': tags,
       };
 
   bool isLikedBy(String userId) => likedBy.contains(userId);
+  String? getReaction(String userId) => reactions[userId];
 
   Reflexion copyWith({
     String? id,
@@ -51,6 +72,9 @@ class Reflexion {
     DateTime? fecha,
     int? likes,
     List<String>? likedBy,
+    int? commentCount,
+    Map<String, String>? reactions,
+    List<String>? tags,
   }) {
     return Reflexion(
       id: id ?? this.id,
@@ -61,6 +85,9 @@ class Reflexion {
       fecha: fecha ?? this.fecha,
       likes: likes ?? this.likes,
       likedBy: likedBy ?? this.likedBy,
+      commentCount: commentCount ?? this.commentCount,
+      reactions: reactions ?? this.reactions,
+      tags: tags ?? this.tags,
     );
   }
 }

@@ -37,7 +37,8 @@ class BibleService {
     ];
   }
 
-  static const String _seedAsset = 'assets/bible/es_rv1909_seed.json';
+  static const String _seedAsset = 'assets/bible/es_rv1960_complete.json';
+  static const String _seedAssetFallback = 'assets/bible/es_rv1909_seed.json';
   static const String _databaseName = 'altar_diario_bible.db';
   static const int _databaseVersion = 1;
 
@@ -70,6 +71,9 @@ class BibleService {
       await _loadWebRV1960(onProgress: onProgress);
       return;
     }
+    // En nativo, la Biblia completa ya viene embebida en el asset.
+    // El seeding ocurre automáticamente en _seedIfNeeded() al abrir la DB.
+    // Solo verificamos que esté poblada.
     try {
       final db = await _db;
       final count = Sqflite.firstIntValue(
@@ -78,13 +82,12 @@ class BibleService {
           ['rv1960'],
         ),
       );
-      if (count != null && count > 0) return;
-      await BibleDownloadService().downloadVersion(
-        _apiSlugRV1960,
-        onProgress: onProgress,
-      );
+      if (count != null && count > 0) {
+        onProgress?.call(1, 1);
+        return;
+      }
     } catch (_) {
-      // RV1960 no disponible — RV1909 seed queda como fallback
+      // Si la DB no se pudo abrir, el seed se hará en el próximo intento
     }
   }
 
@@ -753,7 +756,12 @@ class BibleService {
     );
     if ((count ?? 0) > 0) return;
 
-    final rawJson = await rootBundle.loadString(_seedAsset);
+    String rawJson;
+    try {
+      rawJson = await rootBundle.loadString(_seedAsset);
+    } catch (_) {
+      rawJson = await rootBundle.loadString(_seedAssetFallback);
+    }
     final data = jsonDecode(rawJson) as Map<String, dynamic>;
     final version = data['version'] as String;
     final batch = db.batch();

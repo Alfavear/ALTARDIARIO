@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/reflexion.dart';
+import '../models/comment.dart';
+import '../models/debate.dart';
+import '../models/debate_reply.dart';
 import '../models/peticion_oracion.dart';
 import '../models/usuario.dart';
 import '../models/message.dart';
 import '../models/bible_models.dart';
+import '../models/note.dart';
 
 class FirestoreService {
   final FirebaseFirestore? _firestore;
@@ -34,6 +38,12 @@ class FirestoreService {
 
   CollectionReference<Map<String, dynamic>> _bibleHighlights(String userId) =>
       _usuarios.doc(userId).collection('bible_highlights');
+
+  CollectionReference<Map<String, dynamic>> get _debates =>
+      _firestore!.collection('debates');
+
+  CollectionReference<Map<String, dynamic>> _debateReplies(String debateId) =>
+      _debates.doc(debateId).collection('respuestas');
 
   CollectionReference<Map<String, dynamic>> _bibleNotes(String userId) =>
       _usuarios.doc(userId).collection('bible_notes');
@@ -79,12 +89,242 @@ class FirestoreService {
     }
   }
 
+  Stream<List<Reflexion>> getUserReflexionesWithUid(String userId) {
+    if (!_available) return Stream.value([]);
+    return _reflexiones
+        .where('userId', isEqualTo: userId)
+        .orderBy('fecha', descending: true)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+            .toList()).handleError((_) => <Reflexion>[]);
+  }
+
+  Future<List<Reflexion>> getUserReflexionesOnce(String userId) async {
+    if (!_available) return [];
+    final snapshot = await _reflexiones
+        .where('userId', isEqualTo: userId)
+        .orderBy('fecha', descending: true)
+        .limit(50)
+        .get();
+    return snapshot.docs
+        .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+        .toList();
+  }
+
+  // ── Comentarios ──────────────────────────────────────────────────────────
+
+  Stream<List<Comment>> comentariosStream(String reflexionId) {
+    if (!_available) return Stream.value([]);
+    return _reflexiones
+        .doc(reflexionId)
+        .collection('comentarios')
+        .orderBy('fecha', descending: false)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => Comment.fromMap({'id': d.id, ...d.data()}))
+            .toList()).handleError((_) => <Comment>[]);
+  }
+
+  Future<void> publicarComentario(Comment comment) async {
+    if (!_available) return;
+    await _reflexiones
+        .doc(comment.reflexionId)
+        .collection('comentarios')
+        .add(comment.toMap());
+    await _reflexiones.doc(comment.reflexionId).update({
+      'commentCount': FieldValue.increment(1),
+    });
+  }
+
+  Future<void> toggleCommentLike(
+      String reflexionId, String commentId, String userId, bool isLiked) async {
+    if (!_available) return;
+    if (isLiked) {
+      await _reflexiones
+          .doc(reflexionId)
+          .collection('comentarios')
+          .doc(commentId)
+          .update({
+        'likes': FieldValue.increment(-1),
+        'likedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      await _reflexiones
+          .doc(reflexionId)
+          .collection('comentarios')
+          .doc(commentId)
+          .update({
+        'likes': FieldValue.increment(1),
+        'likedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  // ── Debates Bíblicos ─────────────────────────────────────────────────────
+
+  Stream<List<Debate>> debatesStream({String? libroId}) {
+    if (!_available) return Stream.value([]);
+    var query = _debates.orderBy('fecha', descending: true) as Query;
+    if (libroId != null && libroId.isNotEmpty) {
+      query = query.where('libroId', isEqualTo: libroId);
+    }
+    return query.snapshots().map(
+        (s) => s.docs
+            .map((d) => Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
+            .toList()).handleError((_) => <Debate>[]);
+  }
+
+  Future<void> crearDebate(Debate debate) async {
+    if (!_available) return;
+    await _debates.add(debate.toMap());
+  }
+
+  Future<void> toggleDebateVote(
+      String debateId, String userId, bool hasVoted) async {
+    if (!_available) return;
+    if (hasVoted) {
+      await _debates.doc(debateId).update({
+        'upvotes': FieldValue.increment(-1),
+        'votedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      await _debates.doc(debateId).update({
+        'upvotes': FieldValue.increment(1),
+        'votedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  // ── Respuestas de Debates ────────────────────────────────────────────────
+
+  Stream<List<DebateReply>> debateRepliesStream(String debateId) {
+    if (!_available) return Stream.value([]);
+    return _debateReplies(debateId)
+        .orderBy('fecha', descending: false)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => DebateReply.fromMap({'id': d.id, ...d.data()}))
+            .toList()).handleError((_) => <DebateReply>[]);
+  }
+
+  Future<void> crearRespuesta(DebateReply reply) async {
+    if (!_available) return;
+    await _debateReplies(reply.debateId).add(reply.toMap());
+    await _debates.doc(reply.debateId).update({
+      'replyCount': FieldValue.increment(1),
+    });
+  }
+
+  Future<void> toggleReplyVote(String debateId, String replyId,
+      String userId, bool hasVoted) async {
+    if (!_available) return;
+    if (hasVoted) {
+      await _debateReplies(debateId).doc(replyId).update({
+        'upvotes': FieldValue.increment(-1),
+        'votedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      await _debateReplies(debateId).doc(replyId).update({
+        'upvotes': FieldValue.increment(1),
+        'votedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  // ── Reacciones ───────────────────────────────────────────────────────────
+
+  Future<void> toggleReaction(String reflexionId, String userId,
+      String? emoji, String? currentEmoji) async {
+    if (!_available) return;
+    if (currentEmoji == emoji) {
+      await _reflexiones.doc(reflexionId).update({
+        'reactions.$userId': FieldValue.delete(),
+      });
+    } else {
+      await _reflexiones.doc(reflexionId).update({
+        'reactions.$userId': emoji,
+      });
+    }
+  }
+
   // ── Usuarios ─────────────────────────────────────────────────────────────
 
   Stream<Usuario?> getUsuario(String uid) {
     if (!_available) return Stream.value(null);
     return _usuarios.doc(uid).snapshots().map(
         (d) => d.exists ? Usuario.fromMap({'id': d.id, ...d.data()!}) : null);
+  }
+
+  Future<Usuario?> getUsuarioOnce(String uid) async {
+    if (!_available) return null;
+    final doc = await _usuarios.doc(uid).get();
+    if (!doc.exists) return null;
+    return Usuario.fromMap({'id': doc.id, ...doc.data()!});
+  }
+
+  Stream<List<Usuario>> getUsuariosStream(List<String> uids) {
+    if (!_available) return Stream.value([]);
+    if (uids.isEmpty) return Stream.value([]);
+    return _usuarios
+        .where(FieldPath.documentId, whereIn: uids)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+            .toList());
+  }
+
+  Future<List<Usuario>> getSiguiendoUsuarios(String uid) async {
+    if (!_available) return [];
+    final usuario = await getUsuarioOnce(uid);
+    if (usuario == null || usuario.siguiendo.isEmpty) return [];
+    final snapshot = await _usuarios
+        .where(FieldPath.documentId, whereIn: usuario.siguiendo)
+        .get();
+    return snapshot.docs
+        .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+        .toList();
+  }
+
+  Future<List<Usuario>> getAllUsuarios() async {
+    if (!_available) return [];
+    final snapshot = await _usuarios.limit(100).get();
+    return snapshot.docs
+        .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+        .toList();
+  }
+
+  Future<List<Usuario>> getSeguidoresUsuarios(String uid) async {
+    if (!_available) return [];
+    final usuario = await getUsuarioOnce(uid);
+    if (usuario == null || usuario.seguidores.isEmpty) return [];
+    final snapshot = await _usuarios
+        .where(FieldPath.documentId, whereIn: usuario.seguidores)
+        .get();
+    return snapshot.docs
+        .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+        .toList();
+  }
+
+  /// Obtiene datos de racha (progresoLectura, maxStreak) para una lista de usuarios.
+  /// Usado para las rachas entre amigos y el leaderboard.
+  Future<Map<String, Map<String, dynamic>>> getStreaksData(
+      List<String> uids) async {
+    if (!_available || uids.isEmpty) return {};
+    final result = <String, Map<String, dynamic>>{};
+    final snapshot = await _usuarios
+        .where(FieldPath.documentId, whereIn: uids)
+        .get();
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      result[doc.id] = {
+        'nombre': data['nombre'] ?? 'Anónimo',
+        'fotoUrl': data['fotoUrl'] ?? '',
+        'progresoLectura': List<String>.from(data['progresoLectura'] ?? []),
+        'maxStreak': data['maxStreak'] ?? 0,
+      };
+    }
+    return result;
   }
 
   Future<void> crearOActualizarUsuario(Usuario usuario) async {
@@ -115,6 +355,11 @@ class FirestoreService {
         'seguidores': FieldValue.arrayUnion([currentUserId])
       });
     }
+  }
+
+  Future<void> updateUserConfig(String uid, Map<String, dynamic> config) async {
+    if (!_available) return;
+    await _usuarios.doc(uid).set(config, SetOptions(merge: true));
   }
 
   Future<void> syncProgress(
@@ -229,6 +474,41 @@ class FirestoreService {
     await _peticiones
         .doc(peticionId)
         .update({'oracionesCount': FieldValue.increment(1)});
+  }
+
+  // ── Feedback ─────────────────────────────────────────────────────────────
+
+  Future<void> sendFeedback({
+    required String userId,
+    required String userName,
+    required String mensaje,
+    int calificacion = 0,
+  }) async {
+    if (!_available) return;
+    await _firestore!.collection('feedback').add({
+      'userId': userId,
+      'userName': userName,
+      'mensaje': mensaje,
+      'calificacion': calificacion,
+      'fecha': FieldValue.serverTimestamp(),
+      'appVersion': '1.0.0',
+    });
+  }
+
+  // ── Notas generales ──────────────────────────────────────────────────────
+
+  Future<void> syncNote(String userId, Note note) async {
+    if (!_available) return;
+    await _usuarios
+        .doc(userId)
+        .collection('notes')
+        .doc(note.id)
+        .set(note.toMap(), SetOptions(merge: true));
+  }
+
+  Future<void> deleteNoteFromFirestore(String userId, String noteId) async {
+    if (!_available) return;
+    await _usuarios.doc(userId).collection('notes').doc(noteId).delete();
   }
 
   // ── Chat ─────────────────────────────────────────────────────────────────

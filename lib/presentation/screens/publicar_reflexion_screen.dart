@@ -77,6 +77,10 @@ class _PublicarReflexionScreenState
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -259,17 +263,12 @@ class _PublicarReflexionScreenState
             color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _ToolBtn(icon: Icons.format_bold, onTap: () {}),
-          _ToolBtn(icon: Icons.format_italic, onTap: () {}),
-          _ToolBtn(icon: Icons.format_list_bulleted, onTap: () {}),
-          Container(
-              width: 1, height: 24, color: AppTheme.pendingGrayDark),
           GestureDetector(
             onTap: () => setState(() => _showPassage = !_showPassage),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _showPassage
                     ? AppTheme.primaryBlue.withValues(alpha: 0.1)
@@ -296,33 +295,7 @@ class _PublicarReflexionScreenState
               ),
             ),
           ),
-          Container(
-              width: 1, height: 24, color: AppTheme.pendingGrayDark),
-          _ToolBtn(icon: Icons.undo, onTap: () {}),
-          _ToolBtn(icon: Icons.redo, onTap: () {}),
         ],
-      ),
-    );
-  }
-}
-
-class _ToolBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _ToolBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child:
-              Icon(icon, size: 20, color: AppTheme.textSecondary),
-        ),
       ),
     );
   }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_providers.dart';
+import '../../data/models/comment.dart';
 import '../../data/models/reflexion.dart';
 import '../../core/theme/app_theme.dart';
-import 'chat_screen.dart';
-import 'chat_list_screen.dart';
+import 'public_profile_screen.dart';
+import 'publicar_reflexion_screen.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -29,6 +31,23 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  List<Reflexion> _filterReflexiones(List<Reflexion> reflexiones) {
+    var filtered = reflexiones;
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      filtered = filtered
+          .where((r) => r.texto.toLowerCase().contains(query))
+          .toList();
+    }
+    if (_selectedTag != 'Todo') {
+      final tag = _selectedTag.toLowerCase();
+      filtered = filtered
+          .where((r) => r.tags.any((t) => t.toLowerCase() == tag))
+          .toList();
+    }
+    return filtered;
   }
 
   @override
@@ -60,23 +79,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 color: AppTheme.textSecondary),
             onPressed: () {},
           ),
-          GestureDetector(
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ChatListScreen())),
-            child: Container(
-              width: 36,
-              height: 36,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: AppTheme.primaryBlueLight.withValues(alpha: 0.4),
-                    width: 2),
-              ),
-              child: const Icon(Icons.person,
-                  size: 20, color: AppTheme.textSecondary),
-            ),
-          ),
         ],
       ),
       body: Column(
@@ -84,19 +86,23 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           _buildSearchAndFilters(),
           Expanded(
             child: reflexionesAsync.when(
-              data: (reflexiones) => reflexiones.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.refresh(reflexionesStreamProvider.future),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                        itemCount: reflexiones.length,
-                        itemBuilder: (context, index) =>
-                            _ReflexionCard(
-                                reflexion: reflexiones[index]),
-                      ),
-                    ),
+              data: (reflexiones) {
+                final filtered = _filterReflexiones(reflexiones);
+                if (filtered.isEmpty) {
+                  return _buildEmptyState();
+                }
+                return RefreshIndicator(
+                  onRefresh: () =>
+                      ref.refresh(reflexionesStreamProvider.future),
+                  child: ListView.builder(
+                    padding:
+                        const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) => _ReflexionCard(
+                        reflexion: filtered[index]),
+                  ),
+                );
+              },
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (err, stack) =>
@@ -110,7 +116,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         backgroundColor: AppTheme.primaryBlue,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (_) => const PublicarReflexionScreen(pasajeDia: ''),
+          ));
+        },
         child: const Icon(Icons.edit, color: Colors.white, size: 28),
       ),
     );
@@ -142,12 +152,24 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       hintText: 'Buscar reflexiones o temas...',
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 12),
                     ),
                     style: const TextStyle(
                         fontSize: 14, fontFamily: 'Inter'),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
+                if (_searchController.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() {});
+                    },
+                    child: const Icon(Icons.clear,
+                        size: 18, color: AppTheme.textSecondary),
+                  ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -171,7 +193,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 final tag = _tags[i];
                 final selected = tag == _selectedTag;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedTag = tag),
+                  onTap: () =>
+                      setState(() => _selectedTag = tag),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 6),
@@ -224,7 +247,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Aún no hay reflexiones hoy',
+              'Aún no hay reflexiones',
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w600),
             ),
@@ -248,6 +271,13 @@ class _ReflexionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUid = ref.watch(effectiveUserUidProvider);
     final uid = currentUid;
+    final isSelf = uid == reflexion.userId;
+    final isFollowingAsync = uid != null && !isSelf
+        ? ref.watch(isFollowingProvider(reflexion.userId))
+        : null;
+    final userReaction =
+        uid != null ? reflexion.getReaction(uid) : null;
+    final commentCount = reflexion.commentCount;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -262,59 +292,137 @@ class _ReflexionCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
-                child: Text(
-                  reflexion.userName.isNotEmpty
-                      ? reflexion.userName[0]
-                      : '?',
-                  style: const TextStyle(
-                      color: AppTheme.primaryBlue,
-                      fontWeight: FontWeight.w700),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PublicProfileScreen(
+                          userId: reflexion.userId),
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor:
+                      AppTheme.primaryBlue.withValues(alpha: 0.12),
+                  child: Text(
+                    reflexion.userName.isNotEmpty
+                        ? reflexion.userName[0]
+                        : '?',
+                    style: const TextStyle(
+                        color: AppTheme.primaryBlue,
+                        fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(reflexion.userName,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PublicProfileScreen(
+                            userId: reflexion.userId),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(reflexion.userName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppTheme.textPrimary)),
+                      Text(
+                        _formatTime(reflexion.fecha),
                         style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: AppTheme.textPrimary)),
-                    Text(
-                      _formatTime(reflexion.fecha),
-                      style: const TextStyle(
-                          fontSize: 12, color: AppTheme.textSecondary),
-                    ),
-                  ],
+                            fontSize: 12,
+                            color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.todayHighlight,
-                  borderRadius: BorderRadius.circular(20),
+              if (isFollowingAsync != null)
+                isFollowingAsync.when(
+                  data: (isFollowing) => isFollowing
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.todayHighlight,
+                            borderRadius:
+                                BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check,
+                                  size: 12,
+                                  color: AppTheme.completedGreen),
+                              SizedBox(width: 3),
+                              Text('Siguiendo',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color:
+                                          AppTheme.completedGreen)),
+                            ],
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: () {
+                            ref
+                                .read(firestoreServiceProvider)
+                                .toggleFollow(uid!, reflexion.userId,
+                                    false);
+                            ref.invalidate(
+                                isFollowingProvider(reflexion.userId));
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue,
+                              borderRadius:
+                                  BorderRadius.circular(20),
+                            ),
+                            child: const Text('Seguir',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white)),
+                          ),
+                        ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.todayHighlight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_fire_department,
+                          size: 14,
+                          color: AppTheme.streakOrange,
+                          fill: 1),
+                      const SizedBox(width: 4),
+                      const Text('Tú',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.streakOrange)),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.local_fire_department,
-                        size: 14,
-                        color: AppTheme.streakOrange,
-                        fill: 1),
-                    const SizedBox(width: 4),
-                    const Text('Racha',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.streakOrange)),
-                  ],
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -349,8 +457,13 @@ class _ReflexionCard extends ConsumerWidget {
                 fontSize: 14, height: 1.5, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1,
-              color: AppTheme.pendingGrayDark),
+          _ReactionStrip(
+            reflexionId: reflexion.id,
+            currentReaction: userReaction,
+            reactions: reflexion.reactions,
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1, color: AppTheme.pendingGrayDark),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -359,7 +472,7 @@ class _ReflexionCard extends ConsumerWidget {
                 icon: Icons.favorite,
                 label: 'Amén (${reflexion.likes})',
                 isActive: uid != null && reflexion.isLikedBy(uid),
-                activeColor: AppTheme.streakOrange,
+                activeColor: Colors.red,
                 onTap: () {
                   if (uid == null) return;
                   final isLiked = reflexion.isLikedBy(uid);
@@ -370,31 +483,156 @@ class _ReflexionCard extends ConsumerWidget {
               ),
               _ActionBtn(
                 icon: Icons.chat_bubble_outline,
-                label: 'Comentar',
-                onTap: () {
-                  if (uid == null || uid == reflexion.userId) return;
-                  final ids = [uid, reflexion.userId]..sort();
-                  final chatId = ids.join('_');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(
-                        chatId: chatId,
-                        otherUserId: reflexion.userId,
-                        otherUserName: reflexion.userName,
-                      ),
-                    ),
-                  );
-                },
+                label: 'Comentar (${commentCount > 0 ? '$commentCount' : ''})',
+                onTap: () => _showCommentsSheet(context, ref, reflexion),
               ),
               _ActionBtn(
                 icon: Icons.share,
                 label: 'Compartir',
-                onTap: () {},
+                onTap: () {
+                  final text =
+                      '${reflexion.pasajeDia}\n\n${reflexion.texto}\n\n— ${reflexion.userName}';
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('¡Copiado al portapapeles!')),
+                  );
+                },
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showCommentsSheet(
+      BuildContext context, WidgetRef ref, Reflexion r) {
+    final uid = ref.read(effectiveUserUidProvider);
+    final commentCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.7,
+            child: Column(
+              children: [
+                const Text('Comentarios',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ref.watch(comentariosStreamProvider(r.id)).when(
+                    data: (comments) {
+                      if (comments.isEmpty) {
+                        return const Center(
+                          child: Text('Sin comentarios aún.',
+                              style: TextStyle(
+                                  color: AppTheme.textSecondary)),
+                        );
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16),
+                        itemCount: comments.length,
+                        itemBuilder: (_, i) =>
+                            _CommentTile(comment: comments[i]),
+                      );
+                    },
+                    loading: () => const Center(
+                        child: CircularProgressIndicator()),
+                    error: (e, _) =>
+                        Center(child: Text('Error: $e')),
+                  ),
+                ),
+                if (uid != null)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(
+                        16, 8, 16, 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: commentCtrl,
+                              decoration: InputDecoration(
+                                hintText: 'Escribe un comentario...',
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(24),
+                                  borderSide: BorderSide(
+                                      color:
+                                          AppTheme.pendingGrayDark),
+                                ),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 10),
+                                isDense: true,
+                              ),
+                              textInputAction: TextInputAction.send,
+                              onSubmitted: (value) {
+                                if (value.trim().isEmpty) return;
+                                _sendComment(ref, r, uid, value);
+                                commentCtrl.clear();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.send_rounded,
+                                color: AppTheme.primaryBlue),
+                            onPressed: () {
+                              if (commentCtrl.text.trim().isEmpty) {
+                                Navigator.pop(ctx);
+                                return;
+                              }
+                              _sendComment(ref, r, uid,
+                                  commentCtrl.text);
+                              commentCtrl.clear();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _sendComment(
+      WidgetRef ref, Reflexion r, String uid, String text) {
+    final user = ref.read(userProfileProvider).value;
+    ref.read(firestoreServiceProvider).publicarComentario(
+      Comment(
+        id: '',
+        reflexionId: r.id,
+        userId: uid,
+        userName: user?.nombre ?? 'Anónimo',
+        userFotoUrl: user?.fotoUrl ?? '',
+        texto: text.trim(),
+        fecha: DateTime.now(),
       ),
     );
   }
@@ -406,6 +644,192 @@ class _ReflexionCard extends ConsumerWidget {
     if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
     if (diff.inDays == 1) return 'Ayer';
     return DateFormat('dd MMM').format(date);
+  }
+}
+
+class _CommentTile extends ConsumerWidget {
+  final Comment comment;
+  const _CommentTile({required this.comment});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final uid = ref.watch(effectiveUserUidProvider);
+    final isLiked = comment.isLikedBy(uid ?? '');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicProfileScreen(
+                      userId: comment.userId),
+                ),
+              );
+            },
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor:
+                  AppTheme.primaryBlue.withValues(alpha: 0.12),
+              backgroundImage: comment.userFotoUrl.isNotEmpty
+                  ? NetworkImage(comment.userFotoUrl)
+                  : null,
+              child: comment.userFotoUrl.isEmpty
+                  ? Text(comment.userName.isNotEmpty
+                          ? comment.userName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.w700))
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.scaffoldBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PublicProfileScreen(
+                                  userId: comment.userId),
+                            ),
+                          );
+                        },
+                        child: Text(comment.userName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13)),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _formatCommentTime(comment.fecha),
+                        style: const TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(comment.texto,
+                      style: const TextStyle(
+                          fontSize: 14, height: 1.3)),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: () {
+                      if (uid == null) return;
+                      ref
+                          .read(firestoreServiceProvider)
+                          .toggleCommentLike(comment.reflexionId,
+                              comment.id, uid, isLiked);
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isLiked
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          size: 14,
+                          color: isLiked ? Colors.red : Colors.grey,
+                        ),
+                        if (comment.likes > 0) ...[
+                          const SizedBox(width: 3),
+                          Text('${comment.likes}',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: isLiked
+                                      ? Colors.red
+                                      : Colors.grey)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCommentTime(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return DateFormat('d MMM').format(date);
+  }
+}
+
+class _ReactionStrip extends ConsumerWidget {
+  final String reflexionId;
+  final String? currentReaction;
+  final Map<String, String> reactions;
+  const _ReactionStrip(
+      {required this.reflexionId,
+      required this.currentReaction,
+      required this.reactions});
+
+  static const _emojis = ['❤️', '🙏', '🔥', '💡'];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final uid = ref.watch(effectiveUserUidProvider);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ..._emojis.map((e) {
+          final isActive = currentReaction == e;
+          final count = reactions.values.where((v) => v == e).length;
+          return GestureDetector(
+            onTap: () async {
+              if (uid == null) return;
+              await ref.read(firestoreServiceProvider).toggleReaction(
+                  reflexionId, uid, e, currentReaction);
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? AppTheme.primaryBlue.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isActive
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                      : Colors.transparent,
+                ),
+              ),
+              child: Text(
+                '$e${count > 0 ? ' $count' : ''}',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight:
+                        isActive ? FontWeight.bold : FontWeight.normal),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
   }
 }
 
