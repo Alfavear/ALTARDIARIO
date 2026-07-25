@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -30,9 +31,6 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   BibleVersion _selectedVersion = BibleService.availableVersions.first;
   List<BibleVersion> _versions = BibleService.availableVersions;
   bool _isLoading = true;
-  bool _isDownloading = false;
-  int _downloadProgress = 0;
-  int _downloadTotal = 0;
   List<BiblePassage> _passages = [];
   List<BibleHighlight> _highlights = [];
   List<BibleNote> _notes = [];
@@ -53,22 +51,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   @override
   void initState() {
     super.initState();
-    _autoDownloadDefault();
-  }
-
-  void _parseInitialPassage() {
-    final match = RegExp(r'^(.+?)\s+(\d+)$', caseSensitive: false)
-        .firstMatch(widget.pasajes);
-    if (match != null) {
-      final book = match.group(1)!;
-      final chapter = int.parse(match.group(2)!);
-      final id = _bibleService.getBookIdFromName(book);
-      if (id != -1) {
-        _selectedBookId = id;
-        _selectedChapter = chapter;
-        _loadChapterCount();
-      }
-    }
+    _loadText();
+    _downloadRV1960InBackground();
   }
 
   void _loadChapterCount() {
@@ -274,26 +258,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     );
   }
 
-  Future<void> _autoDownloadDefault() async {
-    setState(() {
-      _isDownloading = true;
-      _downloadProgress = 0;
-    });
-    await _bibleService.ensureDefaultDownloaded(
-      onProgress: (current, total) {
-        if (mounted) {
-          setState(() {
-            _downloadProgress = current;
-            _downloadTotal = total;
-          });
-        }
-      },
-    );
-    if (mounted) {
-      setState(() => _isDownloading = false);
-      _parseInitialPassage();
-      _loadText();
-    }
+  Future<void> _downloadRV1960InBackground() async {
+    await _bibleService.ensureDefaultDownloaded();
   }
 
   Future<void> _loadVersions() async {
@@ -333,6 +299,12 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
       );
 
       if (!mounted) return;
+      if (passages.isNotEmpty && passages.first.verses.isNotEmpty) {
+        final first = passages.first.verses.first;
+        _selectedBookId = first.bookId;
+        _selectedChapter = first.chapter;
+        _loadChapterCount();
+      }
       setState(() {
         _passages = passages;
         _highlights = highlights;
@@ -383,6 +355,10 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: GestureDetector(
           onTap: widget.readOnly ? _showBookSelector : null,
           child: Row(
@@ -492,31 +468,6 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   Widget _buildBody(bool isCompleted) {
-    if (_isDownloading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(color: AppTheme.primaryBlue),
-              const SizedBox(height: 24),
-              const Text(
-                'Descargando Reina-Valera 1960…',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              if (_downloadTotal > 0)
-                Text(
-                  '$_downloadProgress de $_downloadTotal versículos',
-                  style: const TextStyle(color: AppTheme.textSecondary),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
-
     if (_isLoading) {
       return const Center(
           child: CircularProgressIndicator(color: AppTheme.primaryBlue));
@@ -656,6 +607,60 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     );
   }
 
+  void _showVersionSelector() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Seleccionar versión',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          ),
+          ..._versions.map((v) => ListTile(
+            leading: Icon(
+              v.id == _selectedVersion.id ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: AppTheme.primaryBlue,
+            ),
+            title: Text(v.name),
+            onTap: () {
+              Navigator.pop(ctx);
+              setState(() => _selectedVersion = v);
+              _loadText();
+            },
+          )),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.settings, color: AppTheme.primaryBlue),
+            title: const Text('Gestionar versiones...'),
+            onTap: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const BibleVersionsScreen(),
+              ));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sharePassage() {
+    if (_passages.isEmpty) return;
+    final buffer = StringBuffer();
+    for (final p in _passages) {
+      buffer.writeln(p.reference);
+      for (final v in p.verses) {
+        buffer.writeln('${v.verse}: ${v.text}');
+      }
+    }
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Texto copiado al portapapeles')),
+    );
+  }
+
   Widget _buildReaderToolbar() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -683,7 +688,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
           Container(
               width: 1, height: 24, color: AppTheme.pendingGrayDark),
           GestureDetector(
-            onTap: () {},
+            onTap: _showVersionSelector,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -704,7 +709,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
               width: 1, height: 24, color: AppTheme.pendingGrayDark),
           _ToolbarBtn(
             icon: Icons.share,
-            onTap: () {},
+            onTap: _sharePassage,
           ),
         ],
       ),
@@ -1021,6 +1026,13 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         child: ElevatedButton.icon(
           onPressed: () async {
             await storageService.markDateAsCompleted(widget.fechaClave);
+            final uid = ref.read(effectiveUserUidProvider);
+            if (uid != null) {
+              final firestore = ref.read(firestoreServiceProvider);
+              final completed = await storageService.getCompletedDates();
+              final maxStreak = storageService.getMaxStreak();
+              await firestore.syncProgress(uid, completed, maxStreak);
+            }
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Lectura completada')),

@@ -46,7 +46,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       createdAt: widget.existingNote?.createdAt ?? now,
       updatedAt: now,
     );
-    await ref.read(storageProvider).saveNote(note);
+    final storage = ref.read(storageProvider);
+    await storage.saveNote(note);
+    final uid = ref.read(effectiveUserUidProvider);
+    if (uid != null) {
+      final firestore = ref.read(firestoreServiceProvider);
+      await firestore.syncNote(uid, note);
+    }
     if (mounted) Navigator.pop(context, true);
   }
 
@@ -195,29 +201,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   Widget _buildToolbar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppTheme.pendingGrayDark.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          _ToolBtn(icon: Icons.format_bold, onTap: () {}),
-          _ToolBtn(icon: Icons.format_italic, onTap: () {}),
-          _ToolBtn(icon: Icons.format_list_bulleted, onTap: () {}),
-          _ToolBtn(icon: Icons.format_quote, onTap: () {}),
-          Container(
-              width: 1,
-              height: 20,
-              color: AppTheme.pendingGrayDark.withValues(alpha: 0.5)),
-          _ToolBtn(icon: Icons.image, onTap: () {}),
-          _ToolBtn(icon: Icons.link, onTap: () {}),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildTagsSection() {
@@ -303,34 +287,20 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              final text = _contentCtrl.text;
+              final suggestion = '"Jehová es mi pastor; nada me faltará." — Salmos 23:1';
+              _contentCtrl.text = text.isNotEmpty ? '$text\n\n$suggestion' : suggestion;
+              _contentCtrl.selection = TextSelection.fromPosition(
+                TextPosition(offset: _contentCtrl.text.length),
+              );
+            },
             child: const Text('Usar',
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.completedGreen)),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ToolBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _ToolBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, size: 18, color: AppTheme.textSecondary),
-        ),
       ),
     );
   }

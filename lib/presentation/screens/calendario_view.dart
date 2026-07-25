@@ -285,6 +285,13 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         await storageService.toggleLectura(lectura.fechaClave);
+                        final uid = ref.read(effectiveUserUidProvider);
+                        if (uid != null) {
+                          final firestore = ref.read(firestoreServiceProvider);
+                          final completed = await storageService.getCompletedDates();
+                          final maxStreak = storageService.getMaxStreak();
+                          await firestore.syncProgress(uid, completed, maxStreak);
+                        }
                         final ahoraCompletado =
                             storageService.isDiaCompletado(lectura.fechaClave);
 

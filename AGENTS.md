@@ -102,3 +102,10 @@ firebase deploy --only firestore:indexes              # Deploy Firestore indexes
 - ALWAYS guard Firebase-dependent code with `kIsWeb` or availability checks
 - ALWAYS add both `toMap()` and `factory fromMap()` to new models
 - ALWAYS add tests for new models (unit) and screens (widget test)
+
+## Modo Enfoque
+- **Provider**: `FocusModeNotifier` en `app_providers.dart` — persiste en SharedPreferences, al activar cancela notificaciones, al desactivar reprograma recordatorio.
+- **Provider name**: `focusModeProvider` (`NotifierProvider<FocusModeNotifier, bool>`).
+- **HomeScreen**: PopScope intercepta back button si focusMode activo y devocional no completado. AppBar muestra 🔒. Tarjeta SwitchListTile en el cuerpo con toggle.
+- **Navegación**: `_handleNavigate(tab, isCompleted)` en HomeScreen bloquea tabs si focusMode on y !isCompleted.
+- **Storage**: `storage_service.dart` — `getFocusMode()`, `setFocusMode(bool)` via `_keyFocusMode`.

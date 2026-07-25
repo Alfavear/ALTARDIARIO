@@ -192,13 +192,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: 20)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.local_fire_department,
-                color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
+        actions: const [],
       ),
       body: _buildBody(featured, others),
     );

@@ -4,9 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/notification_service.dart';
-import '../../data/services/storage_service.dart';
 import '../../data/models/usuario.dart';
 import '../providers/app_providers.dart';
+import 'login_screen.dart';
+import 'followers_screen.dart';
 
 class PerfilScreen extends ConsumerWidget {
   const PerfilScreen({super.key});
@@ -68,8 +69,7 @@ class PerfilScreen extends ConsumerWidget {
                       _AchievementsSection(
                           streak: streak, maxStreak: maxStreak, total: total),
                       const SizedBox(height: 20),
-                      _NotificationReminder(
-                          storageService: storageService, context: context),
+                      const _ConfigSection(),
                       const SizedBox(height: 20),
                       _MenuOptions(authState: authState, ref: ref),
                       const SizedBox(height: 24),
@@ -318,6 +318,7 @@ class _SocialStatsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final uid = ref.watch(effectiveUserUidProvider);
     return userProfile.when(
       data: (usuario) {
         if (usuario == null) return const SizedBox.shrink();
@@ -331,14 +332,42 @@ class _SocialStatsSection extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _SocialStat(
-                  value: '${usuario.siguiendo.length}',
-                  label: 'Siguiendo'),
+              GestureDetector(
+                onTap: () {
+                  if (uid == null) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => FollowersScreen(
+                        userId: uid,
+                        tabIndex: 0,
+                      ),
+                    ),
+                  );
+                },
+                child: _SocialStat(
+                    value: '${usuario.siguiendo.length}',
+                    label: 'Siguiendo'),
+              ),
               Container(
                   height: 40, width: 1, color: AppTheme.pendingGrayDark),
-              _SocialStat(
-                  value: '${usuario.seguidores.length}',
-                  label: 'Seguidores'),
+              GestureDetector(
+                onTap: () {
+                  if (uid == null) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => FollowersScreen(
+                        userId: uid,
+                        tabIndex: 1,
+                      ),
+                    ),
+                  );
+                },
+                child: _SocialStat(
+                    value: '${usuario.seguidores.length}',
+                    label: 'Seguidores'),
+              ),
             ],
           ),
         );
@@ -500,14 +529,14 @@ class _Logro {
   });
 }
 
-class _NotificationReminder extends StatelessWidget {
-  final StorageService storageService;
-  final BuildContext context;
-  const _NotificationReminder(
-      {required this.storageService, required this.context});
+class _ConfigSection extends ConsumerWidget {
+  const _ConfigSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final focusMode = ref.watch(focusModeProvider);
+    final storage = ref.watch(storageProvider);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -515,31 +544,47 @@ class _NotificationReminder extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: AppTheme.softShadow,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.notifications_outlined,
-              color: AppTheme.primaryBlue),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Recordatorio diario',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 2),
-                Text(
-                  '${storageService.getNotificationHour().toString().padLeft(2, '0')}:${storageService.getNotificationMinute().toString().padLeft(2, '0')}',
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 13),
-                ),
-              ],
+          const Text('Configuración',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            secondary: Icon(
+              focusMode ? Icons.lock : Icons.lock_open_rounded,
+              color: focusMode ? AppTheme.streakOrange : AppTheme.textSecondary,
             ),
+            title: Text(
+              focusMode ? 'Modo Enfoque activo' : 'Modo Enfoque',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              focusMode
+                  ? 'Notificaciones bloqueadas'
+                  : 'Sin distracciones hasta completar tu lectura',
+              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            ),
+            value: focusMode,
+            activeThumbColor: AppTheme.streakOrange,
+            onChanged: (_) {
+              ref.read(focusModeProvider.notifier).toggle();
+            },
           ),
-          TextButton(
-            onPressed: () =>
-                _pickNotificationTime(context, storageService),
-            child: const Text('CAMBIAR'),
+          const Divider(height: 1, indent: 56),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined,
+                color: AppTheme.primaryBlue),
+            title: const Text('Recordatorio diario',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+            subtitle: Text(
+              '${storage.getNotificationHour().toString().padLeft(2, '0')}:${storage.getNotificationMinute().toString().padLeft(2, '0')}',
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+            trailing: TextButton(
+              onPressed: () => _pickNotificationTime(context, ref),
+              child: const Text('CAMBIAR'),
+            ),
           ),
         ],
       ),
@@ -548,7 +593,10 @@ class _NotificationReminder extends StatelessWidget {
 }
 
 Future<void> _pickNotificationTime(
-    BuildContext context, StorageService storage) async {
+    BuildContext context, WidgetRef ref) async {
+  final storage = ref.read(storageProvider);
+  final firestore = ref.read(firestoreServiceProvider);
+  final uid = ref.read(effectiveUserUidProvider);
   final initial = TimeOfDay(
     hour: storage.getNotificationHour(),
     minute: storage.getNotificationMinute(),
@@ -556,11 +604,217 @@ Future<void> _pickNotificationTime(
   final picked = await showTimePicker(context: context, initialTime: initial);
   if (picked != null) {
     await storage.setNotificationTime(picked.hour, picked.minute);
+    if (uid != null) {
+      await firestore.updateUserConfig(uid, {
+        'notifHour': picked.hour,
+        'notifMin': picked.minute,
+      });
+    }
     await NotificationService.scheduleDailyReminder(
       hour: picked.hour,
       minute: picked.minute,
     );
   }
+}
+
+void _showSettingsDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Configuración'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_outline,
+                  size: 16, color: AppTheme.textSecondary),
+              const SizedBox(width: 8),
+              const Text('AltarDiario v1.0.0',
+                  style: TextStyle(color: AppTheme.textSecondary)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showClearDataDialog(context);
+              },
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Borrar datos locales'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cerrar'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showClearDataDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Borrar datos locales'),
+      content: const Text(
+        '¿Estás seguro? Se eliminará tu progreso de lectura, notas y datos locales. Esta acción no se puede deshacer.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Función disponible próximamente')),
+            );
+          },
+          child: const Text('Borrar', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showFeedbackDialog(BuildContext context, WidgetRef ref) {
+  final mensajeCtrl = TextEditingController();
+  int calificacion = 0;
+
+  showDialog(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.feedback_outlined, color: AppTheme.primaryBlue),
+            SizedBox(width: 10),
+            Text('Tu opinión'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '¿Qué te parece AltarDiario? '
+                'Tus comentarios nos ayudan a mejorar.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final star = i + 1;
+                  return IconButton(
+                    icon: Icon(
+                      star <= calificacion
+                          ? Icons.star
+                          : Icons.star_border,
+                      color: AppTheme.accentGold,
+                      size: 36,
+                    ),
+                    onPressed: () => setDialogState(() => calificacion = star),
+                  );
+                }),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: mensajeCtrl,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Escribe tu opinión aquí...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: AppTheme.scaffoldBg,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (mensajeCtrl.text.trim().isEmpty) return;
+              final uid = ref.read(effectiveUserUidProvider);
+              final userProfile = ref.read(userProfileProvider).asData?.value;
+              await ref.read(firestoreServiceProvider).sendFeedback(
+                userId: uid ?? 'anonimo',
+                userName: userProfile?.nombre ?? 'Anónimo',
+                mensaje: mensajeCtrl.text.trim(),
+                calificacion: calificacion,
+              );
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Gracias por tu opinión 🙏'),
+                  backgroundColor: AppTheme.completedGreen,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Enviar'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void _showPrivacyDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Privacidad'),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tus datos de lectura, notas y reflexiones se almacenan de forma segura en Firebase y localmente en tu dispositivo.',
+            style: TextStyle(height: 1.4),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'No compartimos tu información personal con terceros. Puedes eliminar tu cuenta y datos en cualquier momento.',
+            style: TextStyle(height: 1.4),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Entendido'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _MenuOptions extends ConsumerWidget {
@@ -581,7 +835,7 @@ class _MenuOptions extends ConsumerWidget {
           _MenuTile(
             icon: Icons.settings,
             label: 'Configuración',
-            onTap: () {},
+            onTap: () => _showSettingsDialog(context),
           ),
           const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
           _MenuTile(
@@ -599,13 +853,21 @@ class _MenuOptions extends ConsumerWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.bold)),
             ),
-            onTap: () {},
+            onTap: () {
+              _pickNotificationTime(context, ref);
+            },
           ),
           const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
           _MenuTile(
             icon: Icons.lock_person,
             label: 'Privacidad',
-            onTap: () {},
+            onTap: () => _showPrivacyDialog(context),
+          ),
+          const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
+          _MenuTile(
+            icon: Icons.feedback_outlined,
+            label: 'Enviar opinión',
+            onTap: () => _showFeedbackDialog(context, ref),
           ),
           const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
           _MenuTile(
@@ -613,7 +875,37 @@ class _MenuOptions extends ConsumerWidget {
             label: 'Cerrar Sesión',
             color: AppTheme.completedGreen,
             onTap: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Cerrar Sesión'),
+                  content: const Text(
+                    '¿Estás seguro de que deseas cerrar sesión?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Cerrar Sesión',
+                          style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm != true) return;
               await ref.read(authServiceProvider).signOut();
+              await ref.read(authServiceProvider).clearLocalUid();
+              ref.read(localUidProvider.notifier).setUid(null);
+              if (!context.mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (_) => const LoginScreen(),
+                ),
+                (route) => false,
+              );
             },
           ),
         ],

@@ -173,6 +173,16 @@ class StorageService {
     await _prefs.setInt(_keyNotifMin, minute);
   }
 
+  // ── Modo Enfoque ───────────────────────────────────────────────
+
+  static const String _keyFocusMode = 'focus_mode_enabled';
+
+  bool getFocusMode() => _prefs.getBool(_keyFocusMode) ?? false;
+
+  Future<void> setFocusMode(bool value) async {
+    await _prefs.setBool(_keyFocusMode, value);
+  }
+
   // ── Notas ─────────────────────────────────────────────────────
 
   static const String _keyNotes = 'user_notes';
