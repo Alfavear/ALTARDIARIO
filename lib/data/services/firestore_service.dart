@@ -372,6 +372,77 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  /// Guarda el token FCM del usuario para push notifications.
+  Future<void> saveFCMToken(String uid, String token) async {
+    if (!_available) return;
+    await _usuarios.doc(uid).set({'fcmToken': token}, SetOptions(merge: true));
+  }
+
+  /// Elimina el token FCM del usuario (logout).
+  Future<void> clearFCMToken(String uid) async {
+    if (!_available) return;
+    await _usuarios.doc(uid).set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
+  }
+
+  /// Crea una notificación en la subcolección del usuario (para Cloud Functions).
+  Future<void> createNotification({
+    required String userId,
+    required String type,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+    String? actorId,
+    String? actorName,
+    String? actorFotoUrl,
+  }) async {
+    if (!_available) return;
+    await _usuarios.doc(userId).collection('notifications').add({
+      'type': type,
+      'title': title,
+      'body': body,
+      'data': data ?? {},
+      'actorId': actorId,
+      'actorName': actorName,
+      'actorFotoUrl': actorFotoUrl ?? '',
+      'read': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Stream de notificaciones del usuario.
+  Stream<List<Map<String, dynamic>>> notificationsStream(String uid) {
+    if (!_available) return Stream.value([]);
+    return _usuarios
+        .doc(uid)
+        .collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList())
+        .handleError((_) => <Map<String, dynamic>>[]);
+  }
+
+  /// Marca una notificación como leída.
+  Future<void> markNotificationAsRead(String uid, String notificationId) async {
+    if (!_available) return;
+    await _usuarios.doc(uid).collection('notifications').doc(notificationId).update({'read': true});
+  }
+
+  /// Marca todas las notificaciones como leídas.
+  Future<void> markAllNotificationsAsRead(String uid) async {
+    if (!_available) return;
+    final snapshot = await _usuarios
+        .doc(uid)
+        .collection('notifications')
+        .where('read', isEqualTo: false)
+        .get();
+    final batch = _firestore!.batch();
+    for (final doc in snapshot.docs) {
+      batch.update(doc.reference, {'read': true});
+    }
+    await batch.commit();
+  }
+
   // ── Biblia: Subrayados y Notas ──────────────────────────────────────────────
 
   Future<void> syncBibleHighlight(

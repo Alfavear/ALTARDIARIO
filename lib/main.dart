@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'core/theme/app_theme.dart';
 import 'core/services/notification_service.dart';
 import 'data/services/storage_service.dart';
+import 'data/services/auth_service.dart';
 import 'presentation/providers/app_providers.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'firebase_options.dart';
@@ -19,6 +21,16 @@ void main() async {
     );
   } catch (e) {
     debugPrint("⚠️ Advertencia: Error al inicializar Firebase: $e");
+  }
+
+  // Web: Manejar resultado de signInWithRedirect (Google OAuth)
+  if (kIsWeb) {
+    try {
+      final authService = AuthService();
+      await authService.handleRedirectResult();
+    } catch (e) {
+      debugPrint("Redirect result handling: $e");
+    }
   }
 
   final prefs = await SharedPreferences.getInstance();

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import 'main_navigation_view.dart';
@@ -66,11 +67,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final user = await ref.read(authServiceProvider).signInWithGoogle();
       if (user != null && mounted) {
         _navigateToMain();
+      } else if (mounted) {
+        // signInWithRedirect iniciado - la navegación ocurre tras recarga
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Redirigiendo a Google... Completa el inicio de sesión.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String msg;
+        switch (e.code) {
+          case 'auth/popup-blocked':
+            msg = 'Popup bloqueado. Permite popups para este sitio.';
+            break;
+          case 'auth/cancelled-popup-request':
+            msg = 'Inicio de sesión cancelado.';
+            break;
+          case 'auth/network-request-failed':
+            msg = 'Error de red. Verifica tu conexión.';
+            break;
+          case 'auth/too-many-requests':
+            msg = 'Demasiados intentos. Intenta más tarde.';
+            break;
+          case 'auth/unauthorized-domain':
+            msg = 'Dominio no autorizado. Contacta al administrador.';
+            break;
+          default:
+            msg = 'Error de autenticación: ${e.message ?? e.code}';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al conectar con Google: $e')),
+          SnackBar(content: Text('Error inesperado: $e')),
         );
       }
     } finally {

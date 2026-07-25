@@ -77,6 +77,8 @@ test/
 - Wrap widgets: `ProviderScope(overrides: [provider.overrideWithValue(...)], child: MaterialApp(...))`
 - Model tests: `group('ModelName')` with `test('descripción en español', ...)`
 - Use `testWidgets` for widget tests, `test` for unit tests
+- **Mock Notifier providers** in tests: override `build()` (NOT constructor `state = value`) — Riverpod 3.x Notifiers throw "Tried to use a notifier in an uninitialized state" if `state` is set in constructor before `build()` runs
+- **Test surface size**: HomeScreen's `_MiniReadingCard` overflows in default test viewport (124px constraint); consider larger `physicalSizeTestValue` or simpler test assertions
 
 ## Common Commands
 ```bash

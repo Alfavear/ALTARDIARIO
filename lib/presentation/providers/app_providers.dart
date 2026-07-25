@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/auth_service.dart';
@@ -156,6 +157,96 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
   return results;
 });
 
+/// Datos para el leaderboard global (top usuarios por racha).
+class LeaderboardEntry {
+  final String userId;
+  final String nombre;
+  final String fotoUrl;
+  final int rachaActual;
+  final int maxStreak;
+  final int totalLecturas;
+  final int posicion;
+
+  LeaderboardEntry({
+    required this.userId,
+    required this.nombre,
+    required this.fotoUrl,
+    required this.rachaActual,
+    required this.maxStreak,
+    required this.totalLecturas,
+    required this.posicion,
+  });
+}
+
+/// Leaderboard global: top 100 usuarios por racha actual.
+final globalLeaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return [];
+  final firestore = ref.read(firestoreServiceProvider);
+  final storage = ref.read(storageProvider);
+  
+  // Obtener top 100 usuarios ordenados por racha (aproximado: traer todos y ordenar localmente)
+  final allUsers = await firestore.getAllUsuarios();
+  if (allUsers.isEmpty) return [];
+  
+  final allUids = allUsers.map((u) => u.id).toList();
+  final streaksData = await firestore.getStreaksData(allUids);
+  
+  final results = <LeaderboardEntry>[];
+  for (int i = 0; i < allUsers.length; i++) {
+    final user = allUsers[i];
+    final data = streaksData[user.id];
+    final progreso = data != null ? List<String>.from(data['progresoLectura']) : <String>[];
+    final racha = storage.calcularRacha(progreso);
+    final maxS = data != null ? (data['maxStreak'] as int? ?? 0) : 0;
+    
+    // Para el usuario actual, usar datos locales si son más altos
+    if (user.id == uid) {
+      final localRacha = storage.calcularRacha();
+      if (localRacha > racha) {
+        results.add(LeaderboardEntry(
+          userId: user.id,
+          nombre: 'Tú',
+          fotoUrl: '',
+          rachaActual: localRacha,
+          maxStreak: storage.getMaxStreak(),
+          totalLecturas: storage.getTotalCompletadas(),
+          posicion: i + 1,
+        ));
+        continue;
+      }
+    }
+    
+    results.add(LeaderboardEntry(
+      userId: user.id,
+      nombre: user.nombre,
+      fotoUrl: user.fotoUrl,
+      rachaActual: racha,
+      maxStreak: maxS,
+      totalLecturas: progreso.length,
+      posicion: i + 1,
+    ));
+  }
+  
+  // Ordenar por racha descendente
+  results.sort((a, b) => b.rachaActual.compareTo(a.rachaActual));
+  
+  // Reasignar posiciones
+  for (int i = 0; i < results.length; i++) {
+    results[i] = LeaderboardEntry(
+      userId: results[i].userId,
+      nombre: results[i].nombre,
+      fotoUrl: results[i].fotoUrl,
+      rachaActual: results[i].rachaActual,
+      maxStreak: results[i].maxStreak,
+      totalLecturas: results[i].totalLecturas,
+      posicion: i + 1,
+    );
+  }
+  
+  return results.take(100).toList();
+});
+
 /// Verifica si el usuario actual sigue a otro usuario.
 final isFollowingProvider = FutureProvider.family<bool, String>((ref, targetId) {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -275,3 +366,44 @@ class FocusModeNotifier extends Notifier<bool> {
 
 final focusModeProvider =
     NotifierProvider<FocusModeNotifier, bool>(FocusModeNotifier.new);
+
+/// Token FCM del usuario actual (para push notifications).
+class FcmTokenNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  Future<void> setToken(String token) async {
+    state = token;
+    final uid = ref.read(effectiveUserUidProvider);
+    if (uid != null) {
+      await ref.read(firestoreServiceProvider).updateUserConfig(uid, {'fcmToken': token});
+    }
+  }
+
+  Future<void> clearToken() async {
+    state = null;
+    final uid = ref.read(effectiveUserUidProvider);
+    if (uid != null) {
+      await ref.read(firestoreServiceProvider).updateUserConfig(uid, {'fcmToken': FieldValue.delete()});
+    }
+  }
+}
+
+final fcmTokenProvider = NotifierProvider<FcmTokenNotifier, String?>(FcmTokenNotifier.new);
+
+/// Stream de notificaciones del usuario actual.
+final notificationsStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).notificationsStream(uid);
+});
+
+/// Contador de notificaciones no leídas.
+final unreadNotificationsCountProvider = Provider<int>((ref) {
+  final notificationsAsync = ref.watch(notificationsStreamProvider);
+  return notificationsAsync.when(
+    data: (notifications) => notifications.where((n) => n['read'] != true).length,
+    loading: () => 0,
+    error: (_, __) => 0,
+  );
+});

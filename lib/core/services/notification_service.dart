@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart' show Color;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-/// Servicio de notificaciones locales para recordatorios diarios de lectura.
+/// Servicio de notificaciones (locales + FCM push) para recordatorios diarios de lectura.
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
 
   static bool _initialized = false;
+  static bool _fcmInitialized = false;
 
-  /// Inicializa el plugin de notificaciones.
+  /// Inicializa el plugin de notificaciones locales y FCM.
   static Future<void> init() async {
     if (kIsWeb || _initialized) return;
 
@@ -20,8 +23,7 @@ class NotificationService {
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings iosSettings =
-        DarwinInitializationSettings(
+    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
@@ -40,6 +42,117 @@ class NotificationService {
     );
 
     _initialized = true;
+    await _initFCM();
+  }
+
+  /// Inicializa Firebase Cloud Messaging para push notifications.
+  static Future<void> _initFCM() async {
+    if (kIsWeb || _fcmInitialized) return;
+
+    // Solicitar permisos
+    final NotificationSettings settings = await _fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      debugPrint('FCM: Permisos no concedidos');
+      return;
+    }
+
+    // Obtener token FCM
+    final String? token = await _fcm.getToken();
+    debugPrint('FCM Token: $token');
+
+    _fcmInitialized = true;
+
+    // Manejar mensajes en foreground
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+    // Manejar mensajes cuando app está en background pero abierta
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+    // Manejar mensajes cuando app está terminada y se abre desde notificación
+    final RemoteMessage? initialMessage = await _fcm.getInitialMessage();
+    if (initialMessage != null) {
+      _handleMessageOpenedApp(initialMessage);
+    }
+
+    // Token refresh
+    _fcm.onTokenRefresh.listen((newToken) {
+      debugPrint('FCM Token refreshed: $newToken');
+      // TODO: Actualizar token en Firestore via callback
+      _onTokenRefresh?.call(newToken);
+    });
+  }
+
+  /// Callback opcional para cuando se refresca el token FCM
+  static void Function(String)? _onTokenRefresh;
+
+  /// Registra callback para cuando se refresca el token FCM
+  static void setOnTokenRefresh(void Function(String) callback) {
+    _onTokenRefresh = callback;
+  }
+
+  /// Obtiene el token FCM actual (útil para guardar en Firestore tras login).
+  static Future<String?> getFCMToken() async {
+    if (kIsWeb || !_fcmInitialized) return null;
+    return await _fcm.getToken();
+  }
+
+  /// Maneja mensajes recibidos con la app en primer plano.
+  static void _handleForegroundMessage(RemoteMessage message) {
+    debugPrint('FCM Foreground: ${message.notification?.title}');
+    _showLocalNotification(
+      title: message.notification?.title ?? 'altarDiario',
+      body: message.notification?.body ?? 'Tienes un nuevo mensaje',
+      payload: message.data,
+    );
+  }
+
+  /// Maneja cuando el usuario toca una notificación (app en background/terminada).
+  static void _handleMessageOpenedApp(RemoteMessage message) {
+    debugPrint('FCM Opened App: ${message.notification?.title}');
+    // TODO: Navegar según message.data['route'] o tipo de notificación
+  }
+
+  /// Muestra una notificación local inmediata (para mensajes FCM en foreground).
+  static Future<void> _showLocalNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? payload,
+  }) async {
+    if (kIsWeb || !_initialized) return;
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'altar_diario_fcm',
+      'Notificaciones Push',
+      channelDescription: 'Notificaciones push de altarDiario',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: Color(0xFF1565C0),
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _plugin.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      details,
+      payload: payload?.toString(),
+    );
   }
 
   /// Solicita permisos de notificación (necesario en Android 13+ e iOS).
