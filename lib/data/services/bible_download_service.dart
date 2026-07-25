@@ -61,6 +61,7 @@ class BibleDownloadService {
     }
 
     final downloadedIds = await getDownloadedVersionIds();
+    final downloadedLower = downloadedIds.map((id) => id.toLowerCase()).toSet();
 
     final data = jsonDecode(response.body) as List<dynamic>;
     final translations = <AvailableTranslation>[];
@@ -72,7 +73,7 @@ class BibleDownloadService {
           slug: slug,
           name: t['full_name'] as String,
           language: language,
-          isDownloaded: downloadedIds.contains(slug),
+          isDownloaded: downloadedLower.contains(slug.toLowerCase()),
         ));
       }
     }
@@ -199,23 +200,23 @@ class BibleDownloadService {
 
   static String? _versionName(String slug) {
     const names = {
-      'RV1960': 'Reina-Valera 1960',
-      'RV2004': 'Reina Valera Gómez 2004',
-      'BTX3': 'La Biblia Textual 3ra Edicion',
-      'PDT': 'Palabra de Dios para Todos',
-      'NVI': 'Nueva Versión Internacional',
-      'NTV': 'Nueva Traducción Viviente',
-      'LBLA': 'La Biblia de las Américas',
-      'KJV': 'King James Version',
-      'NKJV': 'New King James Version',
-      'NIV': 'New International Version',
-      'NIV2011': 'New International Version 2011',
-      'ESV': 'English Standard Version',
-      'NASB': 'New American Standard Bible',
-      'YLT': "Young's Literal Translation",
-      'WEB': 'World English Bible',
-      'RV1909': 'Reina Valera 1909',
+      'rv1960': 'Reina-Valera 1960',
+      'rv2004': 'Reina Valera Gómez 2004',
+      'btx3': 'La Biblia Textual 3ra Edicion',
+      'pdt': 'Palabra de Dios para Todos',
+      'nvi': 'Nueva Versión Internacional',
+      'ntv': 'Nueva Traducción Viviente',
+      'lbla': 'La Biblia de las Américas',
+      'kjv': 'King James Version',
+      'nkjv': 'New King James Version',
+      'niv': 'New International Version',
+      'niv2011': 'New International Version 2011',
+      'esv': 'English Standard Version',
+      'nasb': 'New American Standard Bible',
+      'ylt': "Young's Literal Translation",
+      'web': 'World English Bible',
+      'rv1909': 'Reina Valera 1909',
     };
-    return names[slug];
+    return names[slug.toLowerCase()];
   }
 }

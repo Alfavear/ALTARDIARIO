@@ -34,7 +34,7 @@ void main() {
       await tester.pumpWidget(createSplashScreen(storageService));
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('altarDiario'), findsOneWidget);
+      expect(find.text('AltarDiario'), findsOneWidget);
       expect(find.text('Tu hábito diario con Dios'), findsOneWidget);
 
       await pumpAndClearTimer(tester);

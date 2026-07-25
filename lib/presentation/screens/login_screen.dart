@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
-import '../widgets/app_logo_widget.dart';
 import 'main_navigation_view.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -64,7 +63,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      await ref.read(authServiceProvider).signInWithGoogle();
+      final user = await ref.read(authServiceProvider).signInWithGoogle();
+      if (user != null && mounted) {
+        _navigateToMain();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,98 +98,192 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: Container(
         width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const AppLogoWidget(size: 100),
-                const SizedBox(height: 20),
-                const Text(
-                  'altarDiario',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const Text(
-                  'Tu hábito diario con Dios',
-                  style: TextStyle(color: Colors.white70, fontSize: 15),
-                ),
-                const SizedBox(height: 60),
-                if (_isLoading)
-                  const CircularProgressIndicator(color: Colors.white)
-                else ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _signInAnonymously,
-                      icon: const Icon(Icons.bolt),
-                      label: const Text('ENTRAR SIN REGISTRO'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppTheme.primaryBlue,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _signInWithGoogle,
-                      icon: const Icon(Icons.account_circle_outlined),
-                      label: const Text('CONTINUAR CON GOOGLE'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (defaultTargetPlatform == TargetPlatform.iOS ||
-                      defaultTargetPlatform == TargetPlatform.macOS)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _signInWithApple,
-                          icon: const Icon(Icons.apple),
-                          label: const Text('CONTINUAR CON APPLE'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                          ),
+        child: Stack(
+          children: [
+            ..._buildAmbientGlows(),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 40),
+                      _buildLogo(),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'AltarDiario',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                    ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _signInDemo,
-                      icon: const Icon(Icons.phone_android_outlined, size: 20),
-                      label: const Text('MODO DEMO (sin conexión)'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white38),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Tu hábito diario con Dios,\nahora en comunidad',
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(color: Colors.white70, fontSize: 15),
                       ),
-                    ),
+                      const SizedBox(height: 48),
+                      if (_isLoading)
+                        const CircularProgressIndicator(color: Colors.white)
+                      else ...[
+                        _buildGoogleButton(),
+                        const SizedBox(height: 12),
+                        if (defaultTargetPlatform == TargetPlatform.iOS ||
+                            defaultTargetPlatform == TargetPlatform.macOS)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildAppleButton(),
+                          ),
+                        _buildAnonymousButton(),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _signInDemo,
+                          child: const Text(
+                            'MODO DEMO (sin conexión)',
+                            style: TextStyle(
+                                color: Colors.white60, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Al continuar, aceptas nuestros Términos de\nServicio y Política de Privacidad.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white38, fontSize: 11),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Podrás sincronizar tu progreso y reflexiones\ncreando una cuenta más tarde.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
-                  ),
-                ],
-              ],
+                ),
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildAmbientGlows() {
+    return [
+      Positioned(
+        top: -80,
+        left: -40,
+        child: Container(
+          width: 200,
+          height: 200,
+          decoration: BoxDecoration(
+            color: AppTheme.accentGold.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
           ),
         ),
+      ),
+      Positioned(
+        bottom: -60,
+        right: -40,
+        child: Container(
+          width: 240,
+          height: 240,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryBlueLight.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildLogo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.local_fire_department,
+          size: 64, color: Colors.white),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _signInWithGoogle,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: AppTheme.textPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.g_mobiledata,
+                size: 24, color: AppTheme.textPrimary),
+            const SizedBox(width: 10),
+            const Text('Continuar con Google',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 15)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppleButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _signInWithApple,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.apple, size: 24),
+            const SizedBox(width: 10),
+            const Text('Continuar con Apple',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 15)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnonymousButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: _signInAnonymously,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          side: const BorderSide(color: Colors.white38),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Text('Continuar anónimamente',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
       ),
     );
   }

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "username": "Alfavear",
+
+  "instructions": ["AGENTS.md"],
+
+  "lsp": {
+    "dart": {
+      "command": ["dart", "language-server"],
+      "extensions": [".dart"]
+    }
+  },
+
+  "command": {
+    "test-all": {
+      "description": "Run all Flutter tests",
+      "template": "Run `flutter test` and report any failures"
+    },
+    "test-file": {
+      "description": "Run a single test file (usage: /test-file path/to/file.dart)",
+      "template": "Run `flutter test {{input}}` and report any failures"
+    },
+    "analyze": {
+      "description": "Run Flutter static analysis",
+      "template": "Run `flutter analyze` and fix any issues found"
+    },
+    "build-apk": {
+      "description": "Build Android release APK",
+      "template": "Run `flutter build apk --release` and report the result"
+    },
+    "deploy-rules": {
+      "description": "Deploy Firestore security rules",
+      "template": "Run `firebase deploy --only firestore:rules` and report the result"
+    },
+    "deploy-indexes": {
+      "description": "Deploy Firestore indexes",
+      "template": "Run `firebase deploy --only firestore:indexes` and report the result"
+    }
+  },
+
+  "mcp": {
+    "stitch": {
+      "type": "remote",
+      "url": "https://stitch.googleapis.com/mcp",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "X-Goog-Api-Key": "${GOOGLE_STITCH_API_KEY}"
+      }
+    }
+  },
+
+  "tool_output": {
+    "max_lines": 500,
+    "max_bytes": 81920
+  },
+
+  "compaction": {
+    "auto": true,
+    "tail_turns": 20
+  },
+
+  "skills": {
+    "paths": [".opencode/skills"]
+  }
+}

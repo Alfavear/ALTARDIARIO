@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../core/theme/app_theme.dart';
 import '../../data/services/bible_download_service.dart';
 
@@ -39,7 +38,8 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       _error = null;
     });
     try {
-      final translations = await _downloadService.fetchAvailableTranslations();
+      final translations =
+          await _downloadService.fetchAvailableTranslations();
       if (!mounted) return;
       setState(() {
         _translations = translations;
@@ -164,26 +164,42 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final featured =
+        _filtered.where((t) => t.isDownloaded || _downloading.contains(t.slug)).toList();
+    final others =
+        _filtered.where((t) => !featured.contains(t)).toList();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
-        elevation: 0,
-        title: const Text('Versiones de la Biblia'),
-        actions: [
-          if (_error != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _load,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.primaryBlue, AppTheme.primaryBlueLight],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
             ),
-        ],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Versiones',
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 20)),
+        actions: const [],
       ),
-      body: _buildBody(),
+      body: _buildBody(featured, others),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(
+      List<AvailableTranslation> featured, List<AvailableTranslation> others) {
     if (_isLoading) {
       return const Center(
         child: Column(
@@ -204,16 +220,16 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+              const Icon(Icons.cloud_off,
+                  size: 48, color: AppTheme.textSecondary),
               const SizedBox(height: 16),
-              Text(
-                'No se pudieron cargar las traducciones.',
-                textAlign: TextAlign.center,
-              ),
+              const Text('No se pudieron cargar las traducciones.',
+                  textAlign: TextAlign.center),
               const SizedBox(height: 8),
               Text(
                 _error!,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(
+                    fontSize: 12, color: AppTheme.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -228,49 +244,196 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       );
     }
 
-    final filtered = _filtered;
-
-    return Column(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: TextField(
-            decoration: const InputDecoration(
-              hintText: 'Buscar versión...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            onChanged: (v) => setState(() => _search = v),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(bottom: 24),
-            itemCount: filtered.length,
-            itemBuilder: (context, index) {
-              final t = filtered[index];
-              return _buildTile(t);
-            },
-          ),
-        ),
+        _buildSearchBar(),
+        const SizedBox(height: 20),
+        if (featured.isNotEmpty) ...[
+          const Text('Instaladas',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary)),
+          const SizedBox(height: 10),
+          ...featured.map((t) => _buildFeaturedCard(t)),
+          const SizedBox(height: 24),
+        ],
+        const Text('Todas las Traducciones',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary)),
+        const SizedBox(height: 10),
+        ...others.map((t) => _buildTranslationItem(t)),
+        const SizedBox(height: 24),
+        _buildOfflineTip(),
       ],
     );
   }
 
-  Widget _buildTile(AvailableTranslation t) {
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppTheme.pendingGrayDark),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search,
+              size: 20, color: AppTheme.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              onChanged: (v) => setState(() => _search = v),
+              decoration: const InputDecoration(
+                hintText: 'Buscar traducciones (ej. Reina Valera)',
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          const Icon(Icons.tune,
+              size: 18, color: AppTheme.textSecondary),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedCard(AvailableTranslation t) {
     final slug = t.slug;
     final isDownloading = _downloading.contains(slug);
     final progress = _progress[slug] ?? 0.0;
 
-    return ListTile(
-      title: Text(t.name, maxLines: 2, overflow: TextOverflow.ellipsis),
-      subtitle: Text(
-        '${t.language} · ${t.slug}${t.isDownloaded ? ' · Descargada' : ''}',
-        style: const TextStyle(fontSize: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.4)),
       ),
-      trailing: isDownloading
-          ? SizedBox(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.auto_stories,
+                    color: AppTheme.primaryBlue, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: AppTheme.textPrimary)),
+                    Text('${t.language} · Español',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary)),
+                  ],
+                ),
+              ),
+              if (isDownloading)
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 3,
+                        color: AppTheme.primaryBlue,
+                      ),
+                      Text(
+                        '${(progress * 100).toInt()}%',
+                        style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.completedGreenLight,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text('Instalado',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.completedGreen)),
+                ),
+            ],
+          ),
+          if (isDownloading) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor:
+                    AppTheme.primaryBlue.withValues(alpha: 0.1),
+                color: AppTheme.completedGreen,
+                minHeight: 6,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTranslationItem(AvailableTranslation t) {
+    final slug = t.slug;
+    final isDownloading = _downloading.contains(slug);
+    final progress = _progress[slug] ?? 0.0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.translate,
+              size: 22, color: AppTheme.textSecondary),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppTheme.textPrimary)),
+                Text(t.language,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary)),
+              ],
+            ),
+          ),
+          if (isDownloading)
+            SizedBox(
               width: 36,
               height: 36,
               child: Stack(
@@ -281,24 +444,85 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                     strokeWidth: 3,
                     color: AppTheme.primaryBlue,
                   ),
-                  Text(
-                    '${(progress * 100).toInt()}%',
-                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                  ),
+                  Text('${(progress * 100).toInt()}%',
+                      style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold)),
                 ],
               ),
             )
-          : t.isDownloaded
-              ? IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: () => _delete(t),
-                  tooltip: 'Eliminar',
-                )
-              : IconButton(
-                  icon: const Icon(Icons.download, color: AppTheme.primaryBlue),
-                  onPressed: () => _download(t),
-                  tooltip: 'Descargar',
+          else if (t.isDownloaded)
+            IconButton(
+              icon: const Icon(Icons.delete_outline,
+                  color: AppTheme.textSecondary, size: 20),
+              onPressed: () => _delete(t),
+            )
+          else
+            GestureDetector(
+              onTap: () => _download(t),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.pendingGrayDark),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.download,
+                        size: 16, color: AppTheme.textSecondary),
+                    const SizedBox(width: 4),
+                    const Text('Descargar',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary)),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfflineTip() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryBlueLight.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppTheme.primaryBlueLight.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info,
+              size: 18, color: AppTheme.primaryBlue),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Lectura Offline',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppTheme.primaryBlue)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Descarga tus versiones favoritas para leer la Palabra de Dios incluso sin conexión.',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

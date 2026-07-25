@@ -13,21 +13,44 @@ class OracionScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Pedir Oración'),
+        title: Row(
+          children: [
+            const Icon(Icons.auto_awesome,
+                size: 20, color: AppTheme.primaryBlue),
+            const SizedBox(width: 8),
+            const Text('Pedir Oración',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
         content: TextField(
           controller: controller,
           maxLines: 3,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: '¿Por qué podemos orar por ti?',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: AppTheme.pendingGray,
           ),
         ),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar',
+                style: TextStyle(color: AppTheme.textSecondary)),
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+            ),
             onPressed: () async {
               if (controller.text.trim().isEmpty) return;
-              
+
               final uid = ref.read(effectiveUserUidProvider) ?? 'anonimo';
               final nuevaPeticion = PeticionOracion(
                 id: '',
@@ -36,8 +59,10 @@ class OracionScreen extends ConsumerWidget {
                 motivo: controller.text.trim(),
                 fecha: DateTime.now(),
               );
-              
-              await ref.read(firestoreServiceProvider).crearPeticionOracion(nuevaPeticion);
+
+              await ref
+                  .read(firestoreServiceProvider)
+                  .crearPeticionOracion(nuevaPeticion);
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Compartir'),
@@ -52,37 +77,108 @@ class OracionScreen extends ConsumerWidget {
     final peticionesAsync = ref.watch(peticionesStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Compañeros de Oración')),
-      body: peticionesAsync.when(
-        data: (peticiones) => peticiones.isEmpty
-            ? _buildEmptyState()
-            : ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: peticiones.length,
-                itemBuilder: (context, index) => _PeticionCard(peticion: peticiones[index]),
-              ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+      backgroundColor: AppTheme.scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.local_fire_department,
+                color: AppTheme.primaryBlue, size: 22),
+            const SizedBox(width: 8),
+            Text('AltarDiario',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(color: AppTheme.primaryBlue, fontSize: 20)),
+          ],
+        ),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              children: [
+                const Icon(Icons.front_hand,
+                    size: 18, color: AppTheme.primaryBlueLight),
+                const SizedBox(width: 6),
+                Text(
+                  'COMPAÑEROS DE ORACIÓN',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryBlueLight,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: peticionesAsync.when(
+              data: (peticiones) => peticiones.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      itemCount: peticiones.length,
+                      itemBuilder: (context, index) =>
+                          _PeticionCard(peticion: peticiones[index]),
+                    ),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (err, stack) =>
+                  Center(child: Text('Error: $err')),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => _abrirDialogoNuevaPeticion(context, ref),
         label: const Text('Pedir Oración'),
         icon: const Icon(Icons.add),
         backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.auto_awesome, size: 64, color: AppTheme.accentGold),
-          const SizedBox(height: 16),
-          Text('No hay peticiones activas.', style: TextStyle(color: AppTheme.textSecondary)),
-          const Text('¡Sé el primero en pedir apoyo!'),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.accentGoldLight.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.auto_awesome,
+                  size: 40, color: AppTheme.accentGold),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No hay peticiones activas.',
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '¡Sé el primero en pedir apoyo!',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -94,60 +190,117 @@ class _PeticionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppTheme.accentGold.withValues(alpha: 0.2),
-                  child: Text(peticion.userName.isNotEmpty ? peticion.userName[0] : '?', style: const TextStyle(color: AppTheme.accentGold)),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        boxShadow: AppTheme.softShadow,
+        border: Border.all(
+            color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor:
+                    AppTheme.accentGold.withValues(alpha: 0.15),
+                child: Text(
+                  peticion.userName.isNotEmpty
+                      ? peticion.userName[0]
+                      : '?',
+                  style: const TextStyle(
+                      color: AppTheme.accentGold,
+                      fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(peticion.userName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(
-                        DateFormat('dd MMM, HH:mm').format(peticion.fecha),
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                      ),
-                    ],
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(peticion.userName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: AppTheme.primaryBlue)),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('dd MMM, HH:mm').format(peticion.fecha),
+                      style: const TextStyle(
+                          fontSize: 11, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.pendingGray,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              peticion.motivo,
+              style: const TextStyle(fontSize: 14, height: 1.5),
+            ),
+          ),
+          const Divider(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.people_outline,
+                      size: 14, color: AppTheme.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${peticion.oracionesCount} orando',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary),
                   ),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref
+                      .read(firestoreServiceProvider)
+                      .apoyarPeticion(peticion.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Has dicho: ¡Amén! 🙏'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.front_hand,
+                    size: 16, color: Colors.white),
+                label: const Text('AMÉN',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBlue,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  elevation: 0,
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(peticion.motivo, style: const TextStyle(fontSize: 15, height: 1.4)),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${peticion.oracionesCount} personas están orando',
-                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppTheme.textSecondary),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    ref.read(firestoreServiceProvider).apoyarPeticion(peticion.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Has dicho: ¡Amén! Orando por esto. 🙏'), duration: Duration(seconds: 1)),
-                    );
-                  },
-                  icon: const Icon(Icons.front_hand, size: 16, color: AppTheme.primaryBlue),
-                  label: const Text('AMÉN', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -1,3 +1,33 @@
+## 2026-06-08 (continuación 4) — Modo Enfoque + Sugerencias de amistad
+
+### ✅ Modo Enfoque
+- **`storage_service.dart`**: Métodos `getFocusMode()` / `setFocusMode()` persisten en SharedPreferences.
+- **`app_providers.dart`**: Nuevo `FocusModeNotifier` (toggle persistente) que al activarse llama `NotificationService.cancelAll()` y al desactivarse re-programa el recordatorio diario.
+- **`home_screen.dart`**:
+  - **PopScope**: Intercepta el botón de retroceso cuando el Modo Enfoque está activo y el devocional no está completado, mostrando un diálogo de advertencia.
+  - **Ícono 🔒 en AppBar**: Aparece junto a la campana de notificaciones cuando el modo está activo.
+  - **Tarjeta SwitchListTile**: Sección "Modo Enfoque" en el cuerpo del Home (entre stats y "Rachas entre Amigos") con toggle, ícono de candado, y subtítulo descriptivo.
+  - **`_handleNavigate()`**: Método central que bloquea navegación entre tabs si el Modo Enfoque está activo y la lectura del día no está completada. Muestra un diálogo con opciones "Seguir leyendo" o "Desactivar".
+- **Notificaciones**: Se cancelan automáticamente al activar Modo Enfoque y se restauran al desactivar.
+
+### ✅ Sugerencias de Amistad
+- **`app_providers.dart`**: Nuevo `sugerenciasAmistadProvider` (FutureProvider) que obtiene hasta 100 usuarios, excluye a ti y seguidos, mezcla y toma 5 aleatorios.
+- **`firestore_service.dart`**: Nuevo método `getAllUsuarios()` para obtener la colección completa de usuarios.
+- **`home_screen.dart`**: Sección horizontal con tarjetas de "Personas que quizás conozcas" usando `Consumer` widget para escuchar el provider.
+
+## 2026-06-06 (continuación — Google Stitch MCP + variables de entorno)
+
+### ✅ Google Stitch MCP integrado
+- **opencode.json** creado con MCP remoto de Google Stitch para convertir diseños a código Flutter.
+- **API key movida a variable de entorno** (`GOOGLE_STITCH_API_KEY`) por seguridad.
+- **`.env` creado** con la key (ignorado por git).
+- **`.env.example` actualizado** con la referencia a la nueva variable.
+- **`$PROFILE` de PowerShell** configurado con la variable persistente para que esté disponible al iniciar opencode.
+
+### ⏳ Próximo paso
+- **Probar Google Stitch**: pasar un diseño (captura, Figma) y ver qué genera.
+- **Seguir con mejoras de UI** usando los diseños convertidos.
+
 ## 2026-06-06 (continuación — Modo Demo, RV1960 en web, Firebase resiliente)
 
 ### ✅ Modo Demo offline
@@ -58,12 +88,63 @@
 Ir a **Firebase Console → Firestore → Rules** y pegar el contenido de `firestore.rules` (o ejecutar `firebase deploy --only firestore:rules` si tienen Firebase CLI instalado).
 
 ### ⏳ Pendiente / Próximos pasos
-- **Google Sign-In en web**: requiere configurar OAuth Client ID en Firebase Console → Authentication → Google → Web SDK configuration (URI de redirección). Probar en Chrome.
+- **Google Sign-In en Android (APK)**: requiere SHA fingerprint de la keystore en Firebase Console → Project Settings → General → Android apps → SHA certificate fingerprints. Agregar ambos: debug y release.
+- **Google Sign-In en web (Chrome)**: requiere configurar OAuth Client ID en Firebase Console → Authentication → Google → Web SDK configuration (URI de redirección).
 - **Sign in with Apple**: requiere app iOS/macOS registrada; ejecutar `flutterfire configure --project=altardiario-ec25f --platforms=ios,macos`.
-- **BibleVersionsScreen**: gestor de versiones descargadas (buscar, descargar, eliminar). Funciona en nativo con sqflite; en web mostrar mensaje "no disponible".
-- **Rachas entre amigos**: requiere Firestore estable; pospuesto.
-- **Windows `flutter run`**: requiere Modo Desarrollador (symlinks).
-- **Tests**: agregar tests para AuthService (local), FirestoreService (resiliencia), NotificationService (hora configurable).
+- **Fase 4: Leaderboard / Ranking comunitario**: tabla de posiciones por lecturas, racha, actividad.
+- **Fase 5: Foro de debates bíblicos**: temas de discusión por libro/capítulo.
+- **Tests**: agregar tests para las nuevas funcionalidades sociales.
+
+## 2026-06-08 (continuación 3) — Fase 3: Rachas entre amigos
+
+### ✅ Rachas entre Amigos
+- **`firestore_service.dart`**: Nuevo método `getStreaksData()` que obtiene `progresoLectura` y `maxStreak` de múltiples usuarios desde Firestore.
+- **`app_providers.dart`**: Nuevo `friendStreaksProvider` que fusiona tu racha local (de `StorageService`) con las rachas sincronizadas de los usuarios que sigues, ordenadas por racha actual descendente. Incluye `calcularRachaFromDates()` para replicar la lógica local con datos de la nube.
+- **`amigos_rachas_screen.dart`** (nuevo): Pantalla con ranking tipo leaderboard. Muestra medallas 🥇🥈🥉 para top 3, badge "ERES TÚ" para tu posición, color de racha según intensidad (3+ naranja, 7+ fuerte, 30+ rojo intenso). Tappable para ir al perfil del amigo.
+- **`home_screen.dart`**: Nueva tarjeta "Rachas entre Amigos" en la pantalla de inicio que navega al ranking.
+
+## 2026-06-08 (continuación 2) — Fase 1 y 2 sociales: Perfiles, Follow, Comentarios, Reacciones
+
+### ✅ Perfil público de otros usuarios
+- **`public_profile_screen.dart`** (nuevo): Pantalla de perfil público que muestra avatar, nombre, bio, fecha de creación, conteo de siguiendo/seguidores (tappable), y reflexiones del usuario con reacciones.
+- **`followers_screen.dart`** (nuevo): Pantalla con tabs de "Siguiendo" y "Seguidores", cada uno con lista de usuarios tappable para ver su perfil.
+- **`home_screen.dart`**: El nombre del autor en la vista previa de reflexiones ahora navega al perfil público.
+- **`feed_screen.dart`**: Avatar y nombre del autor en tarjetas de reflexión navegan al perfil público.
+
+### ✅ Seguir/Dejar de seguir funcional
+- **`feed_screen.dart`**: Cada tarjeta de reflexión ahora tiene botón "Seguir" (si no lo sigues) o badge "Siguiendo" si ya lo sigues.
+- **`public_profile_screen.dart`**: Botón "Seguir"/"Dejar de seguir" en el perfil público, con toggle visual.
+- **`perfil_screen.dart`**: Stats de siguiendo/seguidores ahora son tappables para ver las listas.
+
+### ✅ Comentarios en reflexiones
+- **`comment.dart`** (nuevo): Modelo `Comment` con id, reflexionId, userId, userName, userFotoUrl, texto, fecha, likes, likedBy.
+- **`firestore_service.dart`**: Métodos `comentariosStream()`, `publicarComentario()`, `toggleCommentLike()`.
+- **`feed_screen.dart`**: Bottom sheet de comentarios con envío en tiempo real y like en comentarios.
+
+### ✅ Reacciones con emojis
+- **`reflexion.dart`**: Nuevo campo `reactions` (`Map<String, String>` userId → emoji).
+- **`firestore_service.dart`**: Método `toggleReaction()` que agrega/remueve emoji.
+- **`feed_screen.dart`**: Strip de reacciones (❤️🙏🔥💡) debajo del texto de la reflexión.
+
+### ✅ Búsqueda y tags corregidos
+- **`feed_screen.dart`**: Búsqueda ahora filtra por texto de la reflexión. Tags filtran por contenido que contiene la palabra clave. Botón de limpiar búsqueda agregado.
+
+### ✅ Cambios a modelos
+- **`usuario.dart`**: Agregados campos `bio` (String) y `fechaCreacion` (DateTime).
+- **`reflexion.dart`**: Agregados campos `commentCount` (int) y `reactions` (Map<String, String>).
+
+## 2026-06-08 — Corrección de bugs post-APK (Google Sign-In, carrusel bíblico, opciones sin funcionalidad)
+
+### ✅ Google Sign-In ahora navega al inicio
+- **`login_screen.dart`**: `_signInWithGoogle()` ahora captura el `User` retornado por `signInWithGoogle()` y llama `_navigateToMain()` para redirigir al usuario tras autenticar correctamente.
+
+### ✅ Carrusel de navegación bíblica visible al entrar directo
+- **`bible_reader_screen.dart`**: `_loadText()` ahora extrae `bookId` y `chapter` del primer versículo cargado para asignar `_selectedBookId` y `_selectedChapter`. Esto hace que `_buildChapterNav()` se muestre inmediatamente al entrar a la Biblia sin tener que presionar "Seleccionar libro".
+
+### ✅ Opciones no funcionales corregidas
+- **`home_screen.dart`**: El botón de notificaciones en el AppBar ahora navega al tab Perfil (índice 4) donde está el recordatorio configurable, en lugar de mostrar "próximamente".
+- **`perfil_screen.dart`**: El diálogo de Configuración ahora incluye un botón "Borrar datos locales" con confirmación. Eliminada función `_showComingSoon` no utilizada.
+- `flutter analyze` — 0 warnings, 0 errores.
 
 ## 2026-05-27 (Fase 4: Perfil y Sincronización)
 
