@@ -11,6 +11,7 @@ import 'notes_screen.dart';
 import 'public_profile_screen.dart';
 import 'amigos_rachas_screen.dart';
 import 'foro_screen.dart';
+import 'leaderboard_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int tabIndex)? onNavigateTo;
@@ -217,14 +218,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Expanded(
                 child: _ActionCard(
                   icon: Icons.emoji_events_rounded,
-                  label: 'Rachas',
+                  label: 'Leaderboard',
                   color: AppTheme.streakOrange,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) =>
-                              const AmigosRachasScreen()),
+                          builder: (_) => const LeaderboardScreen()),
                     );
                   },
                 ),
@@ -837,23 +837,26 @@ class _MiniReadingCard extends StatelessWidget {
                   color: AppTheme.textSecondary,
                   letterSpacing: 1)),
           const SizedBox(height: 6),
-          Text(passage,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryBlue)),
-          const Spacer(),
-          Row(
-            children: [
-              const Icon(Icons.schedule,
-                  size: 14, color: AppTheme.pendingGrayDark),
-              const SizedBox(width: 4),
-              const Text('Planificado',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.pendingGrayDark)),
-            ],
-          ),
+           Text(passage,
+               maxLines: 2,
+               overflow: TextOverflow.ellipsis,
+               style: const TextStyle(
+                   fontSize: 14,
+                   fontWeight: FontWeight.w700,
+                   color: AppTheme.primaryBlue)),
+           const Spacer(),
+           Row(
+             mainAxisSize: MainAxisSize.min,
+             children: [
+               const Icon(Icons.schedule,
+                   size: 14, color: AppTheme.pendingGrayDark),
+               const SizedBox(width: 4),
+               const Text('Planificado',
+                   style: TextStyle(
+                       fontSize: 11,
+                       color: AppTheme.pendingGrayDark)),
+             ],
+           ),
         ],
       ),
     );
