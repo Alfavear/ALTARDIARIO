@@ -152,10 +152,52 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
     }
   }
 
+  String _selectedLangFilter = 'todos';
+
+  String _getLanguageBadge(String lang) {
+    final lower = lang.toLowerCase();
+    if (lower.contains('spanish') || lower.contains('español') || lower == 'es') {
+      return '🇪🇸 Español';
+    } else if (lower.contains('english') || lower.contains('inglés') || lower == 'en') {
+      return '🇺🇸 English';
+    } else if (lower.contains('portuguese') || lower.contains('portugués') || lower == 'pt') {
+      return '🇧🇷 Português';
+    } else if (lower.contains('french') || lower.contains('francés') || lower == 'fr') {
+      return '🇫🇷 Français';
+    } else if (lower.contains('german') || lower.contains('alemán') || lower == 'de') {
+      return '🇩🇪 Deutsch';
+    } else if (lower.contains('italian') || lower.contains('italiano') || lower == 'it') {
+      return '🇮🇹 Italiano';
+    }
+    return '🌐 $lang';
+  }
+
   List<AvailableTranslation> get _filtered {
-    if (_search.isEmpty) return _translations;
+    var list = _translations;
+
+    if (_selectedLangFilter == 'instaladas') {
+      list = list.where((t) => t.isDownloaded || _downloading.contains(t.slug)).toList();
+    } else if (_selectedLangFilter == 'es') {
+      list = list.where((t) {
+        final l = t.language.toLowerCase();
+        return l.contains('spanish') || l.contains('español') || l == 'es';
+      }).toList();
+    } else if (_selectedLangFilter == 'en') {
+      list = list.where((t) {
+        final l = t.language.toLowerCase();
+        return l.contains('english') || l.contains('inglés') || l == 'en';
+      }).toList();
+    } else if (_selectedLangFilter == 'otros') {
+      list = list.where((t) {
+        final l = t.language.toLowerCase();
+        return !l.contains('spanish') && !l.contains('español') && l != 'es' &&
+            !l.contains('english') && !l.contains('inglés') && l != 'en';
+      }).toList();
+    }
+
+    if (_search.isEmpty) return list;
     final q = _search.toLowerCase();
-    return _translations.where((t) {
+    return list.where((t) {
       return t.name.toLowerCase().contains(q) ||
           t.language.toLowerCase().contains(q) ||
           t.slug.toLowerCase().contains(q);
@@ -187,7 +229,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Versiones',
+        title: const Text('Versiones de la Biblia',
             style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -195,6 +237,46 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
         actions: const [],
       ),
       body: _buildBody(featured, others),
+    );
+  }
+
+  Widget _buildLanguageFilterChips() {
+    final filters = [
+      {'id': 'todos', 'label': '🌐 Todos'},
+      {'id': 'es', 'label': '🇪🇸 Español'},
+      {'id': 'en', 'label': '🇺🇸 English'},
+      {'id': 'instaladas', 'label': '🌟 Instaladas'},
+      {'id': 'otros', 'label': '🌎 Otros Idiomas'},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filters.map((f) {
+          final isSelected = _selectedLangFilter == f['id'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(
+                f['label']!,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppTheme.textPrimary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+              ),
+              selected: isSelected,
+              selectedColor: AppTheme.primaryBlue,
+              backgroundColor: Colors.white,
+              onSelected: (val) {
+                if (val) {
+                  setState(() => _selectedLangFilter = f['id']!);
+                }
+              },
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -248,9 +330,11 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         _buildSearchBar(),
+        const SizedBox(height: 12),
+        _buildLanguageFilterChips(),
         const SizedBox(height: 20),
         if (featured.isNotEmpty) ...[
-          const Text('Instaladas',
+          const Text('Instaladas (Offline)',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -259,11 +343,20 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
           ...featured.map((t) => _buildFeaturedCard(t)),
           const SizedBox(height: 24),
         ],
-        const Text('Todas las Traducciones',
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Traducciones Disponibles',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary)),
+            Text(
+              '${others.length} disponibles',
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+          ],
+        ),
         const SizedBox(height: 10),
         ...others.map((t) => _buildTranslationItem(t)),
         const SizedBox(height: 24),
@@ -342,7 +435,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                             color: AppTheme.textPrimary)),
-                    Text('${t.language} · Español',
+                    Text(_getLanguageBadge(t.language),
                         style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary)),
@@ -425,7 +518,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: AppTheme.textPrimary)),
-                Text(t.language,
+                Text(_getLanguageBadge(t.language),
                     style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary)),

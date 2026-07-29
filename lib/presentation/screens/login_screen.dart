@@ -6,6 +6,8 @@ import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 import 'main_navigation_view.dart';
 
+import '../../data/models/usuario.dart';
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,37 +19,101 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _signInAnonymously() async {
+    final nameCtrl = TextEditingController();
+    final guestName = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.person_pin, color: AppTheme.primaryBlue),
+            SizedBox(width: 8),
+            Text('Bienvenido Invitado',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ingresa tu nombre o apodo para identificarte en las reflexiones y oraciones comunitarias:',
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                hintText: 'Ej. Juan Carlos',
+                prefixIcon: const Icon(Icons.badge_outlined,
+                    color: AppTheme.primaryBlue),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('Cancelar',
+                style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final val = nameCtrl.text.trim();
+              Navigator.pop(ctx, val.isNotEmpty ? val : 'Invitado');
+            },
+            child:
+                const Text('Ingresar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (guestName == null) return;
+
     setState(() => _isLoading = true);
     try {
       final user = await ref.read(authServiceProvider).signInAnon();
-      if (user == null && mounted) {
-        final localUid = await ref.read(authServiceProvider).getLocalUid();
-        if (localUid != null) {
-          ref.read(localUidProvider.notifier).setUid(localUid);
+      final uid = user?.uid ?? (await ref.read(authServiceProvider).getLocalUid());
+
+      if (uid != null) {
+        if (user == null) {
+          ref.read(localUidProvider.notifier).setUid(uid);
         }
+        final formattedName = '$guestName (Invitado)';
+        final storage = ref.read(storageProvider);
+        await storage.setUserName(formattedName);
+
+        final firestoreService = ref.read(firestoreServiceProvider);
+        await firestoreService.crearOActualizarUsuario(
+          Usuario(
+            id: uid,
+            nombre: formattedName,
+            email: 'invitado@altardiario.app',
+            fotoUrl: '',
+            siguiendo: [],
+            seguidores: [],
+            badges: ['bienvenida'],
+          ),
+        );
       }
       if (mounted) _navigateToMain();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al iniciar sesión: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInDemo() async {
-    setState(() => _isLoading = true);
-    try {
-      final uid = await ref.read(authServiceProvider).signInLocal();
-      ref.read(localUidProvider.notifier).setUid(uid);
-      if (mounted) _navigateToMain();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error en modo demo: $e')),
         );
       }
     } finally {
@@ -177,15 +243,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: _buildAppleButton(),
                           ),
                         _buildAnonymousButton(),
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: _signInDemo,
-                          child: const Text(
-                            'MODO DEMO (sin conexión)',
-                            style: TextStyle(
-                                color: Colors.white60, fontSize: 13),
-                          ),
-                        ),
                       ],
                       const SizedBox(height: 32),
                       const Text(
@@ -317,7 +374,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text('Continuar anónimamente',
+        child: const Text('Iniciar sesión como invitado',
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
       ),
     );

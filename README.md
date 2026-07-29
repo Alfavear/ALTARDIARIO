@@ -1,10 +1,10 @@
-# 📖 AltarDiario: Tu Hábito Devocional Social
+﻿# 📖 AltarDiario: Tu Hábito Devocional Social
 
 > "Tu hábito diario con Dios, ahora en comunidad."
 >
 > AltarDiario es una aplicación móvil multiplataforma (iOS y Android) diseñada para ayudarte a mantener un hábito constante de lectura bíblica diaria, transformándose en una plataforma social devocional donde puedes compartir tus reflexiones y conectar con otros creyentes.
 >
-> **Estado del Proyecto:** En desarrollo activo (Fase 2: Núcleo Social - Reflexiones)
+> 4.  **Fase 4: Identidad & Sincronización 🕒** (En proceso: Perfiles dinámicos, estadísticas y Cloud Sync).
 >
 > ![AltarDiario Logo](https://via.placeholder.com/150/007bff/ffffff?text=AltarDiario+Logo)
 > _(Placeholder para el logo oficial de AltarDiario)_
@@ -27,6 +27,13 @@
 > - **Chats Internos:** Mensajería privada para apoyo espiritual y comunión.
 > - **Perfil de Usuario:** Estadísticas personales, rachas y reflexiones publicadas (próximamente).
 > - **Sincronización en la Nube:** Guarda tu progreso y datos sociales en Firebase para acceder desde cualquier dispositivo (próximamente).
+> >
+> > ### 🏆 Gamificación (Implementado)
+> > - **Sistema de Badges/Insignias:** 16 insignias desbloqueables por logros (lecturas, rachas, comunidad, oración).
+> > - **Niveles y XP:** Subidor de nivel por puntos acumulados (nivel 1-10).
+> > - **Racha y Puntos Total:** Tracking de streaks y puntos en perfil de usuario.
+> >
+> > Consulta `lib/core/services/gamification_service.dart` y `lib/data/models/badge.dart` para detalles.
 >
 > ## 🛠️ Tecnologías Utilizadas
 >
@@ -98,10 +105,10 @@
 > Estamos en una transición activa hacia una plataforma social. Nuestro progreso se mide en 5 hitos principales:
 >
 > 1.  **Fase 1: Infraestructura ✅** (Finalizado: Riverpod, Navegación Global, Base Firebase).
-> 2.  **Fase 2: El Altar Social 🕒** (En proceso: Feed en tiempo real, publicación de reflexiones, interacciones).
-> 3.  **Fase 3: Comunidad de Oración** (Próximamente: Sistema de peticiones y apoyo mutuo).
+> 2.  **Fase 2: El Altar Social ✅** (Finalizado: Feed en tiempo real, publicación de reflexiones, interacciones).
+> 3.  **Fase 3: Comunidad de Oración ✅** (Finalizado: Sistema de peticiones y apoyo mutuo).
 > 4.  **Fase 4: Identidad & Sincronización 🕒** (En proceso: Perfiles dinámicos, estadísticas y Cloud Sync).
-> 5.  **Fase 5: Excelencia UI/UX** (Próximamente: Gamificación, animaciones premium y notificaciones push).
+> 5.  **Fase 5: Gamificación ✅** (Finalizado: Sistema de badges/insignias, niveles XP, rachas).
 >
 > Consulta la `BITACORA.md` para ver el historial técnico detallado de cada día.
 >

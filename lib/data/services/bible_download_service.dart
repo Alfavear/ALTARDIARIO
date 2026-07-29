@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/bible_models.dart';
@@ -25,6 +26,7 @@ class BibleDownloadService {
   static const String _baseUrl = 'https://bolls.life';
   static const String _databaseName = 'altar_diario_bible.db';
   static const int _batchSize = 1000;
+  static const String _webDownloadedKey = 'web_downloaded_bible_versions';
 
   // Mapa de ID de versión → slug de API (bolls.life es sensible a mayúsculas)
   static const Map<String, String> _apiSlugs = {
@@ -50,6 +52,36 @@ class BibleDownloadService {
   Future<void> close() async {
     await _database?.close();
     _database = null;
+  }
+
+  Future<Set<String>> _getWebDownloadedSlugs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909'];
+      return list.toSet();
+    } catch (_) {
+      return {'rv1960', 'rv1909'};
+    }
+  }
+
+  Future<void> _addWebDownloadedSlug(String slug) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = (prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909']).toSet();
+      current.add(slug);
+      current.add(slug.toLowerCase());
+      await prefs.setStringList(_webDownloadedKey, current.toList());
+    } catch (_) {}
+  }
+
+  Future<void> _removeWebDownloadedSlug(String slug) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = (prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909']).toSet();
+      current.remove(slug);
+      current.remove(slug.toLowerCase());
+      await prefs.setStringList(_webDownloadedKey, current.toList());
+    } catch (_) {}
   }
 
   Future<List<AvailableTranslation>> fetchAvailableTranslations() async {
@@ -81,7 +113,9 @@ class BibleDownloadService {
   }
 
   Future<Set<String>> getDownloadedVersionIds() async {
-    if (kIsWeb) return {};
+    if (kIsWeb) {
+      return await _getWebDownloadedSlugs();
+    }
     try {
       final db = await _db;
       final rows = await db.rawQuery(
@@ -94,7 +128,13 @@ class BibleDownloadService {
   }
 
   Future<List<BibleVersion>> getDownloadedVersions() async {
-    if (kIsWeb) return [];
+    if (kIsWeb) {
+      final slugs = await _getWebDownloadedSlugs();
+      return slugs.map((id) {
+        final name = _versionName(id) ?? id.toUpperCase();
+        return BibleVersion(id: id, name: name, lang: 'es');
+      }).toList();
+    }
     try {
       final db = await _db;
       final rows = await db.rawQuery(
@@ -130,7 +170,19 @@ class BibleDownloadService {
     String versionId, {
     void Function(int current, int total)? onProgress,
   }) async {
-    if (kIsWeb) throw UnsupportedError('Downloads not supported on web');
+    if (kIsWeb) {
+      onProgress?.call(1, 4);
+      final apiSlug = _apiSlug(versionId);
+      final response = await http.get(
+        Uri.parse('$_baseUrl/get-books/$apiSlug/'),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('No se pudo verificar la versión en la red');
+      }
+      onProgress?.call(4, 4);
+      await _addWebDownloadedSlug(versionId);
+      return;
+    }
 
     final apiSlug = _apiSlug(versionId);
     final bookNames = await _fetchBookNames(versionId);
@@ -182,7 +234,10 @@ class BibleDownloadService {
   }
 
   Future<void> deleteVersion(String slug) async {
-    if (kIsWeb) throw UnsupportedError('Not supported on web');
+    if (kIsWeb) {
+      await _removeWebDownloadedSlug(slug);
+      return;
+    }
     final db = await _db;
     await db.delete(
       'bible_verses',

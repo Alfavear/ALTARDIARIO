@@ -155,6 +155,43 @@ class NotificationService {
     );
   }
 
+  /// Muestra una notificación local inmediata (para insignias o logros).
+  static Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb || !_initialized) return;
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'altar_diario_badges',
+      'Insignias y Logros',
+      channelDescription: 'Notificaciones de nuevas insignias desbloqueadas',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: Color(0xFF1565C0),
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _plugin.show(
+      id,
+      title,
+      body,
+      details,
+    );
+  }
+
   /// Solicita permisos de notificación (necesario en Android 13+ e iOS).
   static Future<bool> requestPermissions() async {
     if (kIsWeb) return true;

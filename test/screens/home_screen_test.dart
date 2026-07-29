@@ -109,9 +109,6 @@ class _MockFocusModeNotifier extends FocusModeNotifier {
 
 class MockFirestoreService extends FirestoreService {
   @override
-  bool get _available => true;
-
-  @override
   Stream<List<Reflexion>> reflexionesStream() => Stream.value([]);
 
   @override

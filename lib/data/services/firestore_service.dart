@@ -24,6 +24,8 @@ class FirestoreService {
 
   bool get _available => _firestore != null;
 
+  FirebaseFirestore? get firestore => _firestore;
+
   CollectionReference<Map<String, dynamic>> get _reflexiones =>
       _firestore!.collection('reflexiones');
 
@@ -341,19 +343,19 @@ class FirestoreService {
     final targetDoc = _usuarios.doc(targetUserId);
 
     if (isFollowing) {
-      await currentDoc.update({
+      await currentDoc.set({
         'siguiendo': FieldValue.arrayRemove([targetUserId])
-      });
-      await targetDoc.update({
+      }, SetOptions(merge: true));
+      await targetDoc.set({
         'seguidores': FieldValue.arrayRemove([currentUserId])
-      });
+      }, SetOptions(merge: true));
     } else {
-      await currentDoc.update({
+      await currentDoc.set({
         'siguiendo': FieldValue.arrayUnion([targetUserId])
-      });
-      await targetDoc.update({
+      }, SetOptions(merge: true));
+      await targetDoc.set({
         'seguidores': FieldValue.arrayUnion([currentUserId])
-      });
+      }, SetOptions(merge: true));
     }
   }
 

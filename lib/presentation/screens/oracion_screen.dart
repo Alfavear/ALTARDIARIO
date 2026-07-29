@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/gamification_service.dart';
+import '../../core/services/community_policy_service.dart';
+import '../widgets/guest_access_restricted_widget.dart';
 import '../providers/app_providers.dart';
 import '../../data/models/peticion_oracion.dart';
 
@@ -22,23 +25,29 @@ class OracionScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: '¿Por qué podemos orar por ti?',
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: AppTheme.pendingGray,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CommunityPolicyService.buildPolicyBanner(context),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: '¿Por qué podemos orar por ti?',
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: AppTheme.pendingGray,
+              ),
+            ),
+          ],
         ),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar',
+            child: const Text('Cancelar',
                 style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
@@ -49,21 +58,60 @@ class OracionScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20)),
             ),
             onPressed: () async {
-              if (controller.text.trim().isEmpty) return;
+              final motivo = controller.text.trim();
+              if (motivo.isEmpty) return;
+
+              final policyCheck = CommunityPolicyService.validarContenido(motivo);
+              if (!policyCheck.isApproved) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(policyCheck.reason ??
+                        'La petición no cumple las normas comunitarias.'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+                return;
+              }
 
               final uid = ref.read(effectiveUserUidProvider) ?? 'anonimo';
+              final firestore = ref.read(firestoreServiceProvider);
+              final storage = ref.read(storageProvider);
+              final user = ref.read(userProfileProvider).asData?.value;
+              final firebaseUser = ref.read(authServiceProvider).currentUser;
+
+              final userName = (user?.nombre.isNotEmpty == true)
+                  ? user!.nombre
+                  : (storage.getUserName() ?? firebaseUser?.displayName ?? 'Invitado');
+
               final nuevaPeticion = PeticionOracion(
                 id: '',
                 userId: uid,
-                userName: 'Usuario de Altar',
+                userName: userName,
                 motivo: controller.text.trim(),
                 fecha: DateTime.now(),
               );
 
-              await ref
-                  .read(firestoreServiceProvider)
-                  .crearPeticionOracion(nuevaPeticion);
-              if (context.mounted) Navigator.pop(context);
+              await firestore.crearPeticionOracion(nuevaPeticion);
+
+              final newBadges = await GamificationService.evaluarYNotificarBadges(
+                user: user,
+                firestore: firestore,
+                storage: storage,
+                extraStats: {'peticionesPublicadas': 1},
+              );
+
+              if (context.mounted) {
+                Navigator.pop(context);
+                if (newBadges.isNotEmpty) {
+                  GamificationService.showBadgeUnlockedDialog(
+                    context,
+                    newBadges,
+                    firestore: firestore,
+                    storage: storage,
+                    user: user,
+                  );
+                }
+              }
             },
             child: const Text('Compartir'),
           ),
@@ -74,6 +122,37 @@ class OracionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isGuest = ref.watch(isGuestUserProvider);
+
+    if (isGuest) {
+      return Scaffold(
+        backgroundColor: AppTheme.scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: AppTheme.textPrimary,
+          elevation: 0,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.local_fire_department,
+                  color: AppTheme.primaryBlue, size: 22),
+              const SizedBox(width: 8),
+              Text('AltarDiario',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineMedium
+                      ?.copyWith(color: AppTheme.primaryBlue, fontSize: 20)),
+            ],
+          ),
+        ),
+        body: const GuestAccessRestrictedWidget(
+          title: 'Compañeros de Oración Reservado',
+          description:
+              'Para proteger la privacidad y evitar cuentas falsas, la consulta y envío de peticiones de oración comunitarias están reservadas para miembros registrados con su cuenta de Google.',
+        ),
+      );
+    }
+
     final peticionesAsync = ref.watch(peticionesStreamProvider);
 
     return Scaffold(
@@ -190,6 +269,16 @@ class _PeticionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authorProfile =
+        ref.watch(userProfileByIdProvider(peticion.userId)).value;
+    final authorName = (authorProfile?.nombre.isNotEmpty == true)
+        ? authorProfile!.nombre
+        : (peticion.userName.isNotEmpty &&
+                peticion.userName != 'Usuario de Altar' &&
+                peticion.userName != 'Usuario'
+            ? peticion.userName
+            : 'Hermano en Fe');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -210,9 +299,7 @@ class _PeticionCard extends ConsumerWidget {
                 backgroundColor:
                     AppTheme.accentGold.withValues(alpha: 0.15),
                 child: Text(
-                  peticion.userName.isNotEmpty
-                      ? peticion.userName[0]
-                      : '?',
+                  authorName.isNotEmpty ? authorName[0].toUpperCase() : '?',
                   style: const TextStyle(
                       color: AppTheme.accentGold,
                       fontWeight: FontWeight.w700),
@@ -223,7 +310,7 @@ class _PeticionCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(peticion.userName,
+                    Text(authorName,
                         style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,

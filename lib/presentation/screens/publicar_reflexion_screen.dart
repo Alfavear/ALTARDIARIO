@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 import '../../data/models/reflexion.dart';
+import '../../data/models/bible_models.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/gamification_service.dart';
+import '../../core/services/community_policy_service.dart';
+import '../../data/services/bible_service.dart';
 
 class PublicarReflexionScreen extends ConsumerStatefulWidget {
   final String pasajeDia;
@@ -19,11 +23,52 @@ class _PublicarReflexionScreenState
   final _titleController = TextEditingController();
   bool _isPublishing = false;
   bool _showPassage = true;
+  String? _previewVerseText;
+  bool _loadingVerse = true;
 
   @override
   void initState() {
     super.initState();
     _titleController.text = widget.pasajeDia;
+    _fetchVersePreview();
+  }
+
+  Future<void> _fetchVersePreview([String? customPasaje]) async {
+    final pasaje = (customPasaje ?? _titleController.text).trim();
+    if (pasaje.isEmpty) {
+      if (mounted) setState(() => _loadingVerse = false);
+      return;
+    }
+    setState(() => _loadingVerse = true);
+    try {
+      final bibleService = BibleService();
+      final pasajes = await bibleService.getPassageText(pasaje);
+      BibleVerse? foundVerse;
+      for (final p in pasajes) {
+        if (p.verses.isNotEmpty) {
+          foundVerse = p.verses.first;
+          break;
+        }
+      }
+      if (mounted) {
+        setState(() {
+          if (foundVerse != null) {
+            _previewVerseText =
+                '"${foundVerse.text}" — ${foundVerse.bookName} ${foundVerse.chapter}:${foundVerse.verse}';
+          } else {
+            _previewVerseText = null;
+          }
+          _loadingVerse = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _previewVerseText = null;
+          _loadingVerse = false;
+        });
+      }
+    }
   }
 
   @override
@@ -34,17 +79,55 @@ class _PublicarReflexionScreenState
   }
 
   Future<void> _publicar() async {
-    if (_textController.text.trim().isEmpty) return;
+    final texto = _textController.text.trim();
+    if (texto.isEmpty) return;
+
+    final policyCheck = CommunityPolicyService.validarContenido(texto);
+    if (!policyCheck.isApproved) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.shield_outlined, color: AppTheme.primaryBlue),
+                SizedBox(width: 8),
+                Text('Normas Comunitaria',
+                    style:
+                        TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Text(
+                policyCheck.reason ??
+                    'El contenido no cumple las normas de edificación comunitaria.',
+                style: const TextStyle(fontSize: 13, height: 1.4)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _isPublishing = true);
 
     final uid = ref.read(effectiveUserUidProvider) ?? 'anonimo';
     final firestoreService = ref.read(firestoreServiceProvider);
+    final userProfile = ref.read(userProfileProvider).asData?.value;
+    final storage = ref.read(storageProvider);
+    final firebaseUser = ref.read(authServiceProvider).currentUser;
+    final userName = (userProfile?.nombre.isNotEmpty == true)
+        ? userProfile!.nombre
+        : (storage.getUserName() ?? firebaseUser?.displayName ?? 'Invitado');
 
     final nuevaReflexion = Reflexion(
       id: '',
       userId: uid,
-      userName: 'Usuario de Altar',
+      userName: userName,
       texto: _textController.text.trim(),
       pasajeDia: _titleController.text.trim(),
       fecha: DateTime.now(),
@@ -52,7 +135,25 @@ class _PublicarReflexionScreenState
 
     try {
       await firestoreService.publicarReflexion(nuevaReflexion);
+      final user = ref.read(userProfileProvider).asData?.value;
+      final storage = ref.read(storageProvider);
+      final newBadges = await GamificationService.evaluarYNotificarBadges(
+        user: user,
+        firestore: firestoreService,
+        storage: storage,
+        extraStats: {'reflexionesPublicadas': 1},
+      );
+
       if (mounted) {
+        if (newBadges.isNotEmpty) {
+          GamificationService.showBadgeUnlockedDialog(
+            context,
+            newBadges,
+            firestore: firestoreService,
+            storage: storage,
+            user: user,
+          );
+        }
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('¡Reflexión compartida!')),
@@ -134,6 +235,7 @@ class _PublicarReflexionScreenState
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
               children: [
+                CommunityPolicyService.buildPolicyBanner(context),
                 Row(
                   children: [
                     const Icon(Icons.edit_note,
@@ -230,15 +332,30 @@ class _PublicarReflexionScreenState
                           ],
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Jehová es mi pastor; nada me faltará.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontStyle: FontStyle.italic,
-                            color: AppTheme.textSecondary,
-                            height: 1.4,
+                        if (_loadingVerse)
+                          const SizedBox(
+                            height: 24,
+                            child: Center(
+                              child: SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.primaryBlue,
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (_previewVerseText != null)
+                          Text(
+                            _previewVerseText!,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              color: AppTheme.textSecondary,
+                              height: 1.4,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),

@@ -62,6 +62,7 @@ void main() {
             authStateProvider.overrideWithValue(const AsyncValue.data(null)),
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('demo_user')),
             effectiveUserUidProvider.overrideWithValue('demo_user'),
+            isGuestUserProvider.overrideWithValue(false),
             reflexionesStreamProvider.overrideWithValue(AsyncValue.data(mockReflexiones)),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             userProfileProvider.overrideWithValue(AsyncValue.data(null)),
@@ -87,6 +88,7 @@ void main() {
             authStateProvider.overrideWithValue(const AsyncValue.data(null)),
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('demo_user')),
             effectiveUserUidProvider.overrideWithValue('demo_user'),
+            isGuestUserProvider.overrideWithValue(false),
             reflexionesStreamProvider.overrideWithValue(AsyncValue.data(mockReflexiones)),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             userProfileProvider.overrideWithValue(AsyncValue.data(null)),
@@ -114,6 +116,7 @@ void main() {
             authStateProvider.overrideWithValue(const AsyncValue.data(null)),
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('demo_user')),
             effectiveUserUidProvider.overrideWithValue('demo_user'),
+            isGuestUserProvider.overrideWithValue(false),
             reflexionesStreamProvider.overrideWithValue(AsyncValue.data(mockReflexiones)),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             userProfileProvider.overrideWithValue(AsyncValue.data(null)),
@@ -141,6 +144,7 @@ void main() {
             authStateProvider.overrideWithValue(const AsyncValue.data(null)),
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('demo_user')),
             effectiveUserUidProvider.overrideWithValue('demo_user'),
+            isGuestUserProvider.overrideWithValue(false),
             reflexionesStreamProvider.overrideWithValue(const AsyncValue.data([])),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             userProfileProvider.overrideWithValue(AsyncValue.data(null)),
@@ -163,6 +167,7 @@ void main() {
             authStateProvider.overrideWithValue(const AsyncValue.data(null)),
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('demo_user')),
             effectiveUserUidProvider.overrideWithValue('demo_user'),
+            isGuestUserProvider.overrideWithValue(false),
             reflexionesStreamProvider.overrideWithValue(AsyncValue.data(mockReflexiones)),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             userProfileProvider.overrideWithValue(AsyncValue.data(null)),
@@ -195,9 +200,6 @@ class _MockLocalUidNotifier extends LocalUidNotifier {
 
 class MockFirestoreService extends FirestoreService {
   @override
-  bool get _available => true;
-
-  @override
   Stream<List<Reflexion>> reflexionesStream() => Stream.value([]);
 
   @override
@@ -218,6 +220,7 @@ class MockFirestoreService extends FirestoreService {
   @override
   Future<void> publicarComentario(Comment comment) async {}
 
+  @override
   Future<void> toggleCommentLike(String reflexionId, String commentId, String userId, bool isLiked) async {}
 
   @override

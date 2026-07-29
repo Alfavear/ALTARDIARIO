@@ -3,12 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/services/gamification_service.dart';
 import '../../data/models/bible_models.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
+import 'bible_compare_screen.dart';
 import 'bible_versions_screen.dart';
 import 'note_editor_screen.dart';
 import 'notes_screen.dart';
+
+enum BibleReadingTheme { light, sepia, dark }
 
 class BibleReaderScreen extends ConsumerStatefulWidget {
   final String pasajes;
@@ -35,7 +39,30 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   List<BibleHighlight> _highlights = [];
   List<BibleNote> _notes = [];
   double _fontSize = 18.0;
+  BibleReadingTheme _readingTheme = BibleReadingTheme.light;
   String? _errorMessage;
+
+  Color get _themeBgColor {
+    switch (_readingTheme) {
+      case BibleReadingTheme.sepia:
+        return const Color(0xFFFBF0D9);
+      case BibleReadingTheme.dark:
+        return const Color(0xFF1E1E1E);
+      case BibleReadingTheme.light:
+        return Colors.white;
+    }
+  }
+
+  Color get _themeTextColor {
+    switch (_readingTheme) {
+      case BibleReadingTheme.sepia:
+        return const Color(0xFF4A3B32);
+      case BibleReadingTheme.dark:
+        return const Color(0xFFE0E0E0);
+      case BibleReadingTheme.light:
+        return AppTheme.textPrimary;
+    }
+  }
 
   static const Map<String, Color> _highlightColors = {
     '#FFF59D': Color(0xFFFFF59D),
@@ -203,56 +230,97 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   void _showBookSelector() {
+    String query = '';
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (ctx) {
-        final sorted = _bibleService.getBookNames();
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.7,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          builder: (_, scrollCtrl) => Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Text('Seleccionar libro',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollCtrl,
-                  itemCount: sorted.length,
-                  itemBuilder: (_, i) {
-                    final name = sorted[i];
-                    final id = _bibleService.getBookIdFromName(name);
-                    final isSelected = id == _selectedBookId;
-                    return ListTile(
-                      title: Text(name,
-                          style: TextStyle(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final sorted = _bibleService.getBookNames();
+            final filtered = query.isEmpty
+                ? sorted
+                : sorted
+                    .where((b) =>
+                        b.toLowerCase().contains(query.toLowerCase()))
+                    .toList();
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.8,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              builder: (_, scrollCtrl) => Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    child: Text('Seleccionar libro',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Buscar libro (ej. Mateo, Salmos...)',
+                        prefixIcon: const Icon(Icons.search,
+                            color: AppTheme.primaryBlue),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        filled: true,
+                        fillColor: AppTheme.pendingGray,
+                      ),
+                      onChanged: (val) {
+                        setModalState(() => query = val);
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scrollCtrl,
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) {
+                        final name = filtered[i];
+                        final id = _bibleService.getBookIdFromName(name);
+                        final isSelected = id == _selectedBookId;
+                        return ListTile(
+                          title: Text(
+                            name,
+                            style: TextStyle(
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
-                              color: isSelected
-                                  ? AppTheme.primaryBlue
-                                  : null)),
-                      trailing: isSelected
-                          ? const Icon(Icons.check,
-                              color: AppTheme.primaryBlue)
-                          : null,
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        _loadBookChapter(name, id);
+                              color: isSelected ? AppTheme.primaryBlue : null,
+                            ),
+                          ),
+                          subtitle: Text(
+                            id <= 39
+                                ? 'Antiguo Testamento'
+                                : 'Nuevo Testamento',
+                            style: const TextStyle(
+                                fontSize: 11, color: AppTheme.textSecondary),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_circle,
+                                  color: AppTheme.primaryBlue)
+                              : const Icon(Icons.chevron_right,
+                                  size: 18, color: Colors.grey),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _loadBookChapter(name, id);
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -349,11 +417,17 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     final storageService = ref.watch(storageProvider);
     final isCompleted = storageService.isDiaCompletado(widget.fechaClave);
 
+    final appBarBg = _readingTheme == BibleReadingTheme.dark
+        ? const Color(0xFF2A2A2A)
+        : (_readingTheme == BibleReadingTheme.sepia
+            ? const Color(0xFFF3E5AB)
+            : Colors.white);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _themeBgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: appBarBg,
+        foregroundColor: _themeTextColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -374,8 +448,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                       : widget.pasajes,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: _themeTextColor),
                 ),
               ),
               if (widget.readOnly)
@@ -385,6 +459,41 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Comparar versiones',
+            icon: const Icon(Icons.compare_arrows, color: AppTheme.primaryBlue),
+            onPressed: () {
+              final pasajeStr = _passages.isNotEmpty
+                  ? _passages.first.reference
+                  : widget.pasajes;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BibleCompareScreen(
+                    pasaje: pasajeStr,
+                    initialVersionA: _selectedVersion.id,
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: 'Tema de lectura',
+            icon: Icon(
+              _readingTheme == BibleReadingTheme.dark
+                  ? Icons.dark_mode
+                  : (_readingTheme == BibleReadingTheme.sepia
+                      ? Icons.auto_stories
+                      : Icons.wb_sunny_outlined),
+            ),
+            onPressed: () {
+              setState(() {
+                _readingTheme = BibleReadingTheme.values[
+                    (_readingTheme.index + 1) %
+                        BibleReadingTheme.values.length];
+              });
+            },
+          ),
           if (widget.readOnly)
             IconButton(
               tooltip: 'Notas',
@@ -501,40 +610,63 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     return Column(
       children: [
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
-            children: [
-              _buildOfflineBanner(),
-              const SizedBox(height: 16),
-              if (_passages.isNotEmpty && _passages.first.verses.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    children: [
-                      Text(
-                        _passages.first.reference,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryBlue,
+          child: GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (widget.readOnly && details.primaryVelocity != null) {
+                if (details.primaryVelocity! < -250) {
+                  // Swipe a la izquierda -> Capítulo Siguiente
+                  if (_selectedChapter < _maxChapters) {
+                    _goToChapter(_selectedChapter + 1);
+                  }
+                } else if (details.primaryVelocity! > 250) {
+                  // Swipe a la derecha -> Capítulo Anterior
+                  if (_selectedChapter > 1) {
+                    _goToChapter(_selectedChapter - 1);
+                  }
+                }
+              }
+            },
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+              children: [
+                _buildOfflineBanner(),
+                if (widget.readOnly && _maxChapters > 1) ...[
+                  const SizedBox(height: 8),
+                  _buildSwipeHintBar(),
+                ],
+                const SizedBox(height: 16),
+                if (_passages.isNotEmpty && _passages.first.verses.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      children: [
+                        Text(
+                          _passages.first.reference,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: _readingTheme == BibleReadingTheme.dark
+                                ? AppTheme.accentGold
+                                : AppTheme.primaryBlue,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        width: 48,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color:
-                              AppTheme.primaryBlueLight.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(2),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: 48,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color:
+                                AppTheme.primaryBlueLight.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ..._passages.map(_buildPassage),
-              if (!widget.readOnly && !isCompleted) _buildCompleteButton(),
-            ],
+                ..._passages.map(_buildPassage),
+                if (!widget.readOnly && !isCompleted) _buildCompleteButton(),
+              ],
+            ),
           ),
         ),
         if (widget.readOnly && _selectedBookId != null)
@@ -542,6 +674,65 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         if (widget.readOnly && _passages.isNotEmpty)
           _buildReaderToolbar(),
       ],
+    );
+  }
+
+  Widget _buildSwipeHintBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _readingTheme == BibleReadingTheme.dark
+            ? Colors.white.withValues(alpha: 0.08)
+            : AppTheme.primaryBlue.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.chevron_left,
+                size: 16,
+                color: _selectedChapter > 1
+                    ? AppTheme.primaryBlue
+                    : AppTheme.textSecondary.withValues(alpha: 0.3),
+              ),
+              Text(
+                _selectedChapter > 1 ? ' Cap. ${_selectedChapter - 1}' : ' Inicio',
+                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+              ),
+            ],
+          ),
+          const Row(
+            children: [
+              Icon(Icons.swipe_left_alt, size: 14, color: AppTheme.textSecondary),
+              SizedBox(width: 4),
+              Text(
+                'Desliza para cambiar',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+              ),
+              SizedBox(width: 4),
+              Icon(Icons.swipe_right_alt, size: 14, color: AppTheme.textSecondary),
+            ],
+          ),
+          Row(
+            children: [
+              Text(
+                _selectedChapter < _maxChapters ? 'Cap. ${_selectedChapter + 1} ' : ' Fin',
+                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 16,
+                color: _selectedChapter < _maxChapters
+                    ? AppTheme.primaryBlue
+                    : AppTheme.textSecondary.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -996,7 +1187,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                     TextSpan(
                       text: verse.text,
                       style: TextStyle(
-                        color: AppTheme.textPrimary,
+                        color: _themeTextColor,
                         fontSize: _fontSize,
                         height: 1.65,
                       ),
@@ -1027,17 +1218,38 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
           onPressed: () async {
             await storageService.markDateAsCompleted(widget.fechaClave);
             final uid = ref.read(effectiveUserUidProvider);
+            final firestore = ref.read(firestoreServiceProvider);
+            final user = ref.read(userProfileProvider).asData?.value;
+
             if (uid != null) {
-              final firestore = ref.read(firestoreServiceProvider);
               final completed = await storageService.getCompletedDates();
               final maxStreak = storageService.getMaxStreak();
               await firestore.syncProgress(uid, completed, maxStreak);
             }
+
+            final newBadges = await GamificationService.evaluarYNotificarBadges(
+              user: user,
+              firestore: firestore,
+              storage: storageService,
+              extraStats: {
+                'lecturas_completadas': storageService.getTotalCompletadas(),
+              },
+            );
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Lectura completada')),
               );
               Navigator.pop(context);
+              if (newBadges.isNotEmpty) {
+                GamificationService.showBadgeUnlockedDialog(
+                  context,
+                  newBadges,
+                  firestore: firestore,
+                  storage: storageService,
+                  user: user,
+                );
+              }
             }
           },
           icon: const Icon(Icons.check_circle_outline),
@@ -1131,6 +1343,35 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     _showNoteEditor(verse, note);
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.compare_arrows, color: AppTheme.primaryBlue),
+                  title: const Text('Comparar en otras versiones'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      this.context,
+                      MaterialPageRoute(
+                        builder: (_) => BibleCompareScreen(
+                          pasaje: verse.reference,
+                          initialVersionA: _selectedVersion.id,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.copy_rounded),
+                  title: const Text('Copiar versículo'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Clipboard.setData(ClipboardData(text: '${verse.reference}: ${verse.text}'));
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(content: Text('Versículo copiado al portapapeles')),
+                    );
                   },
                 ),
               ],

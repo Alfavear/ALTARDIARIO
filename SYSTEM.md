@@ -27,6 +27,7 @@ lib/
   data/
     models/
       bible_models.dart              # BibleVersion, BibleVerse, BiblePassage, BibleHighlight, BibleNote
+      badge.dart                     # Badge (gamificación: insignias, categorías, rareza)
       comment.dart                   # Comment (comentarios en reflexiones)
       debate.dart                    # Debate (foro bíblico)
       debate_reply.dart              # DebateReply (respuestas en foro)
@@ -35,29 +36,37 @@ lib/
       note.dart                      # Note (notas personales)
       peticion_oracion.dart          # PeticionOracion
       reflexion.dart                 # Reflexion (publicaciones)
-      usuario.dart                   # Usuario (perfil)
+      usuario.dart                   # Usuario (perfil) — incluye badges, totalPuntos, nivel
     services/
-      auth_service.dart              # Auth: anónimo, Google, Apple, demo local
+      auth_service.dart              # Auth: anónimo, Google, Apple
       bible_service.dart             # Carga y gestión de Biblias (SQLite + memoria web)
       firestore_service.dart         # CRUD Firestore: reflexiones, usuarios, comentarios, debates, streaks, chats
+      gamification_service.dart      # Gamificación: badges, XP, niveles, progreso
       storage_service.dart           # SharedPreferences: progreso, rachas, modo enfoque, notas, notificaciones
+  core/
+    services/
+      notification_service.dart      # Notificaciones locales + push FCM
+      community_policy_service.dart  # Normas de la Comunidad (5 reglas, modal, política de privacidad)
+      gamification_service.dart      # Gamificación: badges, XP, niveles, progreso
   presentation/
     providers/
       app_providers.dart             # Todos los providers Riverpod
+    widgets/
+      guest_access_restricted_widget.dart  # Pantalla de bloqueo con CTA para usuarios invitados
     screens/
       splash_screen.dart             # Pantalla de carga inicial
-      login_screen.dart              # Login: Google, Apple, Demo
+      login_screen.dart              # Login: Google, Apple, Invitado (anónimo)
       main_navigation_view.dart      # BottomNavigationBar + IndexedStack (5 tabs)
       home_screen.dart               # Tab 0: Inicio, versículo, stats, foro, rachas, modo enfoque, sugerencias
       calendario_view.dart           # Tab 1: Calendario de lectura anual
-      feed_screen.dart               # Tab 2: Altar Comunitario (feed de reflexiones)
-      oracion_screen.dart            # Tab 3: Peticiones de oración
-      perfil_screen.dart             # Tab 4: Perfil personal
-      bible_reader_screen.dart       # Lector bíblico con múltiples versiones
+      feed_screen.dart               # Tab 2: Altar Comunitario (restringido para invitados)
+      oracion_screen.dart            # Tab 3: Peticiones de oración (restringido para invitados)
+      perfil_screen.dart             # Tab 4: Perfil personal (estadísticas, edición, configuración)
+      bible_reader_screen.dart       # Lector bíblico con múltiples versiones y temas
       bible_versions_screen.dart     # Gestión de versiones bíblicas
       notes_screen.dart              # Notas personales
       note_editor_screen.dart        # Editor de notas
-      publicar_reflexion_screen.dart # Publicar reflexión
+      publicar_reflexion_screen.dart # Publicar reflexión (con banner política comunidad)
       public_profile_screen.dart     # Perfil público de otro usuario
       followers_screen.dart          # Siguiendo / Seguidores
       chat_list_screen.dart          # Lista de chats (no utilizado actualmente)
@@ -67,8 +76,6 @@ lib/
       debate_detail_screen.dart      # Hilo de debate con respuestas
       amigos_rachas_screen.dart      # Ranking de rachas entre amigos
       anual_view.dart                # Vista anual (no utilizado)
-    widgets/
-      # Widgets compartidos (vacíos actualmente)
 test/
   models/                            # Tests unitarios de modelos
   screens/                           # Tests widget
@@ -135,6 +142,8 @@ SplashScreen → LoginScreen → MainNavigationView (IndexedStack)
 | `debateRepliesStreamProvider` | `StreamProvider.family<List<DebateReply>, String>` | Respuestas de debate |
 | `sugerenciasAmistadProvider` | `FutureProvider<List<Usuario>>` | Sugerencias de amistad |
 | `focusModeProvider` | `NotifierProvider<FocusModeNotifier, bool>` | Modo Enfoque |
+| `isGuestUserProvider` | `Provider<bool>` | ¿El usuario actual es invitado (anónimo)? |
+| `userProfileByIdProvider` | `StreamProvider.family<Usuario?, String>` | Perfil de usuario por UID (para tarjetas de autor) |
 
 ---
 
@@ -197,12 +206,27 @@ SplashScreen → LoginScreen → MainNavigationView (IndexedStack)
 
 ### 10. Autenticación
 - Firebase Auth (anónimo, Google, Apple)
-- Modo Demo offline (sin Firebase)
+- Acceso como **Invitado** (anónimo) con restricciones de funciones sociales
 - Tolerante a Firebase caído
 
 ### 11. Notificaciones
 - Recordatorio diario configurable
-- Hora configurable desde Perfil
+- Hora configurable desde Perfil → Configuración
+
+### 12. Seguridad de Invitados
+- `isGuestUserProvider`: detecta si el usuario actual es anónimo
+- `GuestAccessRestrictedWidget`: pantalla de bloqueo con call-to-action a registro
+- **FeedScreen**: invitados no pueden publicar, seguir, reaccionar ni comentar
+- **OracionScreen**: completamente bloqueada para invitados (pantalla de registro)
+
+### 13. Política de Comunidad
+- `CommunityPolicyService`: servicio con 5 normas de uso (respeto, contenido, fuentes, spam, privacidad)
+- Modal de normas en `PerfilScreen` → Configuración
+- Banner recordatorio en `PublicarReflexionScreen`
+
+### 14. Ícono Personalizado
+- Ícono 3D de llama dorada configurado con `flutter_launcher_icons`
+- Generado en todos los tamaños Android (`mipmap-*`) e iOS
 
 ---
 
@@ -324,8 +348,8 @@ keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -sto
 ```
 3. Para release: usar el SHA de tu keystore de release
 
-### Solución temporal para pruebas
-Usar **Modo Demo** desde la pantalla de Login — funciona sin configuración de Google.
+### Acceso sin cuenta
+Usar **"Iniciar sesión como invitado"** desde la pantalla de Login (acceso anónimo de Firebase). Las funciones sociales (publicar, comentar, seguir, peticiones de oración) requieren cuenta registrada.
 
 ---
 

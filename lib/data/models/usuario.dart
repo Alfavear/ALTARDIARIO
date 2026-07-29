@@ -12,6 +12,9 @@ class Usuario {
   final bool modoEnfoque;
   final int notifHour;
   final int notifMin;
+  final List<String> badges;
+  final int totalPuntos;
+  final int nivel;
 
   Usuario({
     required this.id,
@@ -25,6 +28,9 @@ class Usuario {
     this.modoEnfoque = false,
     this.notifHour = 20,
     this.notifMin = 0,
+    this.badges = const [],
+    this.totalPuntos = 0,
+    this.nivel = 1,
   }) : fechaCreacion = fechaCreacion ?? DateTime.now();
 
   factory Usuario.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +47,9 @@ class Usuario {
       modoEnfoque: data['modoEnfoque'] ?? false,
       notifHour: data['notifHour'] ?? 20,
       notifMin: data['notifMin'] ?? 0,
+      badges: List<String>.from(data['badges'] ?? []),
+      totalPuntos: data['totalPuntos'] ?? 0,
+      nivel: data['nivel'] ?? 1,
     );
   }
 
@@ -57,6 +66,9 @@ class Usuario {
       modoEnfoque: data['modoEnfoque'] ?? false,
       notifHour: data['notifHour'] ?? 20,
       notifMin: data['notifMin'] ?? 0,
+      badges: List<String>.from(data['badges'] ?? []),
+      totalPuntos: data['totalPuntos'] ?? 0,
+      nivel: data['nivel'] ?? 1,
     );
   }
 
@@ -71,6 +83,9 @@ class Usuario {
     'modoEnfoque': modoEnfoque,
     'notifHour': notifHour,
     'notifMin': notifMin,
+    'badges': badges,
+    'totalPuntos': totalPuntos,
+    'nivel': nivel,
   };
 
   static DateTime _readDate(Object? value) {

@@ -828,6 +828,7 @@ class _MiniReadingCard extends StatelessWidget {
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(day.toUpperCase(),
@@ -836,27 +837,27 @@ class _MiniReadingCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textSecondary,
                   letterSpacing: 1)),
-          const SizedBox(height: 6),
-           Text(passage,
-               maxLines: 2,
-               overflow: TextOverflow.ellipsis,
-               style: const TextStyle(
-                   fontSize: 14,
-                   fontWeight: FontWeight.w700,
-                   color: AppTheme.primaryBlue)),
-           const Spacer(),
-           Row(
-             mainAxisSize: MainAxisSize.min,
-             children: [
-               const Icon(Icons.schedule,
-                   size: 14, color: AppTheme.pendingGrayDark),
-               const SizedBox(width: 4),
-               const Text('Planificado',
-                   style: TextStyle(
-                       fontSize: 11,
-                       color: AppTheme.pendingGrayDark)),
-             ],
-           ),
+          const SizedBox(height: 4),
+          Text(passage,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryBlue)),
+          Row(
+            children: [
+              const Icon(Icons.schedule,
+                  size: 14, color: AppTheme.pendingGrayDark),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text('Planificado',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.pendingGrayDark)),
+              ),
+            ],
+          ),
         ],
       ),
     );

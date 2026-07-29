@@ -16,6 +16,18 @@ class StorageService {
   static const String _keyCompletedDates = 'completed_dates';
   static const String _keyIsPlanGenerated = 'is_plan_generated';
   static const String _keyMaxStreak = 'max_streak';
+  static const String _keyUserName = 'user_display_name';
+
+  String? getUserName() => _prefs.getString(_keyUserName);
+
+  Future<void> setUserName(String name) async {
+    await _prefs.setString(_keyUserName, name);
+  }
+
+  Future<void> clearLocalProgress() async {
+    await _prefs.remove(_keyCompletedDates);
+    await _prefs.remove(_keyMaxStreak);
+  }
 
   Map<String, String> _planData = {};
 

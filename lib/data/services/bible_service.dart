@@ -260,7 +260,7 @@ class BibleService {
 
   Future<List<BiblePassage>> getPassageText(
     String query, {
-    String version = 'rv1909',
+    String version = 'rv1960',
   }) async {
     await _initialized;
     final passages =
@@ -278,19 +278,64 @@ class BibleService {
         continue;
       }
 
-      final rows = _memoryMode
+      var rows = _memoryMode
           ? _queryPassageMemory(parsed, version)
           : await _queryPassage(await _db, parsed, version);
+
+      if (!_memoryMode && rows.isEmpty && version != 'rv1960') {
+        rows = await _queryPassage(await _db, parsed, 'rv1960');
+      }
+
+      if (_memoryMode && rows.isEmpty) {
+        rows = await _fetchWebChapterOnline(parsed, version);
+        if (rows.isEmpty && version != 'rv1960') {
+          rows = await _fetchWebChapterOnline(parsed, 'rv1960');
+        }
+      }
+
       results.add(BiblePassage(
         reference: passage,
         verses: rows.map(BibleVerse.fromMap).toList(),
         message: rows.isEmpty
-            ? 'Este pasaje aún no está disponible en la Biblia offline incluida.'
+            ? 'Este pasaje aún no está disponible.'
             : null,
       ));
     }
 
     return results.toList();
+  }
+
+  Future<List<Map<String, Object?>>> _fetchWebChapterOnline(
+    ParsedPassage passage,
+    String versionId,
+  ) async {
+    final apiSlug = versionId.toUpperCase();
+    final url = '$_bollsBase/get-text/$apiSlug/${passage.bookId}/${passage.chapterStart}/';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) return [];
+      final verses = jsonDecode(response.body) as List<dynamic>;
+      final results = <Map<String, Object?>>[];
+      for (final v in verses) {
+        final item = v as Map<String, dynamic>;
+        final verseNum = item['verse'] as int;
+        final text = _stripHtml(item['text'] as String);
+        final map = <String, Object?>{
+          'version': versionId,
+          'book_id': passage.bookId,
+          'book_name': passage.bookName,
+          'chapter': passage.chapterStart,
+          'verse': verseNum,
+          'text': text,
+        };
+        final key = '$versionId:${passage.bookId}:${passage.chapterStart}:$verseNum';
+        _memoryVerses[key] = [map];
+        results.add(map);
+      }
+      return results;
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<List<BibleHighlight>> getHighlightsForPassages(

@@ -6,6 +6,7 @@ import '../providers/app_providers.dart';
 import '../../data/models/comment.dart';
 import '../../data/models/reflexion.dart';
 import '../../core/theme/app_theme.dart';
+import '../widgets/guest_access_restricted_widget.dart';
 import 'public_profile_screen.dart';
 import 'publicar_reflexion_screen.dart';
 
@@ -52,6 +53,36 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isGuest = ref.watch(isGuestUserProvider);
+
+    if (isGuest) {
+      return Scaffold(
+        backgroundColor: AppTheme.scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: AppTheme.scaffoldBg,
+          foregroundColor: AppTheme.textPrimary,
+          elevation: 0,
+          title: Row(
+            children: [
+              const Icon(Icons.menu_book,
+                  color: AppTheme.primaryBlue, size: 22),
+              const SizedBox(width: 8),
+              Text('Altar Comunitario',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineMedium
+                      ?.copyWith(color: AppTheme.primaryBlue, fontSize: 20)),
+            ],
+          ),
+        ),
+        body: const GuestAccessRestrictedWidget(
+          title: 'Altar Comunitario Reservado',
+          description:
+              'Para proteger la comunidad de perfiles falsos y vulnerabilidades, la lectura y publicación de reflexiones comunitarias están reservadas para miembros registrados con su cuenta de Google.',
+        ),
+      );
+    }
+
     final reflexionesAsync = ref.watch(reflexionesStreamProvider);
 
     return Scaffold(
@@ -279,6 +310,16 @@ class _ReflexionCard extends ConsumerWidget {
         uid != null ? reflexion.getReaction(uid) : null;
     final commentCount = reflexion.commentCount;
 
+    final authorProfile =
+        ref.watch(userProfileByIdProvider(reflexion.userId)).value;
+    final authorName = (authorProfile?.nombre.isNotEmpty == true)
+        ? authorProfile!.nombre
+        : (reflexion.userName.isNotEmpty &&
+                reflexion.userName != 'Usuario de Altar' &&
+                reflexion.userName != 'Usuario'
+            ? reflexion.userName
+            : 'Hermano en Fe');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -307,9 +348,7 @@ class _ReflexionCard extends ConsumerWidget {
                   backgroundColor:
                       AppTheme.primaryBlue.withValues(alpha: 0.12),
                   child: Text(
-                    reflexion.userName.isNotEmpty
-                        ? reflexion.userName[0]
-                        : '?',
+                    authorName.isNotEmpty ? authorName[0].toUpperCase() : '?',
                     style: const TextStyle(
                         color: AppTheme.primaryBlue,
                         fontWeight: FontWeight.w700),
@@ -331,7 +370,7 @@ class _ReflexionCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(reflexion.userName,
+                      Text(authorName,
                           style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
@@ -348,54 +387,53 @@ class _ReflexionCard extends ConsumerWidget {
               ),
               if (isFollowingAsync != null)
                 isFollowingAsync.when(
-                  data: (isFollowing) => isFollowing
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppTheme.todayHighlight,
-                            borderRadius:
-                                BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.check,
-                                  size: 12,
-                                  color: AppTheme.completedGreen),
-                              SizedBox(width: 3),
-                              Text('Siguiendo',
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      color:
-                                          AppTheme.completedGreen)),
-                            ],
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            ref
-                                .read(firestoreServiceProvider)
-                                .toggleFollow(uid!, reflexion.userId,
-                                    false);
-                            ref.invalidate(
-                                isFollowingProvider(reflexion.userId));
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue,
-                              borderRadius:
-                                  BorderRadius.circular(20),
-                            ),
-                            child: const Text('Seguir',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white)),
-                          ),
-                        ),
+                  data: (isFollowing) => GestureDetector(
+                        onTap: () async {
+                          await ref.read(firestoreServiceProvider).toggleFollow(
+                                uid!,
+                                reflexion.userId,
+                                isFollowing,
+                              );
+                          ref.invalidate(isFollowingProvider(reflexion.userId));
+                        },
+                        child: isFollowing
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.todayHighlight,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: AppTheme.completedGreen.withValues(alpha: 0.4)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check,
+                                        size: 12, color: AppTheme.completedGreen),
+                                    SizedBox(width: 3),
+                                    Text('Siguiendo',
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.completedGreen)),
+                                  ],
+                                ),
+                              )
+                            : Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryBlue,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text('Seguir',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white)),
+                              ),
+                      ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 )

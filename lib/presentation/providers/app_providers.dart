@@ -12,41 +12,33 @@ import '../../data/models/usuario.dart';
 import '../../data/models/peticion_oracion.dart';
 import '../../data/models/reflexion.dart';
 import '../../core/services/notification_service.dart';
-
 /// StorageService — se inicializa con override en main.dart
 final storageProvider = Provider<StorageService>((ref) {
   throw UnimplementedError(
       'storageProvider no ha sido inicializado en el ProviderScope');
 });
-
 /// Servicio de autenticación.
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
-
 /// Stream de cambios en el estado de autenticación (Firebase Auth).
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).userChanges;
 });
-
 /// UID local para modo demo/testing (sin Firebase).
 class LocalUidNotifier extends Notifier<String?> {
   @override
   String? build() => null;
   void setUid(String? uid) => state = uid;
 }
-
 final localUidProvider = NotifierProvider<LocalUidNotifier, String?>(LocalUidNotifier.new);
-
 /// UID efectivo: Firebase Auth primero, luego modo local.
 final effectiveUserUidProvider = Provider<String?>((ref) {
   final fbUid = ref.watch(authStateProvider).value?.uid;
   if (fbUid != null) return fbUid;
   return ref.watch(localUidProvider);
 });
-
 /// Servicio de Firestore.
 final firestoreServiceProvider =
     Provider<FirestoreService>((ref) => FirestoreService());
-
 /// Perfil del usuario autenticado en Firestore.
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -54,46 +46,51 @@ final userProfileProvider = StreamProvider<Usuario?>((ref) {
   return ref.watch(firestoreServiceProvider).getUsuario(uid);
 });
 
+/// Perfil de un usuario específico por su ID.
+final userProfileByIdProvider = StreamProvider.family<Usuario?, String>((ref, userId) {
+  if (userId.isEmpty) return Stream.value(null);
+  return ref.watch(firestoreServiceProvider).getUsuario(userId);
+});
+
+/// Provider que determina si el usuario actual es un Invitado / Anónimo.
+final isGuestUserProvider = Provider<bool>((ref) {
+  final authUser = ref.watch(authStateProvider).value;
+  if (authUser == null) return true;
+  return authUser.isAnonymous;
+});
 /// Feed de reflexiones de la comunidad.
 final reflexionesStreamProvider = StreamProvider<List<Reflexion>>((ref) {
   return ref.watch(firestoreServiceProvider).reflexionesStream();
 });
-
 /// Reflexiones de un usuario específico (para su perfil).
 final userReflexionesProvider =
     StreamProvider.family<List<Reflexion>, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserReflexiones(userId);
 });
-
 /// Peticiones de oración de la comunidad.
 final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
   return ref.watch(firestoreServiceProvider).peticionesStream();
 });
-
 /// Mensajes de un chat específico.
 final messagesStreamProvider =
     StreamProvider.family<List<Message>, String>((ref, chatId) {
   return ref.watch(firestoreServiceProvider).getMessages(chatId);
 });
-
 /// Verifica si el usuario actual es el autor de un contenido.
 final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
   final uid = ref.watch(effectiveUserUidProvider);
   return uid == authorId;
 });
-
 /// Lista de chats del usuario.
 final chatListProvider =
     StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserChats(userId);
 });
-
 /// Perfil de otro usuario (público).
 final otherUserProfileProvider =
     StreamProvider.family<Usuario?, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUsuario(userId);
 });
-
 /// Datos de racha de un amigo para mostrar en ranking.
 class FriendStreak {
   final String userId;
@@ -111,7 +108,6 @@ class FriendStreak {
     required this.totalLecturas,
   });
 }
-
 /// Proveedor de rachas de amigos (usuarios que sigo + yo).
 final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -156,7 +152,6 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
   results.sort((a, b) => b.rachaActual.compareTo(a.rachaActual));
   return results;
 });
-
 /// Datos para el leaderboard global (top usuarios por racha).
 class LeaderboardEntry {
   final String userId;
@@ -166,7 +161,6 @@ class LeaderboardEntry {
   final int maxStreak;
   final int totalLecturas;
   final int posicion;
-
   LeaderboardEntry({
     required this.userId,
     required this.nombre,
@@ -177,7 +171,6 @@ class LeaderboardEntry {
     required this.posicion,
   });
 }
-
 /// Leaderboard global: top 100 usuarios por racha actual.
 final globalLeaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -246,7 +239,6 @@ final globalLeaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) a
   
   return results.take(100).toList();
 });
-
 /// Verifica si el usuario actual sigue a otro usuario.
 final isFollowingProvider = FutureProvider.family<bool, String>((ref, targetId) {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -255,37 +247,31 @@ final isFollowingProvider = FutureProvider.family<bool, String>((ref, targetId) 
     return user?.siguiendo.contains(targetId) ?? false;
   });
 });
-
 /// Comentarios de una reflexión.
 final comentariosStreamProvider =
     StreamProvider.family<List<Comment>, String>((ref, reflexionId) {
   return ref.watch(firestoreServiceProvider).comentariosStream(reflexionId);
 });
-
 /// Lista de usuarios que sigo.
 final siguiendoUsuariosProvider =
     FutureProvider.family<List<Usuario>, String>((ref, uid) {
   return ref.read(firestoreServiceProvider).getSiguiendoUsuarios(uid);
 });
-
 /// Lista de seguidores.
 final seguidoresUsuariosProvider =
     FutureProvider.family<List<Usuario>, String>((ref, uid) {
   return ref.read(firestoreServiceProvider).getSeguidoresUsuarios(uid);
 });
-
 /// Stream de debates bíblicos.
 final debatesStreamProvider =
     StreamProvider.family<List<Debate>, String?>((ref, libroId) {
   return ref.watch(firestoreServiceProvider).debatesStream(libroId: libroId);
 });
-
 /// Stream de respuestas de un debate.
 final debateRepliesStreamProvider =
     StreamProvider.family<List<DebateReply>, String>((ref, debateId) {
   return ref.watch(firestoreServiceProvider).debateRepliesStream(debateId);
 });
-
 /// Sugerencias de amistad (usuarios que no sigues).
 final sugerenciasAmistadProvider =
     FutureProvider<List<Usuario>>((ref) async {
@@ -299,11 +285,9 @@ final sugerenciasAmistadProvider =
   allUsers.shuffle();
   return allUsers.where((u) => !excludeIds.contains(u.id)).take(5).toList();
 });
-
 /// Modo Enfoque — sincronizado con Firestore (nivel usuario) y local.
 class FocusModeNotifier extends Notifier<bool> {
   bool _initialSyncDone = false;
-
   @override
   bool build() {
     final storage = ref.watch(storageProvider);
@@ -313,7 +297,6 @@ class FocusModeNotifier extends Notifier<bool> {
     }
     return storage.getFocusMode();
   }
-
   Future<void> _syncFromFirestore() async {
     try {
       final uid = ref.read(effectiveUserUidProvider);
@@ -342,7 +325,6 @@ class FocusModeNotifier extends Notifier<bool> {
       }
     } catch (_) {}
   }
-
   Future<void> toggle() async {
     final storage = ref.read(storageProvider);
     final firestore = ref.read(firestoreServiceProvider);
@@ -363,15 +345,12 @@ class FocusModeNotifier extends Notifier<bool> {
     }
   }
 }
-
 final focusModeProvider =
     NotifierProvider<FocusModeNotifier, bool>(FocusModeNotifier.new);
-
 /// Token FCM del usuario actual (para push notifications).
 class FcmTokenNotifier extends Notifier<String?> {
   @override
   String? build() => null;
-
   Future<void> setToken(String token) async {
     state = token;
     final uid = ref.read(effectiveUserUidProvider);
@@ -379,7 +358,6 @@ class FcmTokenNotifier extends Notifier<String?> {
       await ref.read(firestoreServiceProvider).updateUserConfig(uid, {'fcmToken': token});
     }
   }
-
   Future<void> clearToken() async {
     state = null;
     final uid = ref.read(effectiveUserUidProvider);
@@ -388,16 +366,13 @@ class FcmTokenNotifier extends Notifier<String?> {
     }
   }
 }
-
 final fcmTokenProvider = NotifierProvider<FcmTokenNotifier, String?>(FcmTokenNotifier.new);
-
 /// Stream de notificaciones del usuario actual.
 final notificationsStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
   if (uid == null) return Stream.value([]);
   return ref.watch(firestoreServiceProvider).notificationsStream(uid);
 });
-
 /// Contador de notificaciones no leídas.
 final unreadNotificationsCountProvider = Provider<int>((ref) {
   final notificationsAsync = ref.watch(notificationsStreamProvider);
@@ -407,3 +382,4 @@ final unreadNotificationsCountProvider = Provider<int>((ref) {
     error: (_, __) => 0,
   );
 });
+

@@ -175,12 +175,12 @@ class AuthService {
     if (!_firebaseAvailable || !kIsWeb) return null;
     try {
       debugPrint('🔄 [AuthService] Verificando redirect result...');
-      final UserCredential? result = 
-          await _auth!.getRedirectResult();
-      debugPrint('✅ [AuthService] Redirect result: ${result?.user?.uid ?? "null"}');
+final UserCredential result = 
+           await _auth!.getRedirectResult();
+      debugPrint('✅ [AuthService] Redirect result: ${result.user?.uid ?? "null"}');
       
-      if (result?.user != null) {
-        return result!.user;
+      if (result.user != null) {
+        return result.user;
       }
       return null;
     } catch (e) {

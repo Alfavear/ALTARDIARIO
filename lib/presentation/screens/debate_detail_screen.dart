@@ -164,8 +164,9 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                           icon: const Icon(Icons.send_rounded,
                               color: AppTheme.primaryBlue),
                           onPressed: () {
-                            if (_replyCtrl.text.trim().isEmpty)
+if (_replyCtrl.text.trim().isEmpty) {
                               return;
+                            }
                             _sendReply(widget.debateId, uid, debate);
                           },
                         ),
