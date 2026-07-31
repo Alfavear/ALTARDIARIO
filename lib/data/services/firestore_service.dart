@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/reflexion.dart';
 import '../models/comment.dart';
 import '../models/debate.dart';
@@ -16,7 +17,11 @@ class FirestoreService {
 
   static FirebaseFirestore? _initFirestore() {
     try {
-      return FirebaseFirestore.instance;
+      final instance = FirebaseFirestore.instance;
+      if (!kIsWeb) {
+        instance.settings = const Settings(persistenceEnabled: true);
+      }
+      return instance;
     } catch (_) {
       return null;
     }

@@ -796,9 +796,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         if (uid != null) {
                           final completed = storage.getCompletedDatesSync();
                           final maxStreak = storage.getMaxStreak();
-                          await ref
-                              .read(firestoreServiceProvider)
-                              .syncProgress(uid, completed, maxStreak);
+                          await syncProgressGuarded(
+                              ref, uid, completed, maxStreak);
                         }
                         if (mounted) setState(() {});
                       },

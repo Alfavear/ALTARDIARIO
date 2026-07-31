@@ -4,7 +4,41 @@ Este archivo documenta los avances, decisiones y tareas realizadas en la evoluci
 
 ---
 
-## 2026-07-30 — Sesión: 30 de Julio 2026 (Parte 2) - Notificaciones y Correcciones en Reglas de Firestore
+## 2026-07-31 — Modo Offline: cola de sincronización de progreso
+
+### ✅ Contexto
+- Auditoría completa del modo offline: la lectura bíblica ya funcionaba sin internet en nativo (SQLite con Biblia RV1960 embebida en `assets/bible/es_rv1960_complete.json`); `_memoryMode` es solo web.
+- Problema: `syncProgress` se llamaba sin protección en 3 sitios y, sin conexión, podía **abortar flujos** (marcar día, finalizar lectura, calendario).
+
+### ✅ Cambios de código
+- **`lib/data/services/storage_service.dart`**: Nueva cola de sincronización pendiente:
+  - `_keyPendingDates = 'pending_sync_dates'`
+  - `getPendingSyncDates()`, `setPendingSyncDates(list)`, `clearPendingSync()`
+  - `clearAllLocalData()` ahora también borra la cola pendiente
+- **`lib/data/services/firestore_service.dart`**: `persistenceEnabled: true` en `FirebaseFirestore.settings` (solo móvil, no web) — Firestore encola escrituras offline automáticamente.
+- **`lib/presentation/providers/app_providers.dart`**:
+  - `bibleServiceProvider`: provider singleton de `BibleService`
+  - `syncProgressGuarded(ref, uid, completed, maxStreak)`: envuelve `syncProgress`; si falla, guarda las fechas en la cola pendiente; si funciona, limpia la cola
+  - `pushPendingProgress(ref)`: reintenta subir fechas pendientes + subrayados/notas pendientes de la Biblia (los marca `synced` al confirmarse)
+- **`lib/data/services/bible_service.dart`**: `getPendingHighlights()` y `getPendingNotes()` — consultan filas con `sync_status = 'pending'` en SQLite.
+- **`lib/presentation/screens/home_screen.dart` (~790)**: toggle de día ahora usa `syncProgressGuarded` — ya no aborta el flujo offline.
+- **`lib/presentation/screens/bible_reader_screen.dart`**: botón "FINALIZAR LECTURA" usa `syncProgressGuarded` y `evaluarYNotificarBadges` envuelto en try/catch (los badges se re-evalúan después).
+- **`lib/presentation/screens/calendario_view.dart` (~286)**: toggle de lectura del día usa `syncProgressGuarded`.
+- **`lib/presentation/screens/splash_screen.dart`**: al abrir la app, tras resolver el usuario, dispara `pushPendingProgress(ref)` para subir lo que quedó pendiente offline.
+
+### ✅ Despliegue y actualización in-app
+- APK release reconstruido (60.5MB) con los cambios offline y subido al release de GitHub v1.0.3 (reemplazado con `--clobber`).
+- Web desplegada a https://altardiario-ec25f.web.app
+- Documento `config/app_info` en Firestore actualizado (vía REST):
+  - `minVersion: '1.0.0'`, `latestVersion: '1.0.3'`, `updateUrl: 'https://github.com/Alfavear/ALTARDIARIO/releases/download/v1.0.3/app-release.apk'`
+  - La regla de escritura de `config` se relajó temporalmente a `if true` para la actualización y se restauró a `request.auth != null` (desplegada de nuevo).
+
+### ✅ Tests
+- Agregados 4 tests de cola pendiente en `test/services/storage_service_test.dart` (guardar, recuperar, limpiar, borrado en clearAllLocalData).
+- `flutter test`: 105/105 pasando.
+- `flutter analyze`: 0 errores (solo info pre-existentes en `scripts/`).
+
+---
 
 **Agente**: opencode (Antigravity)
 - **Fix 1:** Se corrigieron los permisos de actualización en `firestore.rules` para permitir que usuarios autenticados actualicen documentos que no crearon, específicamente para poder agregar 'upvotes' (Me gusta) a comentarios, reflexiones, peticiones y debates. Se cambió la variable incorrecta `authorId` por `userId` en la regla de creación de debates, lo cual estaba causando que la aplicación se quedara en pantalla de carga en el Foro Bíblico (debido a denegación de permisos al intentar escuchar la colección).

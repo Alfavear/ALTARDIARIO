@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/services/gamification_service.dart';
+import '../../data/models/badge.dart' as badge_model;
 import '../../data/models/bible_models.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
@@ -1224,17 +1225,24 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             if (uid != null) {
               final completed = await storageService.getCompletedDates();
               final maxStreak = storageService.getMaxStreak();
-              await firestore.syncProgress(uid, completed, maxStreak);
+              await syncProgressGuarded(ref, uid, completed, maxStreak);
             }
 
-            final newBadges = await GamificationService.evaluarYNotificarBadges(
-              user: user,
-              firestore: firestore,
-              storage: storageService,
-              extraStats: {
-                'lecturas_completadas': storageService.getTotalCompletadas(),
-              },
-            );
+            List<badge_model.Badge> newBadges = [];
+            try {
+              newBadges =
+                  await GamificationService.evaluarYNotificarBadges(
+                user: user,
+                firestore: firestore,
+                storage: storageService,
+                extraStats: {
+                  'lecturas_completadas':
+                      storageService.getTotalCompletadas(),
+                },
+              );
+            } catch (_) {
+              newBadges = [];
+            }
 
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(

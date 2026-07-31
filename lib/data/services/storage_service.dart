@@ -17,6 +17,7 @@ class StorageService {
   static const String _keyIsPlanGenerated = 'is_plan_generated';
   static const String _keyMaxStreak = 'max_streak';
   static const String _keyUserName = 'user_display_name';
+  static const String _keyPendingDates = 'pending_sync_dates';
 
   String? getUserName() => _prefs.getString(_keyUserName);
 
@@ -36,6 +37,19 @@ class StorageService {
     await _prefs.remove(_keyPlanStartDate);
     await _prefs.remove(_keyFocusMode);
     await _prefs.remove('local_uid');
+    await _prefs.remove(_keyPendingDates);
+  }
+
+  List<String> getPendingSyncDates() {
+    return _prefs.getStringList(_keyPendingDates) ?? [];
+  }
+
+  Future<void> setPendingSyncDates(List<String> dates) async {
+    await _prefs.setStringList(_keyPendingDates, dates);
+  }
+
+  Future<void> clearPendingSync() async {
+    await _prefs.remove(_keyPendingDates);
   }
 
   Map<String, String> _planData = {};

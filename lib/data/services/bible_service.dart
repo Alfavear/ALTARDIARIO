@@ -594,6 +594,30 @@ class BibleService {
     );
   }
 
+  Future<List<BibleHighlight>> getPendingHighlights() async {
+    await _initialized;
+    if (_memoryMode) return const [];
+    final db = await _db;
+    final rows = await db.query(
+      'bible_highlights',
+      where: 'sync_status = ? AND user_id IS NOT NULL',
+      whereArgs: ['pending'],
+    );
+    return rows.map(BibleHighlight.fromMap).toList();
+  }
+
+  Future<List<BibleNote>> getPendingNotes() async {
+    await _initialized;
+    if (_memoryMode) return const [];
+    final db = await _db;
+    final rows = await db.query(
+      'bible_notes',
+      where: 'sync_status = ? AND user_id IS NOT NULL',
+      whereArgs: ['pending'],
+    );
+    return rows.map(BibleNote.fromMap).toList();
+  }
+
   ParsedPassage? parsePassage(String raw) {
     final match = _passageRegex.firstMatch(raw.trim());
     if (match == null) return null;

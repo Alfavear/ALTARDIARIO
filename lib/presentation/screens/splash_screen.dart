@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
@@ -72,6 +74,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         ref.read(localUidProvider.notifier).setUid(localUid);
       }
       if (!mounted) return;
+      unawaited(pushPendingProgress(ref));
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainNavigationView()),
       );

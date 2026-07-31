@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/bible_service.dart';
 import '../../data/models/message.dart';
 import '../../data/models/comment.dart';
 import '../../data/models/peticion_oracion.dart';
@@ -31,15 +32,69 @@ class LocalUidNotifier extends Notifier<String?> {
   void setUid(String? uid) => state = uid;
 }
 final localUidProvider = NotifierProvider<LocalUidNotifier, String?>(LocalUidNotifier.new);
+
 /// UID efectivo: Firebase Auth primero, luego modo local.
 final effectiveUserUidProvider = Provider<String?>((ref) {
   final fbUid = ref.watch(authStateProvider).value?.uid;
   if (fbUid != null) return fbUid;
   return ref.watch(localUidProvider);
 });
+
 /// Servicio de Firestore.
 final firestoreServiceProvider =
     Provider<FirestoreService>((ref) => FirestoreService());
+
+/// Servicio de la Biblia (SQLite local).
+final bibleServiceProvider =
+    Provider<BibleService>((ref) => BibleService());
+Future<void> syncProgressGuarded(
+    WidgetRef ref, String uid, List<String> completed, int maxStreak) async {
+  final storage = ref.read(storageProvider);
+  final firestore = ref.read(firestoreServiceProvider);
+  try {
+    await firestore.syncProgress(uid, completed, maxStreak);
+    await storage.clearPendingSync();
+  } catch (_) {
+    await storage.setPendingSyncDates(completed);
+  }
+}
+
+/// Reintenta subir el progreso pendiente (fechas completadas y
+/// subrayados/notas de la Biblia) que no se pudo sincronizar offline.
+Future<void> pushPendingProgress(WidgetRef ref) async {
+  final uid = ref.read(effectiveUserUidProvider);
+  if (uid == null) return;
+  final storage = ref.read(storageProvider);
+  final firestore = ref.read(firestoreServiceProvider);
+
+  final pending = storage.getPendingSyncDates();
+  if (pending.isNotEmpty) {
+    try {
+      await firestore.syncProgress(uid, pending, storage.getMaxStreak());
+      await storage.clearPendingSync();
+    } catch (_) {
+      return;
+    }
+  }
+
+  final bibleService = ref.read(bibleServiceProvider);
+    try {
+      final pendingHighlights = await bibleService.getPendingHighlights();
+      for (final h in pendingHighlights) {
+        try {
+          await firestore.syncBibleHighlight(uid, h);
+          await bibleService.markHighlightSynced(h.id);
+        } catch (_) {}
+      }
+      final pendingNotes = await bibleService.getPendingNotes();
+      for (final n in pendingNotes) {
+        try {
+          await firestore.syncBibleNote(uid, n);
+          await bibleService.markNoteSynced(n.id);
+        } catch (_) {}
+      }
+    } catch (_) {}
+}
 /// Perfil del usuario autenticado en Firestore.
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);

@@ -141,5 +141,29 @@ void main() {
         expect(lecturas.first.dia, 1);
       });
     });
+
+    group('cola de sincronización pendiente', () {
+      test('inicia sin fechas pendientes', () {
+        expect(storage.getPendingSyncDates(), isEmpty);
+      });
+
+      test('setPendingSyncDates guarda y recupera fechas', () async {
+        await storage.setPendingSyncDates(['2026-06-01', '2026-06-02']);
+        expect(storage.getPendingSyncDates(),
+            ['2026-06-01', '2026-06-02']);
+      });
+
+      test('clearPendingSync vacía la cola', () async {
+        await storage.setPendingSyncDates(['2026-06-01']);
+        await storage.clearPendingSync();
+        expect(storage.getPendingSyncDates(), isEmpty);
+      });
+
+      test('clearAllLocalData también borra la cola pendiente', () async {
+        await storage.setPendingSyncDates(['2026-06-01']);
+        await storage.clearAllLocalData();
+        expect(storage.getPendingSyncDates(), isEmpty);
+      });
+    });
   });
 }
