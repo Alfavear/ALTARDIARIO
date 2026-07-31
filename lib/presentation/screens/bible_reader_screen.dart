@@ -12,6 +12,7 @@ import 'bible_compare_screen.dart';
 import 'bible_versions_screen.dart';
 import 'note_editor_screen.dart';
 import 'notes_screen.dart';
+import '../widgets/bible_dictionary_modal.dart';
 
 enum BibleReadingTheme { light, sepia, dark }
 
@@ -460,6 +461,11 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Diccionario bíblico',
+            icon: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue),
+            onPressed: () => BibleDictionaryModal.show(context),
+          ),
           IconButton(
             tooltip: 'Comparar versiones',
             icon: const Icon(Icons.compare_arrows, color: AppTheme.primaryBlue),
@@ -1351,6 +1357,15 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     _showNoteEditor(verse, note);
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.menu_book_rounded, color: AppTheme.accentGold),
+                  title: const Text('Buscar en Diccionario Bíblico'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    BibleDictionaryModal.show(this.context);
                   },
                 ),
                 ListTile(

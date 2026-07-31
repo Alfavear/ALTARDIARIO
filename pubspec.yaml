@@ -60,3 +60,4 @@ flutter:
     - assets/plan_lectura.json
     - assets/bible/
     - assets/bible/es_rv1960_complete.json
+    - assets/dictionary/biblical_glossary.json

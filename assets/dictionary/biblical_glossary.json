@@ -1,0 +1,227 @@
+[
+  {
+    "id": "selah",
+    "palabra": "Selah",
+    "origen": "Hebreo: סֶלָה (Selah)",
+    "significado": "Pauta musical / Pausa para meditar",
+    "definicion": "Expresión poética y musical hallada frecuentemente en los Salmos y en Habacuc. Indica una pausa contemplativa para reflexionar profundamente en lo que se acaba de cantar o leer.",
+    "pasajes": ["Salmos 3:2", "Salmos 46:7", "Habacuc 3:3"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "shalom",
+    "palabra": "Shalom",
+    "origen": "Hebreo: שָׁלוֹם (Shālōm)",
+    "significado": "Paz integral, plenitud, bienestar",
+    "definicion": "Más que la mera ausencia de conflicto, el Shalom hebreo representa integridad, salud física y espiritual, prosperidad y perfecta armonía con Dios y con el prójimo.",
+    "pasajes": ["Números 6:26", "Isaías 9:6", "Jeremías 29:11"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "agape",
+    "palabra": "Ágape",
+    "origen": "Griego: ἀγάπη (Agápē)",
+    "significado": "Amor incondicional y sacrificial",
+    "definicion": "El nivel más alto de amor en el Nuevo Testamento. Describe el amor incondicional, divino y abnegado de Dios hacia la humanidad, el cual busca el bien supremo del otro sin esperar nada a cambio.",
+    "pasajes": ["Juan 3:16", "1 Corintios 13:4", "1 Juan 4:8"],
+    "categoria": "Término Griego"
+  },
+  {
+    "id": "sheol",
+    "palabra": "Seol",
+    "origen": "Hebreo: שְׁאוֹל (She'ol)",
+    "significado": "El morada de los muertos / Sepulcro",
+    "definicion": "En el Antiguo Testamento, hace referencia al lugar de los muertos o el sepulcro donde reposan las almas antes de la revelación plena de la resurrección en Cristo.",
+    "pasajes": ["Génesis 37:35", "Salmos 16:10", "Eclesiastés 9:10"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "efod",
+    "palabra": "Efod",
+    "origen": "Hebreo: אֵפוֹד (Ephod)",
+    "significado": "Vestidura sacerdotal sagrada",
+    "definicion": "Prenda sagrada parecida a un chaleco o delantal bordado con hilos de oro, azul, púrpura y lino, llevada por el Sumo Sacerdote de Israel sobre la cual se colocaba el pectoral del juicio.",
+    "pasajes": ["Éxodo 28:6", "1 Samuel 2:18", "1 Samuel 23:9"],
+    "categoria": "Objeto Sagrado"
+  },
+  {
+    "id": "urim_y_tumim",
+    "palabra": "Urim y Tumim",
+    "origen": "Hebreo: אוּרִים וְתֻמִּים (Urim ve-Tummim)",
+    "significado": "Luces y Perfecciones / Suertes sagradas",
+    "definicion": "Objetos sagrados colocados en el pectoral del Sumo Sacerdote que se utilizaban para discernir la voluntad de Dios en decisiones de vital importancia para la nación de Israel.",
+    "pasajes": ["Éxodo 28:30", "Levítico 8:8", "1 Samuel 28:6"],
+    "categoria": "Objeto Sagrado"
+  },
+  {
+    "id": "querubin",
+    "palabra": "Querubín",
+    "origen": "Hebreo: כְּרוּב (Kərūv)",
+    "significado": "Ser celestial guardián de la gloria de Dios",
+    "definicion": "Orden exaltado de seres celestiales asociados estrechamente con la santidad, el trono y la presencia protectora de Dios. Figuras de querubines cubrían el Arca del Pacto.",
+    "pasajes": ["Génesis 3:24", "Éxodo 25:18", "Ezequiel 10:1"],
+    "categoria": "Ser Celestial"
+  },
+  {
+    "id": "serafin",
+    "palabra": "Serafín",
+    "origen": "Hebreo: שָׂרָף (Saraph)",
+    "significado": "Ardiente / Ser que arde en adoración",
+    "definicion": "Seres celestiales descritos por el profeta Isaías con seis alas que proclaman incesantemente 'Santo, Santo, Santo es el Señor' ardiendo en celo y adoración pura.",
+    "pasajes": ["Isaías 6:2", "Isaías 6:6"],
+    "categoria": "Ser Celestial"
+  },
+  {
+    "id": "mana",
+    "palabra": "Maná",
+    "origen": "Hebreo: מָן (Mān - ¿Qué es esto?)",
+    "significado": "Pan milagroso del cielo",
+    "definicion": "Alimento milagroso provisto por Dios a los israelitas diariamente durante sus 40 años de travesía por el desierto. Jesús se proclamó como el verdadero Pan del Cielo.",
+    "pasajes": ["Éxodo 16:14", "Salmos 78:24", "Juan 6:31"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "arca_del_pacto",
+    "palabra": "Arca del Pacto",
+    "origen": "Hebreo: אֲרוֹן הַבְּרִית (Aron HaBrit)",
+    "significado": "Cofre sagrado de la Alianza",
+    "definicion": "El objeto más sagrado del Tabernáculo y del Templo. Contenía las Tablas de la Ley, la vara de Aarón y el maná. Encima se hallaba el Propiciatorio donde se manifestaba la gloria de Dios (Shekinah).",
+    "pasajes": ["Éxodo 25:10", "Hebreos 9:4"],
+    "categoria": "Objeto Sagrado"
+  },
+  {
+    "id": "santificacion",
+    "palabra": "Santificación",
+    "origen": "Griego: ἁγιασμός (Hagiasmos) / Hebreo: קֹדֶשׁ (Kodesh)",
+    "significado": "Separación para Dios y transformación moral",
+    "definicion": "El proceso progresivo mediante el cual el Espíritu Santo transforma al creyente a la imagen de Cristo, apartándolo del pecado y dedicándolo al servicio sagrado de Dios.",
+    "pasajes": ["1 Tesalonicenses 4:3", "Hebreos 12:14", "1 Pedro 1:2"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "justificacion",
+    "palabra": "Justificación",
+    "origen": "Griego: δικαίωσις (Dikaiōsis)",
+    "significado": "Declarar justo / Declaración judicial de inocencia",
+    "definicion": "Acto soberano de la gracia de Dios mediante el cual declara justo al pecador sobre la base de la fe en el sacrificio expiatorio de Jesucristo en la cruz.",
+    "pasajes": ["Romanos 3:24", "Romanos 5:1", "Gálatas 2:16"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "redencion",
+    "palabra": "Redención",
+    "origen": "Griego: ἀπολύτρωσις (Apolytrosis) / Hebreo: גָּאַל (Ga'al)",
+    "significado": "Rescate mediante el pago de un precio",
+    "definicion": "Liberación del pecador de la esclavitud del pecado y de la condenación mediante el pago del precio supremo: la sangre derramada de Jesucristo.",
+    "pasajes": ["Efesios 1:7", "Colosenses 1:14", "1 Pedro 1:18"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "gracia",
+    "palabra": "Gracia",
+    "origen": "Griego: χάρις (Charis) / Hebreo: חֵן (Chen)",
+    "significado": "Favor inmerecido e incondicional",
+    "definicion": "El favor soberano, amor y bendición inmerecida que Dios otorga a la humanidad, especialmente manifestado en la salvación a través de Jesucristo.",
+    "pasajes": ["Efesios 2:8", "Tito 2:11", "Hebreos 4:16"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "pacto",
+    "palabra": "Pacto",
+    "origen": "Hebreo: בְּרִית (Berit) / Griego: διαθήκη (Diatheke)",
+    "significado": "Alianza solemne y compromiso sagrado",
+    "definicion": "Compromiso solemne establecido por Dios con la humanidad garantizado por sus promesas. Incluye el Pacto de Abraham, el Pacto del Sinaí y el Nuevo Pacto sellado en Cristo.",
+    "pasajes": ["Génesis 15:18", "Jeremías 31:31", "Lucas 22:20"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "expiacion",
+    "palabra": "Expiación",
+    "origen": "Hebreo: כָּפַר (Kapar - Cubrir) / Griego: ἱλασμός (Hilasmos)",
+    "significado": "Cobertura del pecado y reconciliación",
+    "definicion": "El acto de cubrir o limpiar la culpa del pecado para reconciliar al pecador con Dios. En el AT se realizaba con sangre de animales; en el NT se cumplió perfectamente en Cristo.",
+    "pasajes": ["Levítico 17:11", "Romanos 5:11", "1 Juan 2:2"],
+    "categoria": "Concepto Teológico"
+  },
+  {
+    "id": "hosanna",
+    "palabra": "Hosanna",
+    "origen": "Hebreo/Arameo: הוֹשִׁיעָה־נָּא (Hoshi'a-na)",
+    "significado": "¡Sálvanos ahora, te rogamos!",
+    "definicion": "Súplica gozosa de salvación y aclamación mesiánica cantada durante la Fiesta de los Tabernáculos y pronunciada por la multitud durante la Entrada Triunfal de Jesús en Jerusalén.",
+    "pasajes": ["Salmos 118:25", "Mateo 21:9", "Marcos 11:9"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "aleluya",
+    "palabra": "Aleluya",
+    "origen": "Hebreo: הַלְלוּ־יָהּ (Hallelu-Yah)",
+    "significado": "¡Alabad a Yahvé / Señor!",
+    "definicion": "Exclamación de alabanza litúrgica que combina el verbo 'alabar' y el nombre sagrado de Dios (Jah / Yahvé). Usada tanto en el Templo judío como en la adoración celestial de Apocalipsis.",
+    "pasajes": ["Salmos 104:35", "Salmos 150:1", "Apocalipsis 19:1"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "amen",
+    "palabra": "Amén",
+    "origen": "Hebreo: אָמֵן (Amen) / Griego: ἀμήν",
+    "significado": "Así sea / Cierto, firme y verdadero",
+    "definicion": "Palabra de confirmación y asentimiento solemne que afirma la certeza, verdad y fiabilidad de lo dicho. Jesús la usaba frecuentemente diciendo 'De cierto, de cierto os digo'.",
+    "pasajes": ["Deuteronomio 27:26", "2 Corintios 1:20", "Apocalipsis 3:14"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "paracleto",
+    "palabra": "Paráclito",
+    "origen": "Griego: παράκλητος (Paraklētos)",
+    "significado": "Consolador, Abogado, Ayudador llamado al lado",
+    "definicion": "Título dado por Jesús al Espíritu Santo en el Evangelio de Juan. Designa a quien es llamado para estar al lado del creyente como consolador, defensor, consejero e intercesor.",
+    "pasajes": ["Juan 14:16", "Juan 15:26", "1 Juan 2:1"],
+    "categoria": "Término Griego"
+  },
+  {
+    "id": "maranata",
+    "palabra": "Maranata",
+    "origen": "Arameo: מָרַן אֲתָא (Maran ata)",
+    "significado": "¡El Señor viene! / ¡Ven, Señor nuestro!",
+    "definicion": "Expresión aramea utilizada por la iglesia primitiva como saludo y oración ferviente que expresa la gozosa expectativa del retorno glorioso de Jesucristo.",
+    "pasajes": ["1 Corintios 16:22", "Apocalipsis 22:20"],
+    "categoria": "Término Hebreo"
+  },
+  {
+    "id": "terafim",
+    "palabra": "Terafín",
+    "origen": "Hebreo: תְּרָפִים (Teraphim)",
+    "significado": "Ídolos domésticos / Estatuillas familiares",
+    "definicion": "Pequeñas estatuillas o ídolos familiares venerados en la antigüedad como amuletos de protección y símbolos de herencia legal o propiedad familiar.",
+    "pasajes": ["Génesis 31:19", "1 Samuel 19:13", "Oseas 3:4"],
+    "categoria": "Objeto Sagrado"
+  },
+  {
+    "id": "filacteria",
+    "palabra": "Filacteria",
+    "origen": "Griego: φυλακτήριον / Hebreo: Tefilín (תְּפִלִּין)",
+    "significado": "Cajitas de cuero con pasajes bíblicos",
+    "definicion": "Pequeñas cajitas de cuero que los hombres judíos piadosos ataban en la frente y en el brazo izquierdo durante las oraciones, conteniendo rollitos con pasajes de la Torá.",
+    "pasajes": ["Éxodo 13:9", "Deuteronomio 6:8", "Mateo 23:5"],
+    "categoria": "Objeto Sagrado"
+  },
+  {
+    "id": "sinagoga",
+    "palabra": "Sinagoga",
+    "origen": "Griego: συναγωγή (Synagoge)",
+    "significado": "Lugar de reunión y asamblea",
+    "definicion": "Centro comunitario y religioso judío surgido durante el exilio babilónico, destinado a la lectura de las Escrituras, la oración, la enseñanza de la Torá y la adoración.",
+    "pasajes": ["Mateo 4:23", "Lucas 4:16", "Hechos 13:14"],
+    "categoria": "Lugar"
+  },
+  {
+    "id": "sanedrin",
+    "palabra": "Sanedrín",
+    "origen": "Griego: συνέδριον (Synedrion)",
+    "significado": "Consejo supremo o tribunal judío",
+    "definicion": "Corte suprema religiosa y judicial de los judíos en Jerusalén integrada por 71 miembros (sacerdotes, ancianos y escribas) presidida por el Sumo Sacerdote.",
+    "pasajes": ["Mateo 26:59", "Lucas 22:66", "Hechos 5:27"],
+    "categoria": "Concepto Teológico"
+  }
+]
