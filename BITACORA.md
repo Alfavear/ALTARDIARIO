@@ -4,7 +4,45 @@ Este archivo documenta los avances, decisiones y tareas realizadas en la evoluci
 
 ---
 
-## 2026-07-31 — Modo Offline: cola de sincronización de progreso
+## 2026-07-31 — Release v1.0.4: Diccionario Bíblico Integrado & Overhaul de UI/UX
+
+### ✅ Novedades y Funcionalidades
+- **Diccionario Bíblico y Léxico Teológico (100% Offline)**:
+  - Base de datos léxica embebida (`assets/dictionary/biblical_glossary.json`) con origen en hebreo/griego, definiciones y pasajes.
+  - Accesible desde el ícono 📖 en la barra del Lector Bíblico o al presionar cualquier versículo (*"Buscar en Diccionario Bíblico"*).
+- **Mejoras de Experiencia de Usuario (UI/UX)**:
+  - **Tipografía Editorial Lora:** Fuente Serif elegante para lecturas y pasajes bíblicos.
+  - **Carga Esquelética Animada (Shimmer Loading):** Reemplazo de spinners genéricos en el Feed y Oraciones.
+  - **Respuesta Háptica (HapticFeedback):** Feedback físico al marcar lectura, dar amén o reaccionar.
+- **Versión de Producción:**
+  - Bump de versión a `1.0.4+5` en `pubspec.yaml` y `currentVersion = '1.0.4'` en `AppConstants`.
+  - APK `AltarDiario.apk` v1.0.4 generado y publicado en GitHub Releases.
+  - Colección `/config/app_info` actualizada en Firestore para disparo de actualización in-app.
+
+---
+
+## 2026-07-31 — Fix: Sesión no persistía sin internet (usuarios reportaban que la Biblia "no dejaba leer")
+
+### ✅ Diagnóstico
+- Reporte de usuarios: sin internet la app "no deja leer la Biblia ni nada" — en realidad **les pedía iniciar sesión con Google a cada rato**, aunque ya habían iniciado sesión antes.
+- Causa raíz: `AuthService` solo guardaba el UID local en `local_user_uid` para el modo demo/invitado (`signInLocal`). Al iniciar con **Google/Apple** el UID nunca se persistía.
+- Sin internet, Firebase Auth no restaura la sesión a tiempo en el splash (timeout de 2s) → `hasLocalUser == false` → **LoginScreen** en vez de entrar a la app.
+- Bonus: `_syncLocalProgress` llamaba `clearAllLocalData()` justo DESPUÉS de persistir el UID — se corrigió para que la limpieza de datos NO borre la identidad de sesión.
+
+### ✅ Cambios
+- **`lib/data/services/auth_service.dart`**:
+  - Nuevo `persistLocalUid(uid)` — guarda el UID del último usuario autenticado en `local_user_uid`.
+  - Se persiste el UID en: `signInAnon` (invitado Firebase), `signInWithGoogle` (móvil y web), `signInWithApple`.
+  - La identidad local se limpia solo con `clearLocalUid()` (signOut explícito en Perfil).
+- **`lib/presentation/screens/splash_screen.dart`**: si hay usuario de Firebase, persiste su UID (`persistLocalUid`) para que las próximas aperturas funcionen sin internet.
+- **`lib/data/services/storage_service.dart`**: `clearAllLocalData()` ya NO borra `local_user_uid` (la sesión se limpia solo en el signOut).
+
+### ✅ Resultado
+- Sin internet, la app entra con el UID guardado: lectura bíblica (SQLite), plan y rachas funcionan; `pushPendingProgress` sincroniza cuando vuelve la conexión.
+- `flutter analyze`: 0 errores. `flutter test`: 108/108.
+- APK reconstruido y subido al release v1.0.3; web desplegada a https://altardiario-ec25f.web.app
+
+---
 
 ### ✅ Contexto
 - Auditoría completa del modo offline: la lectura bíblica ya funcionaba sin internet en nativo (SQLite con Biblia RV1960 embebida en `assets/bible/es_rv1960_complete.json`); `_memoryMode` es solo web.

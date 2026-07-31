@@ -64,6 +64,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     final authAsync = ref.read(authStateProvider);
     final hasFirebaseUser = authAsync.hasValue && authAsync.value != null;
+    if (hasFirebaseUser) {
+      // Persistir el UID de Firebase para poder entrar sin internet
+      // cuando Firebase Auth no pueda restaurar la sesión.
+      unawaited(ref
+          .read(authServiceProvider)
+          .persistLocalUid(authAsync.value!.uid));
+    }
     final localUid = await ref.read(authServiceProvider).getLocalUid();
     
     if (!mounted) return;

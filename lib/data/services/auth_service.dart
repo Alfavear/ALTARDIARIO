@@ -45,6 +45,16 @@ class AuthService {
     return prefs.getString(_localUidKey);
   }
 
+  /// Guarda el UID del último usuario autenticado para poder
+  /// entrar sin internet (la sesión de Firebase Auth no se
+  /// restaura si no hay red).
+  Future<void> persistLocalUid(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_localUidKey, uid);
+    } catch (_) {}
+  }
+
   Future<String> signInLocal() async {
     final prefs = await SharedPreferences.getInstance();
     var uid = prefs.getString(_localUidKey);
@@ -68,6 +78,9 @@ class AuthService {
     }
     try {
       final result = await _auth!.signInAnonymously();
+      if (result.user != null) {
+        await persistLocalUid(result.user!.uid);
+      }
       return result.user;
     } catch (e) {
       if (kIsWeb) {
@@ -98,6 +111,7 @@ class AuthService {
           debugPrint('⚠️ [AuthService] userCredential.user es null');
           return null;
         }
+        await persistLocalUid(userCredential.user!.uid);
         return userCredential.user;
       } on FirebaseAuthException catch (e) {
         debugPrint('❌ [AuthService] FirebaseAuthException signInWithPopup: ${e.code} - ${e.message}');
@@ -162,6 +176,9 @@ class AuthService {
         final UserCredential userCredential = 
             await _auth!.signInWithCredential(credential);
         debugPrint('✅ [AuthService] Google Sign-In mobile exitoso: ${userCredential.user?.uid}');
+        if (userCredential.user != null) {
+          await persistLocalUid(userCredential.user!.uid);
+        }
         return userCredential.user;
       } catch (e) {
         debugPrint('❌ [AuthService] Error Google Sign-In mobile: $e');
@@ -175,11 +192,12 @@ class AuthService {
     if (!_firebaseAvailable || !kIsWeb) return null;
     try {
       debugPrint('🔄 [AuthService] Verificando redirect result...');
-final UserCredential result = 
-           await _auth!.getRedirectResult();
+      final UserCredential result = 
+          await _auth!.getRedirectResult();
       debugPrint('✅ [AuthService] Redirect result: ${result.user?.uid ?? "null"}');
       
       if (result.user != null) {
+        await persistLocalUid(result.user!.uid);
         return result.user;
       }
       return null;
@@ -211,6 +229,9 @@ final UserCredential result =
 
     final UserCredential userCredential =
         await _auth!.signInWithCredential(credential);
+    if (userCredential.user != null) {
+      await persistLocalUid(userCredential.user!.uid);
+    }
     return userCredential.user;
   }
 
@@ -227,11 +248,15 @@ final UserCredential result =
   }
 
   Future<void> signOut() async {
-    if (!_firebaseAvailable) return;
+    if (!_firebaseAvailable) {
+      await clearLocalUid();
+      return;
+    }
     if (!kIsWeb && _googleSignIn != null) {
       await _googleSignIn!.signOut();
     }
     await _auth!.signOut();
+    await clearLocalUid();
   }
 
   /// Guarda el token FCM del usuario en Firestore
