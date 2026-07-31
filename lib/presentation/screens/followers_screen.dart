@@ -96,14 +96,12 @@ class _UserListTab extends ConsumerWidget {
                 backgroundImage: u.fotoUrl.isNotEmpty
                     ? NetworkImage(u.fotoUrl)
                     : null,
-                child: u.fotoUrl.isEmpty
-                    ? Text(u.nombre.isNotEmpty ? u.nombre[0].toUpperCase() : '?',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue))
-                    : null,
+                child: Text(u.displayName.isNotEmpty ? u.displayName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue)),
               ),
-              title: Text(u.nombre,
+              title: Text(u.displayName,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: u.bio.isNotEmpty
                   ? Text(u.bio,

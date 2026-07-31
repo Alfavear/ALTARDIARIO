@@ -212,13 +212,12 @@ class ChatListScreen extends ConsumerWidget {
     final lastMessage = chat['lastMessage'] as String? ?? '';
     final lastUpdate = chat['lastUpdate'] as dynamic;
 
-    String otherName = 'Usuario';
+    String otherName = '';
     String otherId = '';
     for (final pid in participantIds) {
       if (pid.toString() != currentUid) {
         otherId = pid.toString();
-        otherName =
-            participantNames[otherId]?.toString() ?? 'Usuario';
+        otherName = participantNames[otherId]?.toString() ?? '';
       }
     }
 

@@ -6,11 +6,12 @@ import '../../data/services/firestore_service.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/models/message.dart';
 import '../../data/models/comment.dart';
-import '../../data/models/debate.dart';
-import '../../data/models/debate_reply.dart';
-import '../../data/models/usuario.dart';
 import '../../data/models/peticion_oracion.dart';
 import '../../data/models/reflexion.dart';
+import '../../data/models/usuario.dart';
+import '../../data/models/notification.dart';
+import '../../data/models/debate.dart';
+import '../../data/models/debate_reply.dart';
 import '../../core/services/notification_service.dart';
 /// StorageService — se inicializa con override en main.dart
 final storageProvider = Provider<StorageService>((ref) {
@@ -43,7 +44,13 @@ final firestoreServiceProvider =
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
   if (uid == null) return Stream.value(null);
-  return ref.watch(firestoreServiceProvider).getUsuario(uid);
+  return ref.watch(firestoreServiceProvider).getUsuario(uid).map((usuario) {
+    if (usuario != null) {
+      final storage = ref.read(storageProvider);
+      storage.syncFromFirestoreData(usuario.progresoLectura, usuario.maxStreak);
+    }
+    return usuario;
+  });
 });
 
 /// Perfil de un usuario específico por su ID.
@@ -125,7 +132,18 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
         data != null ? List<String>.from(data['progresoLectura']) : <String>[];
     final racha = storage.calcularRacha(progreso);
     final maxS = data != null ? (data['maxStreak'] as int? ?? 0) : 0;
-    final nombre = data != null ? (data['nombre'] as String? ?? 'Anónimo') : 'Tú';
+    String deriveName(String n, String e) {
+      var trimmed = n.trim();
+      if (trimmed.isNotEmpty && trimmed.toLowerCase() != 'anónimo') {
+        if (trimmed.endsWith(' (Invitado)')) trimmed = trimmed.substring(0, trimmed.length - 11);
+        return trimmed;
+      }
+      if (e.isNotEmpty && e != 'invitado@altardiario.app') return e.split('@').first;
+      return 'Invitado';
+    }
+    final rawName = data != null ? (data['nombre'] as String? ?? '') : '';
+    final email = data != null ? (data['email'] as String? ?? '') : '';
+    final nombre = data != null ? deriveName(rawName, email) : 'Tú';
     final fotoUrl = data != null ? (data['fotoUrl'] as String? ?? '') : '';
     if (id == uid) {
       final localRacha = storage.calcularRacha();
@@ -193,26 +211,27 @@ final globalLeaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) a
     final racha = storage.calcularRacha(progreso);
     final maxS = data != null ? (data['maxStreak'] as int? ?? 0) : 0;
     
-    // Para el usuario actual, usar datos locales si son más altos
+    final displayName = user.displayName;
+
+    // Para el usuario actual, usar datos locales si son más altos o si es la entrada principal
     if (user.id == uid) {
       final localRacha = storage.calcularRacha();
-      if (localRacha > racha) {
-        results.add(LeaderboardEntry(
-          userId: user.id,
-          nombre: 'Tú',
-          fotoUrl: '',
-          rachaActual: localRacha,
-          maxStreak: storage.getMaxStreak(),
-          totalLecturas: storage.getTotalCompletadas(),
-          posicion: i + 1,
-        ));
-        continue;
-      }
+      final localTotal = storage.getTotalCompletadas();
+      results.add(LeaderboardEntry(
+        userId: user.id,
+        nombre: 'Tú',
+        fotoUrl: user.fotoUrl,
+        rachaActual: localRacha > racha ? localRacha : racha,
+        maxStreak: storage.getMaxStreak() > maxS ? storage.getMaxStreak() : maxS,
+        totalLecturas: localTotal > progreso.length ? localTotal : progreso.length,
+        posicion: i + 1,
+      ));
+      continue;
     }
     
     results.add(LeaderboardEntry(
       userId: user.id,
-      nombre: user.nombre,
+      nombre: displayName,
       fotoUrl: user.fotoUrl,
       rachaActual: racha,
       maxStreak: maxS,
@@ -276,14 +295,39 @@ final debateRepliesStreamProvider =
 final sugerenciasAmistadProvider =
     FutureProvider<List<Usuario>>((ref) async {
   final uid = ref.watch(effectiveUserUidProvider);
-  if (uid == null) return [];
   final firestore = ref.read(firestoreServiceProvider);
-  final usuario = await firestore.getUsuarioOnce(uid);
-  if (usuario == null) return [];
-  final excludeIds = <String>{uid, ...usuario.siguiendo};
+  final usuario = uid != null ? await firestore.getUsuarioOnce(uid) : null;
+  final excludeIds = <String>{if (uid != null) uid, ...?usuario?.siguiendo};
   final allUsers = await firestore.getAllUsuarios();
-  allUsers.shuffle();
-  return allUsers.where((u) => !excludeIds.contains(u.id)).take(5).toList();
+  
+  final mappedUsers = allUsers
+      .where((u) =>
+          !excludeIds.contains(u.id) &&
+          u.email.isNotEmpty &&
+          u.email != 'invitado@altardiario.app')
+      .map((u) {
+    return Usuario(
+      id: u.id,
+      nombre: u.displayName,
+      email: u.email,
+      fotoUrl: u.fotoUrl,
+      bio: u.bio,
+      fechaCreacion: u.fechaCreacion,
+      siguiendo: u.siguiendo,
+      seguidores: u.seguidores,
+      modoEnfoque: u.modoEnfoque,
+      notifHour: u.notifHour,
+      notifMin: u.notifMin,
+      badges: u.badges,
+      totalPuntos: u.totalPuntos,
+      nivel: u.nivel,
+      progresoLectura: u.progresoLectura,
+      maxStreak: u.maxStreak,
+    );
+  }).toList();
+
+  mappedUsers.shuffle();
+  return mappedUsers.take(10).toList();
 });
 /// Modo Enfoque — sincronizado con Firestore (nivel usuario) y local.
 class FocusModeNotifier extends Notifier<bool> {
@@ -368,16 +412,18 @@ class FcmTokenNotifier extends Notifier<String?> {
 }
 final fcmTokenProvider = NotifierProvider<FcmTokenNotifier, String?>(FcmTokenNotifier.new);
 /// Stream de notificaciones del usuario actual.
-final notificationsStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+final notificationsStreamProvider = StreamProvider<List<AppNotification>>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
   if (uid == null) return Stream.value([]);
-  return ref.watch(firestoreServiceProvider).notificationsStream(uid);
+  return ref.watch(firestoreServiceProvider).notificationsStream(uid).map((list) {
+    return list.map((map) => AppNotification.fromMap(map['id'] ?? '', map)).toList();
+  });
 });
 /// Contador de notificaciones no leídas.
 final unreadNotificationsCountProvider = Provider<int>((ref) {
   final notificationsAsync = ref.watch(notificationsStreamProvider);
   return notificationsAsync.when(
-    data: (notifications) => notifications.where((n) => n['read'] != true).length,
+    data: (notifications) => notifications.where((n) => !n.read).length,
     loading: () => 0,
     error: (_, __) => 0,
   );

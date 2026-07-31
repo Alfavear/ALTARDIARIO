@@ -124,14 +124,12 @@ class _StreakCard extends StatelessWidget {
               backgroundImage: streak.fotoUrl.isNotEmpty
                   ? NetworkImage(streak.fotoUrl)
                   : null,
-              child: streak.fotoUrl.isEmpty && !isMe
-                  ? Text(streak.nombre.isNotEmpty
-                          ? streak.nombre[0].toUpperCase()
-                          : '?',
+              child: isMe
+                  ? null
+                  : Text(streak.nombre.isNotEmpty ? streak.nombre[0].toUpperCase() : '?',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryBlue))
-                  : null,
+                          color: AppTheme.primaryBlue)),
             ),
             const SizedBox(width: 12),
             Expanded(

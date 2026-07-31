@@ -31,7 +31,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (currentUid == null) return;
 
     final currentProfile = ref.read(userProfileProvider).value;
-    final currentName = currentProfile?.nombre ?? 'Anónimo';
+    final currentName = currentProfile?.displayName ?? '';
 
     ref.read(firestoreServiceProvider).sendMessage(
       widget.chatId,

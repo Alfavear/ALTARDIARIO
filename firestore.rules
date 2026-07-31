@@ -9,10 +9,18 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userId
         && request.resource.data.keys().hasAll(['userId', 'userName', 'texto', 'fecha', 'pasajeDia']);
-      allow update: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null;
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.userId;
+        
+      match /comentarios/{comentarioId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.auth.uid == request.resource.data.userId;
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null
+          && request.auth.uid == resource.data.userId;
+      }
     }
 
     // ── Peticiones de Oración ────────────────────────────────────
@@ -23,12 +31,25 @@ service cloud.firestore {
       allow update: if request.auth != null;
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.userId;
+        
+      match /comentarios/{comentarioId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.auth.uid == request.resource.data.userId;
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null
+          && request.auth.uid == resource.data.userId;
+      }
     }
 
     // ── Usuarios ─────────────────────────────────────────────────
     match /usuarios/{userId} {
       allow read: if true;
       allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && (
+        request.auth.uid == userId
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seguidores'])
+      );
       allow write: if request.auth != null && request.auth.uid == userId;
 
       // Subrayados de la Biblia (solo el usuario)
@@ -40,6 +61,17 @@ service cloud.firestore {
       match /bible_notes/{noteId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Notas generales (solo el usuario)
+      match /notes/{noteId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Notificaciones
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null; // Para poder enviar notificaciones entre usuarios (como seguir)
+      }
     }
 
     // ── Feedback ─────────────────────────────────────────────────
@@ -47,6 +79,31 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow read: if request.auth != null
         && request.auth.uid == resource.data.userId;
+    }
+
+    // ── Debates (Foro Bíblico) ───────────────────────────────────
+    match /debates/{debateId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+        
+      match /respuestas/{respuestaId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.auth.uid == request.resource.data.userId;
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null
+          && request.auth.uid == resource.data.userId;
+      }
+    }
+
+    // ── Configuración (Global) ───────────────────────────────────
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if false; // Solo se edita desde la consola de Firebase
     }
 
     // ── Chats ────────────────────────────────────────────────────

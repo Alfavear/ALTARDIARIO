@@ -310,32 +310,42 @@ class BibleService {
     String versionId,
   ) async {
     final apiSlug = versionId.toUpperCase();
-    final url = '$_bollsBase/get-text/$apiSlug/${passage.bookId}/${passage.chapterStart}/';
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode != 200) return [];
-      final verses = jsonDecode(response.body) as List<dynamic>;
-      final results = <Map<String, Object?>>[];
-      for (final v in verses) {
-        final item = v as Map<String, dynamic>;
-        final verseNum = item['verse'] as int;
-        final text = _stripHtml(item['text'] as String);
-        final map = <String, Object?>{
-          'version': versionId,
-          'book_id': passage.bookId,
-          'book_name': passage.bookName,
-          'chapter': passage.chapterStart,
-          'verse': verseNum,
-          'text': text,
-        };
-        final key = '$versionId:${passage.bookId}:${passage.chapterStart}:$verseNum';
-        _memoryVerses[key] = [map];
-        results.add(map);
+    final results = <Map<String, Object?>>[];
+    
+    final startCh = passage.chapterStart;
+    final endCh = passage.chapterEnd ?? startCh;
+
+    for (var ch = startCh; ch <= endCh; ch++) {
+      final url = '$_bollsBase/get-text/$apiSlug/${passage.bookId}/$ch/';
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode != 200) continue;
+        final verses = jsonDecode(response.body) as List<dynamic>;
+        for (final v in verses) {
+          final item = v as Map<String, dynamic>;
+          final verseNum = item['verse'] as int;
+          
+          if (ch == startCh && passage.verseStart != null && verseNum < passage.verseStart!) continue;
+          if (ch == endCh && passage.verseEnd != null && verseNum > passage.verseEnd!) continue;
+
+          final text = _stripHtml(item['text'] as String);
+          final map = <String, Object?>{
+            'version': versionId,
+            'book_id': passage.bookId,
+            'book_name': passage.bookName,
+            'chapter': ch,
+            'verse': verseNum,
+            'text': text,
+          };
+          final key = '$versionId:${passage.bookId}:$ch:$verseNum';
+          _memoryVerses[key] = [map];
+          results.add(map);
+        }
+      } catch (_) {
+        continue;
       }
-      return results;
-    } catch (_) {
-      return [];
     }
+    return results;
   }
 
   Future<List<BibleHighlight>> getHighlightsForPassages(
@@ -809,7 +819,8 @@ class BibleService {
     }
     final data = jsonDecode(rawJson) as Map<String, dynamic>;
     final version = data['version'] as String;
-    final batch = db.batch();
+    var batch = db.batch();
+    var inserted = 0;
 
     for (final book in data['books'] as List<dynamic>) {
       final bookMap = book as Map<String, dynamic>;
@@ -832,11 +843,19 @@ class BibleService {
             ).toMap(),
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
+          
+          inserted++;
+          if (inserted % 1000 == 0) {
+            await batch.commit(noResult: true);
+            batch = db.batch();
+          }
         }
       }
     }
 
-    await batch.commit(noResult: true);
+    if (inserted % 1000 != 0) {
+      await batch.commit(noResult: true);
+    }
   }
 
   Future<List<Map<String, Object?>>> _queryPassage(

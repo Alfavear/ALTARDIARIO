@@ -28,7 +28,9 @@ class DebateReply {
         userName: map['userName'] ?? 'Anónimo',
         texto: map['texto'] ?? '',
         fecha: map['fecha'] != null
-            ? DateTime.parse(map['fecha'])
+            ? (map['fecha'] is String
+                ? DateTime.parse(map['fecha'])
+                : (map['fecha'] as dynamic).toDate())
             : DateTime.now(),
         upvotes: map['upvotes'] ?? 0,
         votedBy: map['votedBy'] != null

@@ -473,7 +473,7 @@ class __BadgeUnlockedCelebrationDialogState
     try {
       final userName = widget.user?.nombre.isNotEmpty == true
           ? widget.user!.nombre
-          : (widget.storage?.getUserName() ?? 'Hermano en Fe');
+          : '';
       final uid = widget.user?.id ?? 'anonimo';
 
       final reflexionCelebracion = Reflexion(

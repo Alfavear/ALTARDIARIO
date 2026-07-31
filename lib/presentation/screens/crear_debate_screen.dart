@@ -45,7 +45,7 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
         titulo: titulo,
         contenido: contenido,
         userId: uid,
-        userName: user?.nombre ?? 'Anónimo',
+        userName: user?.displayName ?? '',
         libroId: _bibleService.getBookIdFromName(_selectedLibro ?? '').toString(),
         libroNombre: _selectedLibro ?? '',
         fecha: DateTime.now(),

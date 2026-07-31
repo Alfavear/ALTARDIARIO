@@ -53,9 +53,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   void _navigateAfterSplash() async {
+    // Intentar esperar a que el stream emita, con un timeout de 2 segundos para no bloquearnos
+    try {
+      await ref.read(authStateProvider.future).timeout(const Duration(seconds: 2));
+    } catch (_) {}
+
+    if (!mounted) return;
+
     final authAsync = ref.read(authStateProvider);
     final hasFirebaseUser = authAsync.hasValue && authAsync.value != null;
     final localUid = await ref.read(authServiceProvider).getLocalUid();
+    
+    if (!mounted) return;
     final hasLocalUser = localUid != null;
 
     if (hasFirebaseUser || hasLocalUser) {

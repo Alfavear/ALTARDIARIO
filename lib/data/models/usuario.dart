@@ -15,6 +15,20 @@ class Usuario {
   final List<String> badges;
   final int totalPuntos;
   final int nivel;
+  final List<String> progresoLectura;
+  final int maxStreak;
+
+  String get displayName {
+    var n = nombre.trim();
+    if (n.isNotEmpty && n.toLowerCase() != 'anónimo') {
+      if (n.endsWith(' (Invitado)')) n = n.substring(0, n.length - 11);
+      return n;
+    }
+    if (email.isNotEmpty && email != 'invitado@altardiario.app') {
+      return email.split('@').first;
+    }
+    return 'Invitado';
+  }
 
   Usuario({
     required this.id,
@@ -31,6 +45,8 @@ class Usuario {
     this.badges = const [],
     this.totalPuntos = 0,
     this.nivel = 1,
+    this.progresoLectura = const [],
+    this.maxStreak = 0,
   }) : fechaCreacion = fechaCreacion ?? DateTime.now();
 
   factory Usuario.fromFirestore(DocumentSnapshot doc) {
@@ -50,6 +66,8 @@ class Usuario {
       badges: List<String>.from(data['badges'] ?? []),
       totalPuntos: data['totalPuntos'] ?? 0,
       nivel: data['nivel'] ?? 1,
+      progresoLectura: List<String>.from(data['progresoLectura'] ?? []),
+      maxStreak: data['maxStreak'] ?? 0,
     );
   }
 
@@ -69,6 +87,8 @@ class Usuario {
       badges: List<String>.from(data['badges'] ?? []),
       totalPuntos: data['totalPuntos'] ?? 0,
       nivel: data['nivel'] ?? 1,
+      progresoLectura: List<String>.from(data['progresoLectura'] ?? []),
+      maxStreak: data['maxStreak'] ?? 0,
     );
   }
 
@@ -86,6 +106,8 @@ class Usuario {
     'badges': badges,
     'totalPuntos': totalPuntos,
     'nivel': nivel,
+    'progresoLectura': progresoLectura,
+    'maxStreak': maxStreak,
   };
 
   static DateTime _readDate(Object? value) {

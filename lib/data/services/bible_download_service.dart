@@ -203,7 +203,7 @@ class BibleDownloadService {
     final total = verses.length;
 
     final db = await _db;
-    final batch = db.batch();
+    var batch = db.batch();
     var count = 0;
 
     for (final v in verses) {
@@ -228,6 +228,7 @@ class BibleDownloadService {
       count++;
       if (count % _batchSize == 0 || count == total) {
         await batch.commit(noResult: true);
+        batch = db.batch();
         onProgress?.call(count, total);
       }
     }

@@ -57,7 +57,7 @@ class FirestoreService {
     return _reflexiones.orderBy('fecha', descending: true).snapshots().map(
         (s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
-            .toList()).handleError((_) => <Reflexion>[]);
+            .toList());
   }
 
   Stream<List<Reflexion>> getUserReflexiones(String userId) {
@@ -68,7 +68,7 @@ class FirestoreService {
         .snapshots()
         .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
-            .toList()).handleError((_) => <Reflexion>[]);
+            .toList());
   }
 
   Future<void> publicarReflexion(Reflexion reflexion) async {
@@ -99,7 +99,7 @@ class FirestoreService {
         .snapshots()
         .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
-            .toList()).handleError((_) => <Reflexion>[]);
+            .toList());
   }
 
   Future<List<Reflexion>> getUserReflexionesOnce(String userId) async {
@@ -125,7 +125,7 @@ class FirestoreService {
         .snapshots()
         .map((s) => s.docs
             .map((d) => Comment.fromMap({'id': d.id, ...d.data()}))
-            .toList()).handleError((_) => <Comment>[]);
+            .toList());
   }
 
   Future<void> publicarComentario(Comment comment) async {
@@ -137,6 +137,24 @@ class FirestoreService {
     await _reflexiones.doc(comment.reflexionId).update({
       'commentCount': FieldValue.increment(1),
     });
+
+    final refDoc = await _reflexiones.doc(comment.reflexionId).get();
+    if (refDoc.exists) {
+      final data = refDoc.data()!;
+      final authorId = data['userId'] as String?;
+      if (authorId != null && authorId != comment.userId) {
+        await createNotification(
+          userId: authorId,
+          type: 'new_comment',
+          title: 'Nuevo comentario',
+          body: '${comment.userName} comentó en tu reflexión.',
+          actorId: comment.userId,
+          actorName: comment.userName,
+          actorFotoUrl: comment.userFotoUrl,
+          data: {'reflexionId': comment.reflexionId},
+        );
+      }
+    }
   }
 
   Future<void> toggleCommentLike(
@@ -174,7 +192,7 @@ class FirestoreService {
     return query.snapshots().map(
         (s) => s.docs
             .map((d) => Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
-            .toList()).handleError((_) => <Debate>[]);
+            .toList());
   }
 
   Future<void> crearDebate(Debate debate) async {
@@ -207,7 +225,7 @@ class FirestoreService {
         .snapshots()
         .map((s) => s.docs
             .map((d) => DebateReply.fromMap({'id': d.id, ...d.data()}))
-            .toList()).handleError((_) => <DebateReply>[]);
+            .toList());
   }
 
   Future<void> crearRespuesta(DebateReply reply) async {
@@ -216,6 +234,23 @@ class FirestoreService {
     await _debates.doc(reply.debateId).update({
       'replyCount': FieldValue.increment(1),
     });
+
+    final debateDoc = await _debates.doc(reply.debateId).get();
+    if (debateDoc.exists) {
+      final data = debateDoc.data()!;
+      final authorId = data['userId'] as String?;
+      if (authorId != null && authorId != reply.userId) {
+        await createNotification(
+          userId: authorId,
+          type: 'debate_reply',
+          title: 'Nueva respuesta',
+          body: '${reply.userName} respondió a tu debate.',
+          actorId: reply.userId,
+          actorName: reply.userName,
+          data: {'debateId': reply.debateId},
+        );
+      }
+    }
   }
 
   Future<void> toggleReplyVote(String debateId, String replyId,
@@ -320,7 +355,8 @@ class FirestoreService {
     for (final doc in snapshot.docs) {
       final data = doc.data();
       result[doc.id] = {
-        'nombre': data['nombre'] ?? 'Anónimo',
+        'nombre': data['nombre'] ?? '',
+        'email': data['email'] ?? '',
         'fotoUrl': data['fotoUrl'] ?? '',
         'progresoLectura': List<String>.from(data['progresoLectura'] ?? []),
         'maxStreak': data['maxStreak'] ?? 0,
@@ -356,6 +392,21 @@ class FirestoreService {
       await targetDoc.set({
         'seguidores': FieldValue.arrayUnion([currentUserId])
       }, SetOptions(merge: true));
+
+      final currentUserSnap = await currentDoc.get();
+      if (currentUserSnap.exists) {
+        final data = currentUserSnap.data()!;
+        await createNotification(
+          userId: targetUserId,
+          type: 'new_follower',
+          title: 'Nuevo seguidor',
+          body: '${data['nombre'] ?? 'Alguien'} te ha empezado a seguir.',
+          actorId: currentUserId,
+          actorName: data['nombre'],
+          actorFotoUrl: data['fotoUrl'],
+          data: {'userId': currentUserId},
+        );
+      }
     }
   }
 

@@ -201,11 +201,14 @@ class OracionScreen extends ConsumerWidget {
             child: peticionesAsync.when(
               data: (peticiones) => peticiones.isEmpty
                   ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                      itemCount: peticiones.length,
-                      itemBuilder: (context, index) =>
-                          _PeticionCard(peticion: peticiones[index]),
+                  : RefreshIndicator(
+                      onRefresh: () => ref.refresh(peticionesStreamProvider.future),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                        itemCount: peticiones.length,
+                        itemBuilder: (context, index) =>
+                            _PeticionCard(peticion: peticiones[index]),
+                      ),
                     ),
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
@@ -272,12 +275,8 @@ class _PeticionCard extends ConsumerWidget {
     final authorProfile =
         ref.watch(userProfileByIdProvider(peticion.userId)).value;
     final authorName = (authorProfile?.nombre.isNotEmpty == true)
-        ? authorProfile!.nombre
-        : (peticion.userName.isNotEmpty &&
-                peticion.userName != 'Usuario de Altar' &&
-                peticion.userName != 'Usuario'
-            ? peticion.userName
-            : 'Hermano en Fe');
+        ? authorProfile!.displayName
+        : peticion.userName;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

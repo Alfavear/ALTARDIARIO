@@ -4,6 +4,207 @@ Este archivo documenta los avances, decisiones y tareas realizadas en la evoluci
 
 ---
 
+## 2026-07-30 — Sesión: 30 de Julio 2026 (Parte 2) - Notificaciones y Correcciones en Reglas de Firestore
+
+**Agente**: opencode (Antigravity)
+- **Fix 1:** Se corrigieron los permisos de actualización en `firestore.rules` para permitir que usuarios autenticados actualicen documentos que no crearon, específicamente para poder agregar 'upvotes' (Me gusta) a comentarios, reflexiones, peticiones y debates. Se cambió la variable incorrecta `authorId` por `userId` en la regla de creación de debates, lo cual estaba causando que la aplicación se quedara en pantalla de carga en el Foro Bíblico (debido a denegación de permisos al intentar escuchar la colección).
+- **Corrección de Nombres de Invitados en Perfiles:** Se resolvió un bug donde algunos usuarios que habían publicado reflexiones o debates con un nombre personalizado se mostraban como "Invitado" al abrir su perfil público. Ahora el perfil utilizará el nombre que el usuario guardó en la reflexión como respaldo.
+- **Corrección de Sesión (Progreso mezclado):** Se solucionó un problema de "condición de carrera" (race condition) donde el progreso de una sesión anterior (ej. cuenta invitada o cuenta antigua) se mezclaba y guardaba erróneamente en una nueva cuenta de Google recién vinculada o abierta, garantizando que el nuevo inicio de sesión empiece correctamente con el progreso que corresponde a esa cuenta.
+- **Notificaciones (Implementación):** Se desarrolló y configuró un sistema de notificaciones In-App usando Firestore.
+  - Se modificó `firestore_service.dart` para interceptar eventos de la plataforma:
+    - Cuando un usuario empieza a seguir a otro (`toggleFollow`).
+    - Cuando se publica un nuevo comentario en una reflexión (`publicarComentario`).
+    - Cuando se envía una respuesta a un debate en el foro (`crearRespuesta`).
+  - Cada evento extrae los datos del autor original del contenido, y utiliza la función interna `createNotification()` para guardar un documento en la colección `/usuarios/{userId}/notifications`.
+  - Se desarrolló `notificaciones_screen.dart` (`lib/presentation/screens/`) donde se listan las notificaciones. Se configuraron redireccionamientos inteligentes al hacer click (ej. ir al perfil del nuevo seguidor o al debate respondido).
+  - Se agregó la funcionalidad "Marcar todas como leídas".
+  - En `app_providers.dart` se corrigió el `notificationsStreamProvider` para parsear los documentos de Firestore al modelo fuertemente tipado `AppNotification` e integrarlos con la UI.
+  - Se actualizó el AppBar en `home_screen.dart` para incluir una campana (`Icons.notifications`) con un contador rojo numérico (badge) que reacciona en tiempo real usando un Consumer de Riverpod.
+- **Pull-to-Refresh:** Se añadió la funcionalidad de arrastrar hacia abajo para recargar (usando `RefreshIndicator`) en las siguientes pantallas:
+  - `home_screen.dart`
+  - `feed_screen.dart`
+  - `oracion_screen.dart`
+  - `foro_screen.dart`
+  - `notificaciones_screen.dart`
+  Permitiendo a los usuarios actualizar el contenido sin tener que cerrar o cambiar de pestaña.
+- Se desplegaron las nuevas reglas a Firebase (`firebase deploy --only firestore:rules`).
+
+---
+
+## 2026-07-30 — Feature: Despliegue de Página Web y Distribución de APK (por agente de IA)
+
+### ✅ Firebase Hosting & UI Web
+- **`home_screen.dart`**: Se agregó una tarjeta visible únicamente en la Web (`kIsWeb`) que permite a los usuarios descargar la aplicación nativa para Android.
+- **`GitHub Releases`**: Dado que Firebase Hosting (plan Spark) no permite servir archivos `.apk`, se configuró la distribución segura del APK a través de GitHub Releases (`v1.0.1`). El botón en la Web apunta directamente a este link.
+- **`Despliegue`**: Se compiló `flutter build web` y se desplegó exitosamente a Firebase Hosting en `https://altardiario-ec25f.web.app`.
+
+---
+
+## 2026-07-30 — Fix: Corrección de capítulos bíblicos incompletos (por agente de IA)
+
+### ✅ Resolución de problemas de Batch y SQLite (Móvil)
+- **`bible_download_service.dart`**: Se solucionó un bug silencioso donde las descargas de biblias (ej. NVI) fallaban en el versículo 1000 debido a la reutilización indebida de un `Batch` de `sqflite` que ya había sido commiteado. Ahora, se instancia un nuevo `batch = db.batch()` cada 1000 versículos.
+- **`bible_service.dart` (`_seedIfNeeded`)**: Se modificó la semilla inicial de la Biblia (RV1960) para procesar el commit en lotes de 1000. Antes se insertaban los 31,102 versículos de una sola vez, lo que excedía el límite de transacciones IPC (CursorWindow) en Android y generaba capítulos faltantes o base de datos vacía en ciertos dispositivos.
+
+### ✅ Resolución de pasajes de múltiples capítulos (Web)
+- **`bible_service.dart` (`_fetchWebChapterOnline`)**: Se modificó el fallback de la versión web para consultar todos los capítulos incluidos en un rango de pasaje (ej. `Génesis 1-3`). Anteriormente, solo se descargaba el primer capítulo de la selección, provocando que los demás "salieran incompletos".
+
+---
+
+
+## 2026-07-30 — Fix 6: Nombres en Seguidores/Siguiendo usan displayName + fix bible_service.dart
+
+### ✅ Seguidores/Siguiendo ahora muestran nombre real
+- `followers_screen.dart`: cambié `u.nombre` por `u.displayName` en avatar y título
+- Ahora los usuarios sin `nombre` en Firestore (invitados sin convertir) muestran su email o UID en vez de vacío
+
+### ✅ Sugerencias en HomeScreen usan displayName
+- `home_screen.dart`: cambié `u.nombre.trim()` por `u.displayName`
+
+### ✅ bible_service.dart — fix compilación
+- Renombré `var count` a `var inserted` para no colisionar con el `final count` de línea 809
+- Esto estaba rompiendo TODOS los tests (7 failed to load) — ahora 101/101 pasan
+
+### ✅ Tests
+- `flutter test`: 101/101 pasando
+- `flutter analyze`: solo errores pre-existentes en bible_service (que YA están corregidos arriba)
+
+---
+
+## 2026-07-30 — Fix 5: Botón "Iniciar sesión con Google" en Perfil para invitados
+
+### ✅ Guest Conversion Card en PerfilScreen
+- **`perfil_screen.dart`**: Nuevo widget `_GuestConversionCard` que aparece solo si `isGuest == true`
+- Tarjeta con gradiente azul que muestra:
+  - Icono cloud upload + texto "Guardar tu progreso"
+  - Botón "Iniciar sesión con Google" (blanco con texto azul)
+- Al hacer clic: llama a `signInWithGoogle()`, crea perfil Firestore si no existe, sincroniza progreso local, refresca UI
+
+### ✅ Tests
+- `flutter test`: 101/101 pasando
+- `flutter analyze`: 0 errores, 0 warnings
+
+---
+
+## 2026-07-30 — Fix 4: Progreso local se guarda al iniciar sesión + solo usuarios Google en sugerencias
+
+### ✅ Progreso de invitado se conserva al iniciar sesión con Google/Apple
+- **`login_screen.dart`**: Nuevo método `_syncLocalProgress(uid)`
+  - Se ejecuta después de `_ensureUserProfileCreated` en `_signInWithGoogle` y `_signInWithApple`
+  - Lee las fechas completadas y racha máxima del almacenamiento local (SharedPreferences)
+  - Las sincroniza a Firestore vía `firestoreService.syncProgress()`
+  - **Resultado**: un invitado que usó la app por semanas y luego decide crear cuenta con Google no pierde su progreso
+
+### ✅ "Personas que quizás conozcas" solo muestra usuarios con cuenta real
+- `app_providers.dart:sugerenciasAmistadProvider`: ahora filtra también emails vacíos (`u.email.isNotEmpty`)
+- Solo aparecen usuarios registrados con Google/Apple (tienen email real)
+- Invitados (email `invitado@altardiario.app`) y usuarios sin email quedan excluidos
+
+### ✅ Tests
+- `flutter test`: 101/101 pasando
+- `flutter analyze`: 0 errores, 0 warnings
+
+---
+
+## 2026-07-30 — Fix 3: Invitados ven solo uso personal (nada comunitario)
+
+### ✅ HomeScreen: Todos los elementos comunitarios ocultos para invitados
+- Acciones comunitarias ocultas: **Comunidad**, **Oración**, **Foro Bíblico**, **Leaderboard**, **Rachas entre Amigos**, **Personas que quizás conozcas**, **Últimas reflexiones**
+- Invitados solo ven: lectura del día, devocional, Biblia, racha personal, progreso, notas personales
+- FeedScreen ya estaba bloqueado con `GuestAccessRestrictedWidget` desde antes
+- Controlado por `ref.watch(isGuestUserProvider)` + `if (!isGuest)` collection-if
+
+### ✅ Invitados excluidos de sugerencias de amistad
+- `sugerenciasAmistadProvider` filtra usuarios con email `invitado@altardiario.app`
+
+### ✅ Nombres existentes corregidos al iniciar sesión
+- `login_screen.dart:_fixExistingUserName` — si el nombre en Firestore está vacío/"anónimo", lo reemplaza con datos de Firebase Auth (displayName → email → UID)
+
+### ✅ Tests
+- `flutter test`: 101/101 pasando
+- `flutter analyze`: 0 errores, 0 warnings
+
+---
+
+## 2026-07-30 — Fix 2: Invitados excluidos de sugerencias + Actualización automática de nombres existentes
+
+### ✅ Invitados no aparecen en "Personas que quizás conozcas"
+- **`app_providers.dart:sugerenciasAmistadProvider`**: Ahora filtra usuarios con email `invitado@altardiario.app` (todos los invitados/anónimos)
+- Los usuarios invitados no tienen identidad real, no deben sugerirse como amistad
+
+### ✅ Nombres de usuarios existentes corregidos al iniciar sesión
+- **`login_screen.dart`**: Nuevo método `_fixExistingUserName(User user, Usuario existing)`
+  - Se ejecuta después de `_ensureUserProfileCreated` si el usuario YA existía en Firestore
+  - Si el `nombre` en Firestore está vacío o es "anónimo", lo reemplaza con el `displayName` de Firebase Auth
+  - Si Firebase Auth tampoco tiene nombre, usa el prefijo del email
+  - Si no hay email, usa un identificador basado en UID
+- **Proceso**: Al hacer login con Google/Apple, detecta automáticamente nombres malos y los corrige en Firestore
+
+### ✅ Tests
+- `flutter test`: 101/101 pasando
+- `flutter analyze`: 0 errores, 0 warnings
+
+---
+
+## 2026-07-30 — Registro de Usuarios: Nombres Reales desde el Origen (eliminados placeholders)
+
+### ✅ Cambios por opencode (asistente IA)
+
+### ✅ Helper `displayName` en modelo Usuario
+- **`usuario.dart`**: Nuevo getter `displayName` que deriva el nombre a mostrar desde los datos disponibles:
+  1. Si `nombre` no está vacío ni es "anónimo" → lo usa
+  2. Si no, y el email no es `invitado@altardiario.app` → usa el prefijo del email (`email.split('@').first`)
+  3. Si no → usa los primeros 8 caracteres del UID
+- Este getter se usa en TODOS los puntos de visualización de la app
+
+### ✅ Registro Google/Apple: Captura real de nombres
+- **`login_screen.dart`** — `_ensureUserProfileCreated` mejorado:
+  - Primero usa `user.displayName` (nombre real de Google/Apple)
+  - Si viene vacío, extrae la parte local del email (`email.split('@').first`)
+  - Si aún así no hay nombre, genera `Usuario-{uid abreviado}` (técnico, no placeholder)
+  - Eliminado el fallback genérico `'Usuario'`
+
+### ✅ Registro Anónimo: Ya funcionaba correctamente
+- El diálogo anónimo ya solicitaba nombre + apodo al usuario
+- Se crea en Firestore con formato `"$nombre (Invitado)"`
+- Sin cambios necesarios
+
+### ✅ Datos existentes en Firestore: Derivación desde email
+- **`firestore_service.dart:getStreaksData`**: Ahora incluye el campo `email` en la respuesta (además de `nombre`, `fotoUrl`, etc.)
+- **`app_providers.dart:friendStreaksProvider`**: Si `nombre` está vacío, deriva desde el email o UID
+- **`app_providers.dart:globalLeaderboardProvider`**: Usa `user.displayName` (deriva desde email si nombre vacío)
+- **`app_providers.dart:sugerenciasAmistadProvider`**: Usa `u.displayName`
+
+### ✅ Eliminados todos los placeholders inventados
+- **`app_providers.dart`**: eliminado `'Creyente'` y `'Anónimo'` como fallbacks
+- **`home_screen.dart`**: eliminado `'Usuario'` en tarjetas de sugerencias
+- **`public_profile_screen.dart`**: usa `user.displayName`
+- **`feed_screen.dart`**: eliminados `'Hermano en Fe'`, `'Usuario de Altar'`, `'Usuario'` → usa `authorProfile!.displayName`
+- **`oracion_screen.dart`**: mismo cambio que feed_screen
+- **`chat_list_screen.dart`**: eliminado `'Usuario'`
+- **`chat_screen.dart`**: usa `currentProfile?.displayName`
+- **`debate_detail_screen.dart`**: usa `user?.displayName`
+- **`crear_debate_screen.dart`**: usa `user?.displayName`
+- **`gamification_service.dart`**: eliminado `'Hermano en Fe'`
+
+### ✅ Prompt para usuarios sin nombre real en Perfil
+- **`perfil_screen.dart`**: Detecta si `nombre` está vacío o es "anónimo" (ignorando la derivación por email). Si no tiene nombre real, muestra un botón "Configurar perfil" que abre el diálogo de edición para que el usuario establezca su nombre
+
+### ✅ Resumen
+| Antes | Ahora |
+|-------|-------|
+| "Creyente" para usuarios sin nombre | Nombre real → email prefix → UID |
+| "Usuario" como fallback genérico | Derivación inteligente desde datos disponibles |
+| "Hermano en Fe" en reflexiones/peticiones | `displayName` del perfil Firestore |
+| "Usuario de Altar" ignorado | Datos reales desde Firestore |
+| "Anónimo" en streaks/chats | Email prefix o UID |
+
+### ✅ Tests
+- `flutter test`: 101/101 pasando
+- `flutter analyze`: 0 errores, 0 warnings
+
+---
+
 ## 2026-07-28 — Panel de Perfil Completo, Seguridad Invitados, Política de Comunidad & Ícono APK Personalizado
 
 ### ✅ Ícono de la APK Personalizado

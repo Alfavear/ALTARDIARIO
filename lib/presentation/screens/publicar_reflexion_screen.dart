@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../providers/app_providers.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/models/bible_models.dart';
@@ -135,8 +136,14 @@ class _PublicarReflexionScreenState
 
     try {
       await firestoreService.publicarReflexion(nuevaReflexion);
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      await storage.markDateAsCompleted(todayStr);
+      final completed = storage.getCompletedDatesSync();
+      final maxStreak = storage.getMaxStreak();
+      if (uid != 'anonimo') {
+        await firestoreService.syncProgress(uid, completed, maxStreak);
+      }
       final user = ref.read(userProfileProvider).asData?.value;
-      final storage = ref.read(storageProvider);
       final newBadges = await GamificationService.evaluarYNotificarBadges(
         user: user,
         firestore: firestoreService,

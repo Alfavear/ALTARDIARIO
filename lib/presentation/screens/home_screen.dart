@@ -5,14 +5,18 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/lectura_dia.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
+import '../../core/services/update_service.dart';
 import '../providers/app_providers.dart';
 import 'bible_reader_screen.dart';
 import 'notes_screen.dart';
 import 'public_profile_screen.dart';
 import 'amigos_rachas_screen.dart';
 import 'foro_screen.dart';
-import 'leaderboard_screen.dart';
+import 'notificaciones_screen.dart';
+import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'leaderboard_screen.dart';
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int tabIndex)? onNavigateTo;
 
@@ -33,6 +37,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(_loadVerse);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdates(context);
+    });
   }
 
   Future<void> _loadVerse() async {
@@ -73,6 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final storage = ref.watch(storageProvider);
     final reflexionesAsync = ref.watch(reflexionesStreamProvider);
     final focusMode = ref.watch(focusModeProvider);
+    final isGuest = ref.watch(isGuestUserProvider);
     final now = DateTime.now();
     final dateKey = DateFormat('yyyy-MM-dd').format(now);
     final isCompleted = storage.isDiaCompletado(dateKey);
@@ -116,15 +124,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: EdgeInsets.only(right: 4),
               child: Icon(Icons.lock, color: Colors.white, size: 20),
             ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined,
-                color: Colors.white),
-            onPressed: () => _handleNavigate(4, isCompleted),
+          Consumer(
+            builder: (context, ref, child) {
+              final unreadCount = ref.watch(unreadNotificationsCountProvider);
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificacionesScreen()));
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          unreadCount > 9 ? '9+' : '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(userProfileProvider);
+          ref.invalidate(unreadNotificationsCountProvider);
+          setState(() {});
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
           const Text('Mi Lectura Hoy',
               style: TextStyle(
@@ -135,6 +181,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const Text('Continúa tu camino de fe y reflexión.',
               style: TextStyle(
                   fontSize: 14, color: AppTheme.textSecondary)),
+          if (kIsWeb) ...[
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () async {
+                final url = Uri.parse('https://github.com/Alfavear/ALTARDIARIO/releases/download/v1.0.2/altardiario.apk');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url);
+                }
+              },
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+                  ),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.android, color: Colors.white, size: 28),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Descargar App Nativa',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
+                          Text('Mejor rendimiento y acceso offline',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.download, color: Colors.white),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           _buildReadingCard(isCompleted),
           const SizedBox(height: 16),
@@ -175,62 +271,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.forum_rounded,
-                  label: 'Comunidad',
-                  color: AppTheme.streakOrange,
-                  onTap: () => _handleNavigate(2, isCompleted),
+          if (!isGuest) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionCard(
+                    icon: Icons.forum_rounded,
+                    label: 'Comunidad',
+                    color: AppTheme.streakOrange,
+                    onTap: () => _handleNavigate(2, isCompleted),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.auto_awesome_rounded,
-                  label: 'Oración',
-                  color: AppTheme.completedGreen,
-                  onTap: () => _handleNavigate(3, isCompleted),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _ActionCard(
+                    icon: Icons.auto_awesome_rounded,
+                    label: 'Oración',
+                    color: AppTheme.completedGreen,
+                    onTap: () => _handleNavigate(3, isCompleted),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.forum,
-                  label: 'Foro Bíblico',
-                  color: AppTheme.primaryBlue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ForoScreen()),
-                    );
-                  },
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionCard(
+                    icon: Icons.forum,
+                    label: 'Foro Bíblico',
+                    color: AppTheme.primaryBlue,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ForoScreen()),
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.emoji_events_rounded,
-                  label: 'Leaderboard',
-                  color: AppTheme.streakOrange,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const LeaderboardScreen()),
-                    );
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _ActionCard(
+                    icon: Icons.emoji_events_rounded,
+                    label: 'Leaderboard',
+                    color: AppTheme.streakOrange,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const LeaderboardScreen()),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
           const SizedBox(height: 24),
           Row(
             children: [
@@ -255,126 +353,123 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const AmigosRachasScreen()),
-              );
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: AppTheme.softShadow,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.streakOrange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+          if (!isGuest) ...[
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AmigosRachasScreen()),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: AppTheme.softShadow,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.streakOrange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.emoji_events_rounded,
+                          color: AppTheme.streakOrange),
                     ),
-                    child: const Icon(Icons.emoji_events_rounded,
-                        color: AppTheme.streakOrange),
-                  ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Rachas entre Amigos',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
-                        Text('Compite y motívate con tu comunidad',
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary)),
-                      ],
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Rachas entre Amigos',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600)),
+                          Text('Compite y motívate con tu comunidad',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary)),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Icon(Icons.chevron_right,
-                      color: AppTheme.textSecondary),
-                ],
+                    const Icon(Icons.chevron_right,
+                        color: AppTheme.textSecondary),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Consumer(builder: (_, ref2, __) {
-            final sugerenciasAsync = ref2.watch(sugerenciasAmistadProvider);
-            return sugerenciasAsync.when(
-              data: (usuarios) {
-                if (usuarios.isEmpty) return const SizedBox.shrink();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Personas que quizás conozcas',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 100,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: usuarios.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 12),
-                        itemBuilder: (_, i) {
-                          final u = usuarios[i];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => PublicProfileScreen(
-                                      userId: u.id),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 100,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(
-                                    AppTheme.radiusMedium),
-                                boxShadow: AppTheme.softShadow,
-                              ),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: AppTheme.primaryBlue
-                                        .withValues(alpha: 0.12),
-                                    backgroundImage: u.fotoUrl.isNotEmpty
-                                        ? NetworkImage(u.fotoUrl)
-                                        : null,
-                                    child: u.fotoUrl.isEmpty
-                                        ? Text(
-                                            u.nombre.isNotEmpty
-                                                ? u.nombre[0]
-                                                    .toUpperCase()
-                                                : '?',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color:
-                                                    AppTheme.primaryBlue))
-                                        : null,
+            const SizedBox(height: 16),
+            Consumer(builder: (_, ref2, __) {
+              final sugerenciasAsync = ref2.watch(sugerenciasAmistadProvider);
+              return sugerenciasAsync.when(
+                data: (usuarios) {
+                  if (usuarios.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Personas que quizás conozcas',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 100,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: usuarios.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (_, i) {
+                            final u = usuarios[i];
+                            final displayName = u.displayName;
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PublicProfileScreen(
+                                        userId: u.id),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(u.nombre,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                );
+                              },
+                              child: Container(
+                                width: 100,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusMedium),
+                                  boxShadow: AppTheme.softShadow,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: AppTheme.primaryBlue
+                                          .withValues(alpha: 0.12),
+                                      backgroundImage: u.fotoUrl.isNotEmpty
+                                          ? NetworkImage(u.fotoUrl)
+                                          : null,
+                                      child: Text(
+                                          displayName[0].toUpperCase(),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color:
+                                                  AppTheme.primaryBlue)),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(displayName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600)),
                                 ],
@@ -391,6 +486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               error: (_, __) => const SizedBox.shrink(),
             );
           }),
+          ],
           const SizedBox(height: 16),
           InkWell(
             onTap: () {
@@ -441,53 +537,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          const Text('Últimas reflexiones',
-              style:
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          reflexionesAsync.when(
-            data: (reflexiones) {
-              final preview = reflexiones.take(3).toList();
-              if (preview.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textSecondary),
-      ),
-      );
-  }
-              return Column(
-                children: [
-                  for (final r in preview)
-                    _ReflexionPreviewCard(reflexion: r),
-                  if (reflexiones.length > 3)
-                    TextButton(
-                      onPressed: () =>
-                          _handleNavigate(2, isCompleted),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Ver todas en Altar'),
-                          SizedBox(width: 4),
-                          Icon(Icons.arrow_forward, size: 16),
-                        ],
-                      ),
+          if (!isGuest) ...[
+            const SizedBox(height: 24),
+            const Text('Últimas reflexiones',
+                style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            reflexionesAsync.when(
+              data: (reflexiones) {
+                final preview = reflexiones.take(3).toList();
+                if (preview.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppTheme.textSecondary),
                     ),
-                ],
-              );
-            },
-            loading: () => const SizedBox(
-              height: 80,
-              child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return Column(
+                  children: [
+                    for (final r in preview)
+                      _ReflexionPreviewCard(reflexion: r),
+                    if (reflexiones.length > 3)
+                      TextButton(
+                        onPressed: () =>
+                            _handleNavigate(2, isCompleted),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Ver todas en Altar'),
+                            SizedBox(width: 4),
+                            Icon(Icons.arrow_forward, size: 16),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox(
+                height: 80,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
             ),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
+          ],
         ],
       ),
-      ),
+      ), // Closes ListView
+      ), // Closes RefreshIndicator
     );
   }
 
@@ -688,7 +787,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(width: 10),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () async {
+                        final storage = ref.read(storageProvider);
+                        final now = DateTime.now();
+                        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+                        await storage.toggleLectura(dateKey);
+                        final uid = ref.read(effectiveUserUidProvider);
+                        if (uid != null) {
+                          final completed = storage.getCompletedDatesSync();
+                          final maxStreak = storage.getMaxStreak();
+                          await ref
+                              .read(firestoreServiceProvider)
+                              .syncProgress(uid, completed, maxStreak);
+                        }
+                        if (mounted) setState(() {});
+                      },
                       child: Container(
                         width: 46,
                         height: 46,
@@ -1003,7 +1116,8 @@ class _ReflexionPreviewCard extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => PublicProfileScreen(
-                            userId: reflexion.userId),
+                          userId: reflexion.userId,
+                          fallbackName: reflexion.userName),
                       ),
                     );
                   },

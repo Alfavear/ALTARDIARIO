@@ -27,7 +27,7 @@ void main() async {
   if (kIsWeb) {
     try {
       final authService = AuthService();
-      await authService.handleRedirectResult();
+      await authService.handleRedirectResult().timeout(const Duration(seconds: 1));
     } catch (e) {
       debugPrint("Redirect result handling: $e");
     }

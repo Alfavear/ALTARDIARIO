@@ -92,7 +92,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (user == null) {
           ref.read(localUidProvider.notifier).setUid(uid);
         }
-        final formattedName = '$guestName (Invitado)';
+        final formattedName = guestName;
         final storage = ref.read(storageProvider);
         await storage.setUserName(formattedName);
 
@@ -111,11 +111,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       if (mounted) _navigateToMain();
     } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+      if (e.toString().contains('popup-closed-by-user')) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al iniciar sesión: $e')),
+          const SnackBar(content: Text('Inicio de sesión cancelado')),
         );
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al iniciar sesión: $e')),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -127,12 +132,81 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  Future<void> _ensureUserProfileCreated(User user) async {
+    final firestoreService = ref.read(firestoreServiceProvider);
+    final existingUser = await firestoreService.getUsuarioOnce(user.uid);
+    if (existingUser == null) {
+      String displayName = user.displayName ?? '';
+      if (displayName.trim().isEmpty) {
+        displayName = user.email?.split('@').first ?? '';
+      }
+      if (displayName.trim().isEmpty) {
+        displayName = 'Usuario-${user.uid.substring(0, 6)}';
+      }
+      await firestoreService.crearOActualizarUsuario(
+        Usuario(
+          id: user.uid,
+          nombre: displayName.trim(),
+          email: user.email ?? '',
+          fotoUrl: user.photoURL ?? '',
+          siguiendo: [],
+          seguidores: [],
+          badges: ['bienvenida'],
+        ),
+      );
+    } else {
+      await _fixExistingUserName(user, existingUser);
+    }
+  }
+
+  Future<void> _fixExistingUserName(User user, Usuario existing) async {
+    final raw = existing.nombre.trim();
+    final isBad = raw.isEmpty || raw.toLowerCase() == 'anónimo';
+    if (!isBad) return;
+
+    String correctName = user.displayName ?? '';
+    if (correctName.trim().isEmpty) {
+      correctName = user.email?.split('@').first ?? '';
+    }
+    if (correctName.trim().isEmpty) {
+      correctName = 'Usuario-${user.uid.substring(0, 6)}';
+    }
+    correctName = correctName.trim();
+    if (correctName == raw) return;
+
+    await ref.read(firestoreServiceProvider).updateUserConfig(user.uid, {
+      'nombre': correctName,
+    });
+  }
+
+  Future<void> _syncLocalProgress(String uid) async {
+    final storage = ref.read(storageProvider);
+    final firestore = ref.read(firestoreServiceProvider);
+
+    await storage.clearAllLocalData();
+
+    final remoteUser = await firestore.getUsuarioOnce(uid);
+    if (remoteUser != null) {
+      if (remoteUser.progresoLectura.isNotEmpty) {
+        await storage.loadFromFirestoreData(
+            remoteUser.progresoLectura, remoteUser.maxStreak);
+      }
+      if (remoteUser.nombre.isNotEmpty) {
+        await storage.setUserName(remoteUser.nombre);
+      }
+    }
+  }
+
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
+    final storage = ref.read(storageProvider);
     try {
+      storage.setSwitchingAccount(true);
       final user = await ref.read(authServiceProvider).signInWithGoogle();
       if (user != null && mounted) {
-        _navigateToMain();
+        await _ensureUserProfileCreated(user);
+        await _syncLocalProgress(user.uid);
+        if (mounted) _navigateToMain();
       } else if (mounted) {
         // signInWithRedirect iniciado - la navegación ocurre tras recarga
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,14 +249,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       }
     } finally {
+      storage.setSwitchingAccount(false);
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _signInWithApple() async {
     setState(() => _isLoading = true);
+    final storage = ref.read(storageProvider);
     try {
-      await ref.read(authServiceProvider).signInWithApple();
+      storage.setSwitchingAccount(true);
+      final user = await ref.read(authServiceProvider).signInWithApple();
+      if (user != null && mounted) {
+        await _ensureUserProfileCreated(user);
+        await _syncLocalProgress(user.uid);
+        if (mounted) _navigateToMain();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -190,6 +272,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       }
     } finally {
+      storage.setSwitchingAccount(false);
       if (mounted) setState(() => _isLoading = false);
     }
   }

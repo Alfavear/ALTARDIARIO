@@ -20,6 +20,7 @@ class PerfilScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final userProfile = ref.watch(userProfileProvider);
     final storageService = ref.watch(storageProvider);
+    final isGuest = ref.watch(isGuestUserProvider);
 
     final streak = storageService.calcularRacha();
     final total = storageService.getTotalCompletadas();
@@ -66,6 +67,10 @@ class PerfilScreen extends ConsumerWidget {
                           streak: streak,
                           total: total,
                           reflexionesCount: null),
+                      if (isGuest) ...[
+                        const SizedBox(height: 20),
+                        _GuestConversionCard(),
+                      ],
                       const SizedBox(height: 20),
                       _LevelProgressCard(userProfile: userProfile),
                       const SizedBox(height: 20),
@@ -114,11 +119,10 @@ class _ProfileHero extends StatelessWidget {
     final photoUrl = (usuario?.fotoUrl.isNotEmpty == true)
         ? usuario!.fotoUrl
         : authState.value?.photoURL;
-    final nombre = (usuario?.nombre.isNotEmpty == true)
-        ? usuario!.nombre
-        : (authState.value?.displayName ??
-            authState.value?.email ??
-            'Usuario Anónimo');
+    final nombreCrudo = (usuario?.nombre ?? '').trim();
+    final hasNombreReal = nombreCrudo.isNotEmpty &&
+        nombreCrudo.toLowerCase() != 'anónimo';
+    final nombre = hasNombreReal ? nombreCrudo : (usuario?.displayName ?? '');
     final bio = usuario?.bio ?? '';
 
     final bool isEmoji = photoUrl != null && photoUrl.startsWith('emoji:');
@@ -177,6 +181,32 @@ class _ProfileHero extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+          if (!hasNombreReal && usuario != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: GestureDetector(
+                onTap: () => _showEditProfileDialog(context, ref, usuario),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white38),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit, size: 14, color: Colors.white70),
+                      SizedBox(width: 6),
+                      Text(
+                        'Configurar perfil',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           if (bio.isNotEmpty) ...[
             const SizedBox(height: 4),
             Padding(
@@ -1478,7 +1508,7 @@ void _showFeedbackDialog(BuildContext context, WidgetRef ref) {
               final userProfile = ref.read(userProfileProvider).asData?.value;
               await ref.read(firestoreServiceProvider).sendFeedback(
                 userId: uid ?? 'anonimo',
-                userName: userProfile?.nombre ?? 'Anónimo',
+                userName: userProfile?.displayName ?? '',
                 mensaje: mensajeCtrl.text.trim(),
                 calificacion: calificacion,
               );
@@ -1611,9 +1641,13 @@ class _MenuOptions extends ConsumerWidget {
                 ),
               );
               if (confirm != true) return;
+              final storage = ref.read(storageProvider);
+              storage.setSwitchingAccount(true);
+              await storage.clearAllLocalData();
               await ref.read(authServiceProvider).signOut();
               await ref.read(authServiceProvider).clearLocalUid();
               ref.read(localUidProvider.notifier).setUid(null);
+              storage.setSwitchingAccount(false);
               if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
@@ -1780,5 +1814,143 @@ class _UserReflexionesSection extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+class _GuestConversionCard extends ConsumerWidget {
+  const _GuestConversionCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.cloud_upload_outlined,
+                    color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Guardar tu progreso',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15)),
+                    SizedBox(height: 2),
+                    Text('Inicia sesión con Google y no pierdas tu avance',
+                        style: TextStyle(
+                            color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _signInWithGoogleFromProfile(context, ref),
+              icon: const Icon(Icons.g_mobiledata, size: 20),
+              label: const Text('Iniciar sesión con Google',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF0D47A1),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _signInWithGoogleFromProfile(
+    BuildContext context, WidgetRef ref) async {
+  final storage = ref.read(storageProvider);
+  try {
+    storage.setSwitchingAccount(true);
+    final user = await ref.read(authServiceProvider).signInWithGoogle();
+    if (user == null || !context.mounted) {
+      storage.setSwitchingAccount(false);
+      return;
+    }
+
+    final firestore = ref.read(firestoreServiceProvider);
+    final existing = await firestore.getUsuarioOnce(user.uid);
+    if (existing == null) {
+      String name = user.displayName ?? '';
+      if (name.trim().isEmpty) {
+        name = user.email?.split('@').first ?? 'Usuario-${user.uid.substring(0, 6)}';
+      }
+      await firestore.crearOActualizarUsuario(
+        Usuario(
+          id: user.uid,
+          nombre: name.trim(),
+          email: user.email ?? '',
+          fotoUrl: user.photoURL ?? '',
+          siguiendo: [],
+          seguidores: [],
+          badges: ['bienvenida'],
+        ),
+      );
+    }
+    await storage.clearAllLocalData();
+
+    final remoteUser = await firestore.getUsuarioOnce(user.uid);
+    if (remoteUser != null) {
+      if (remoteUser.progresoLectura.isNotEmpty) {
+        await storage.loadFromFirestoreData(
+            remoteUser.progresoLectura, remoteUser.maxStreak);
+      }
+      if (remoteUser.nombre.isNotEmpty) {
+        await storage.setUserName(remoteUser.nombre);
+      }
+    }
+    if (!context.mounted) return;
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(isGuestUserProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sesión iniciada con Google. ¡Tu progreso está guardado!'),
+        backgroundColor: AppTheme.completedGreen,
+      ),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    if (e.toString().contains('popup-closed-by-user')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inicio de sesión cancelado')),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al conectar: $e')),
+    );
+  } finally {
+    storage.setSwitchingAccount(false);
   }
 }

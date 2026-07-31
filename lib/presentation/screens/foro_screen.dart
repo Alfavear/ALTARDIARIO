@@ -63,11 +63,13 @@ appBar: AppBar(
                 if (filtered.isEmpty) {
                   return _buildEmptyState();
                 }
-                return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  itemCount: filtered.length,
-                  itemBuilder: (_, i) =>
-                      _DebateCard(debate: filtered[i]),
+                return RefreshIndicator(
+                  onRefresh: () => ref.refresh(debatesStreamProvider(_selectedLibro).future),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    itemCount: filtered.length,
+                    itemBuilder: (_, i) => _DebateCard(debate: filtered[i]),
+                  ),
                 );
               },
               loading: () =>

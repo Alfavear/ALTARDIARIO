@@ -117,14 +117,12 @@ class _LeaderboardCard extends StatelessWidget {
               backgroundImage: entry.fotoUrl.isNotEmpty
                   ? NetworkImage(entry.fotoUrl)
                   : null,
-              child: entry.fotoUrl.isEmpty && !isMe
-                  ? Text(entry.nombre.isNotEmpty
-                          ? entry.nombre[0].toUpperCase()
-                          : '?',
+              child: isMe
+                  ? null
+                  : Text(entry.nombre.isNotEmpty ? entry.nombre[0].toUpperCase() : '?',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryBlue))
-                  : null,
+                          color: AppTheme.primaryBlue)),
             ),
             const SizedBox(width: 12),
             Expanded(

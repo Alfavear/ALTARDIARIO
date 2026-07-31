@@ -313,12 +313,8 @@ class _ReflexionCard extends ConsumerWidget {
     final authorProfile =
         ref.watch(userProfileByIdProvider(reflexion.userId)).value;
     final authorName = (authorProfile?.nombre.isNotEmpty == true)
-        ? authorProfile!.nombre
-        : (reflexion.userName.isNotEmpty &&
-                reflexion.userName != 'Usuario de Altar' &&
-                reflexion.userName != 'Usuario'
-            ? reflexion.userName
-            : 'Hermano en Fe');
+        ? authorProfile!.displayName
+        : reflexion.userName;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -339,7 +335,8 @@ class _ReflexionCard extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PublicProfileScreen(
-                          userId: reflexion.userId),
+                          userId: reflexion.userId,
+                          fallbackName: authorName),
                     ),
                   );
                 },
@@ -667,7 +664,7 @@ class _ReflexionCard extends ConsumerWidget {
         id: '',
         reflexionId: r.id,
         userId: uid,
-        userName: user?.nombre ?? 'Anónimo',
+        userName: user?.displayName ?? '',
         userFotoUrl: user?.fotoUrl ?? '',
         texto: text.trim(),
         fecha: DateTime.now(),
@@ -704,7 +701,8 @@ class _CommentTile extends ConsumerWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => PublicProfileScreen(
-                      userId: comment.userId),
+                      userId: comment.userId,
+                      fallbackName: comment.userName),
                 ),
               );
             },
@@ -715,15 +713,13 @@ class _CommentTile extends ConsumerWidget {
               backgroundImage: comment.userFotoUrl.isNotEmpty
                   ? NetworkImage(comment.userFotoUrl)
                   : null,
-              child: comment.userFotoUrl.isEmpty
-                  ? Text(comment.userName.isNotEmpty
-                          ? comment.userName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.primaryBlue,
-                          fontWeight: FontWeight.w700))
-                  : null,
+              child: Text(comment.userName.isNotEmpty
+                      ? comment.userName[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(width: 10),
@@ -745,7 +741,8 @@ class _CommentTile extends ConsumerWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => PublicProfileScreen(
-                                  userId: comment.userId),
+                                  userId: comment.userId,
+                                  fallbackName: comment.userName),
                             ),
                           );
                         },

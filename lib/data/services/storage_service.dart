@@ -29,6 +29,15 @@ class StorageService {
     await _prefs.remove(_keyMaxStreak);
   }
 
+  Future<void> clearAllLocalData() async {
+    await _prefs.remove(_keyCompletedDates);
+    await _prefs.remove(_keyMaxStreak);
+    await _prefs.remove(_keyUserName);
+    await _prefs.remove(_keyPlanStartDate);
+    await _prefs.remove(_keyFocusMode);
+    await _prefs.remove('local_uid');
+  }
+
   Map<String, String> _planData = {};
 
   /// Carga el plan de lectura desde el archivo de assets.
@@ -50,6 +59,29 @@ class StorageService {
   Future<DateTime?> getPlanStartDate() async {
     final dateStr = _prefs.getString(_keyPlanStartDate);
     return dateStr != null ? DateTime.parse(dateStr) : null;
+  }
+
+  bool _isSwitchingAccount = false;
+
+  void setSwitchingAccount(bool value) {
+    _isSwitchingAccount = value;
+  }
+
+  Future<void> syncFromFirestoreData(
+      List<String> firestoreDates, int firestoreMaxStreak) async {
+    if (_isSwitchingAccount) return;
+    
+    final localDates = _prefs.getStringList(_keyCompletedDates) ?? [];
+    final merged = {...localDates, ...firestoreDates}.toList();
+    await _prefs.setStringList(_keyCompletedDates, merged);
+    if (firestoreMaxStreak > getMaxStreak()) {
+      await _prefs.setInt(_keyMaxStreak, firestoreMaxStreak);
+    }
+  }
+
+  Future<void> loadFromFirestoreData(List<String> firestoreDates, int firestoreMaxStreak) async {
+    await _prefs.setStringList(_keyCompletedDates, firestoreDates);
+    await _prefs.setInt(_keyMaxStreak, firestoreMaxStreak);
   }
 
   Future<void> markDateAsCompleted(String dateFormatted) async {

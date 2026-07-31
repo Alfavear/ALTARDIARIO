@@ -9,8 +9,9 @@ import 'followers_screen.dart';
 
 class PublicProfileScreen extends ConsumerWidget {
   final String userId;
+  final String? fallbackName;
 
-  const PublicProfileScreen({super.key, required this.userId});
+  const PublicProfileScreen({super.key, required this.userId, this.fallbackName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,33 +23,37 @@ class PublicProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
-appBar: AppBar(
-  backgroundColor: Colors.white,
-  foregroundColor: AppTheme.textPrimary,
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => Navigator.pop(context),
-  ),
-  title: const Text('Perfil',
-      style: TextStyle(fontWeight: FontWeight.bold)),
-),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Perfil',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: userAsync.when(
         data: (user) {
           if (user == null) {
             return const Center(child: Text('Usuario no encontrado'));
           }
+          String displayName = user.displayName;
+          if (displayName == 'Invitado' && fallbackName != null && fallbackName!.isNotEmpty) {
+            displayName = fallbackName!;
+          }
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: _buildProfileHeader(context, ref, user, isSelf,
-                    isFollowingAsync, uid),
+                    isFollowingAsync, uid, displayName),
               ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Text(
-                    'Reflexiones de ${user.nombre}',
+                    'Reflexiones de $displayName',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w700),
                   ),
@@ -97,7 +102,8 @@ appBar: AppBar(
     Usuario user,
     bool isSelf,
     AsyncValue<bool> isFollowingAsync,
-    String? uid,
+    String? currentUid,
+    String displayName,
   ) {
     return Container(
       decoration: const BoxDecoration(
@@ -118,20 +124,15 @@ appBar: AppBar(
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
                 backgroundImage:
                     user.fotoUrl.isNotEmpty ? NetworkImage(user.fotoUrl) : null,
-                child: user.fotoUrl.isEmpty
-                    ? Text(
-                        user.nombre.isNotEmpty
-                            ? user.nombre[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      )
-                    : null,
+                child: Text(
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
               ),
               const SizedBox(height: 12),
-              Text(user.nombre,
+              Text(displayName,
                   style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -188,7 +189,7 @@ appBar: AppBar(
                   }),
                 ],
               ),
-              if (!isSelf && uid != null) ...[
+              if (!isSelf && currentUid != null) ...[
                 const SizedBox(height: 16),
                 isFollowingAsync.when(
                   data: (isFollowing) => SizedBox(
@@ -197,7 +198,7 @@ appBar: AppBar(
                       onPressed: () async {
                         await ref
                             .read(firestoreServiceProvider)
-                            .toggleFollow(uid, userId, isFollowing);
+                            .toggleFollow(currentUid, userId, isFollowing);
                         ref.invalidate(isFollowingProvider(userId));
                       },
                       icon: Icon(isFollowing

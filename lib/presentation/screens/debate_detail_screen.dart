@@ -34,7 +34,7 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
         id: '',
         debateId: debateId,
         userId: uid,
-        userName: user?.nombre ?? 'Anónimo',
+        userName: user?.displayName ?? '',
         texto: text,
         fecha: DateTime.now(),
       ),
@@ -278,7 +278,8 @@ class _DebateHeader extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PublicProfileScreen(
-                          userId: debate.userId),
+                          userId: debate.userId,
+                          fallbackName: debate.userName),
                     ),
                   );
                 },
@@ -378,7 +379,8 @@ class _ReplyTile extends ConsumerWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => PublicProfileScreen(
-                                userId: reply.userId),
+                                userId: reply.userId,
+                                fallbackName: reply.userName),
                           ),
                         );
                       },
