@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/services/community_policy_service.dart';
 import '../widgets/guest_access_restricted_widget.dart';
+import '../widgets/shimmer_loading_widget.dart';
 import '../providers/app_providers.dart';
 import '../../data/models/peticion_oracion.dart';
 
@@ -210,8 +212,7 @@ class OracionScreen extends ConsumerWidget {
                             _PeticionCard(peticion: peticiones[index]),
                       ),
                     ),
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const ShimmerListLoading(itemCount: 4),
               error: (err, stack) =>
                   Center(child: Text('Error: $err')),
             ),
@@ -356,6 +357,7 @@ class _PeticionCard extends ConsumerWidget {
               ),
               ElevatedButton.icon(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   ref
                       .read(firestoreServiceProvider)
                       .apoyarPeticion(peticion.id);

@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../widgets/guest_access_restricted_widget.dart';
 import 'public_profile_screen.dart';
 import 'publicar_reflexion_screen.dart';
+import '../widgets/shimmer_loading_widget.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -134,8 +135,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   ),
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const ShimmerListLoading(itemCount: 4),
               error: (err, stack) =>
                   Center(child: Text('Error: $err')),
             ),
@@ -510,6 +510,7 @@ class _ReflexionCard extends ConsumerWidget {
                 activeColor: Colors.red,
                 onTap: () {
                   if (uid == null) return;
+                  HapticFeedback.lightImpact();
                   final isLiked = reflexion.isLikedBy(uid);
                   ref
                       .read(firestoreServiceProvider)

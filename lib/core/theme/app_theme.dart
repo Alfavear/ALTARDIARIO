@@ -189,4 +189,21 @@ class AppTheme {
       ),
     );
   }
+
+  /// Estilo tipográfico Serif (Lora) para pasajes bíblicos y versículos.
+  static TextStyle bibleStyle({
+    double fontSize = 16.0,
+    Color? color,
+    FontWeight? fontWeight,
+    double height = 1.65,
+    FontStyle? fontStyle,
+  }) {
+    return GoogleFonts.lora(
+      fontSize: fontSize,
+      color: color ?? textPrimary,
+      fontWeight: fontWeight ?? FontWeight.w400,
+      height: height,
+      fontStyle: fontStyle,
+    );
+  }
 }

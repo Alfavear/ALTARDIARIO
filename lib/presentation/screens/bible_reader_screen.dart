@@ -1193,9 +1193,9 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                   children: [
                     TextSpan(
                       text: verse.text,
-                      style: TextStyle(
-                        color: _themeTextColor,
+                      style: AppTheme.bibleStyle(
                         fontSize: _fontSize,
+                        color: _themeTextColor,
                         height: 1.65,
                       ),
                     ),

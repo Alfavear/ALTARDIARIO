@@ -14,6 +14,7 @@ import 'amigos_rachas_screen.dart';
 import 'foro_screen.dart';
 import 'notificaciones_screen.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'leaderboard_screen.dart';
@@ -788,6 +789,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(width: 10),
                     GestureDetector(
                       onTap: () async {
+                        HapticFeedback.mediumImpact();
                         final storage = ref.read(storageProvider);
                         final now = DateTime.now();
                         final dateKey = DateFormat('yyyy-MM-dd').format(now);
