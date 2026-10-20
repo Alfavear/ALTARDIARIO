@@ -148,8 +148,29 @@ flutter test test/ruta.dart   # un archivo
 flutter run -d chrome|android|ios
 ```
 
-Slash commands en OpenCode: `/check`, `/rules-test`, `/feature`, `/review`,
-`/release`, `/migrate-feature`. Ver `.opencode/commands/`.
+Slash commands en OpenCode: `/cycle`, `/audit`, `/roadmap`, `/check`,
+`/rules-test`, `/feature`, `/review`, `/release`, `/migrate-feature`,
+`/audit-security`. Ver `.opencode/commands/`.
+
+```bash
+scripts/loop.sh 3                        # 3 ciclos autónomos
+node tools/roadmap-mcp/cli.mjs state     # estado del roadmap
+```
+
+## 6b. Ciclo autónomo y roadmap
+
+El trabajo se organiza en `roadmap/tasks.yaml` (fuente de verdad) y se registra
+en `roadmap/BITACORA.md`. **Nunca edites esos archivos a mano desde un agente**:
+usa el MCP `roadmap` (`get_state`, `next_task`, `start_task`, `complete_task`,
+`add_task`, `split_task`, `block_task`, `log_cycle`, `save_audit`).
+
+- `/cycle` ejecuta un ciclo (agente `orchestrator`): una tarea, verificada,
+  revisada, registrada. `scripts/loop.sh N` encadena N ciclos.
+- `/audit` genera tareas nuevas a partir de una auditoría en 6 dimensiones.
+- `/roadmap` muestra dónde va el proyecto.
+- Protocolo completo: skill `autonomous-loop`.
+- Si descubres trabajo necesario fuera de tu tarea, no lo hagas: `add_task`.
+- Si algo requiere decisión humana (deploy, pago, producto, secretos): `block_task`.
 
 ## 7. Qué NO hacer
 
@@ -165,7 +186,9 @@ Slash commands en OpenCode: `/check`, `/rules-test`, `/feature`, `/review`,
 
 | Archivo | Para qué |
 |---|---|
-| `docs/ROADMAP.md` | Plan por fases y prioridades |
+| `roadmap/tasks.yaml` · `roadmap/STATE.md` | Backlog ejecutable y panel de progreso (vía MCP) |
+| `roadmap/BITACORA.md` | Qué hizo cada ciclo autónomo |
+| `docs/ROADMAP.md` | Visión por fases (narrativa; las tareas concretas están en roadmap/tasks.yaml) |
 | `docs/adr/` | Decisiones de arquitectura (una por archivo) |
 | `docs/AI_WORKFLOW.md` | Cómo trabajar día a día con OpenCode en este repo |
 | `docs/SECURITY.md` | Modelo de amenazas, secrets, App Check |

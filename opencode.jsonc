@@ -20,6 +20,10 @@
     { "action": "read",  "resource": "**/key.properties",       "effect": "deny" },
     { "action": "read",  "resource": "**/*.jks",                "effect": "deny" },
     { "action": "edit",  "resource": "lib/firebase_options.dart", "effect": "ask" },
+    // El roadmap y la bitácora se escriben SOLO vía MCP `roadmap`
+    { "action": "edit",  "resource": "roadmap/tasks.yaml",       "effect": "ask" },
+    { "action": "edit",  "resource": "roadmap/BITACORA.md",      "effect": "deny" },
+    { "action": "edit",  "resource": "roadmap/STATE.md",         "effect": "deny" },
     { "action": "edit",  "resource": ".github/workflows/**",    "effect": "ask" },
 
     // Operaciones irreversibles o que tocan producción: preguntar siempre
@@ -62,6 +66,8 @@
   // (planner, reviewer, rules-auditor, release-manager). Aquí solo ajustes
   // del agente principal.
   "agents": {
+    // Ciclo autónomo: orchestrator (.opencode/agents/orchestrator.md) + subagentes
+    // auditor, planner, implementer, tester, reviewer, fixer, rules-auditor, release-manager.
     "build": {
       "description": "Agente principal: implementa issues siguiendo AGENTS.md",
       "system": "Sigue AGENTS.md al pie de la letra. Antes de declarar una tarea terminada ejecuta scripts/check.sh --fast y pega el resultado. Si no puedes ejecutarlo, dilo explícitamente."
@@ -75,6 +81,18 @@
 
   "mcp": {
     "servers": {
+      // Roadmap + bitácora del ciclo autónomo (tools/roadmap-mcp). Local, sin red.
+      "roadmap": {
+        "type": "local",
+        "command": ["node", "tools/roadmap-mcp/server.mjs"],
+        "enabled": true
+      },
+      // Documentación actualizada de paquetes (Flutter, Riverpod, Firebase) para no inventar APIs.
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp",
+        "enabled": true
+      },
       // Google Stitch: diseño → código. Requiere GOOGLE_STITCH_API_KEY en el entorno.
       "stitch": {
         "type": "remote",
@@ -90,6 +108,6 @@
   "compaction": { "auto": true, "keep": { "tokens": 20000 } },
 
   "watcher": {
-    "ignore": ["build/**", ".dart_tool/**", "coverage/**", "firestore-tests/node_modules/**", "functions/node_modules/**", "assets/bible/**"]
+    "ignore": ["build/**", ".dart_tool/**", "coverage/**", "firestore-tests/node_modules/**", "functions/node_modules/**", "tools/roadmap-mcp/node_modules/**", "assets/bible/**"]
   }
 }

@@ -22,7 +22,29 @@ en https://opencode.ai/v2/docs/migrate-v1.
    abre el PR. La CI corre lo mismo que `scripts/check.sh`.
 4. Mergea. Si cambiaron reglas/índices/web, `deploy-firebase.yml` despliega.
 
+## Modo autónomo (la app se mejora sola)
+
+```bash
+scripts/loop.sh 3                 # corre 3 ciclos; cada uno: tarea → implementa → check → review → bitácora
+node tools/roadmap-mcp/cli.mjs state
+git branch --list 'auto/*'        # ramas listas para PR
+```
+Cada ciclo toma la siguiente tarea de `roadmap/tasks.yaml`, la ejecuta con el
+pipeline planner → implementer → tester → reviewer → fixer, y registra todo en
+`roadmap/BITACORA.md`. Cada 5 ciclos (o si el backlog se vacía) el `auditor`
+revisa el repo y crea tareas nuevas. El bucle para solo si: alcanza N, falla
+dos veces en la misma tarea, no hay tareas tras auditar, o creas `roadmap/STOP`.
+
+Tú: revisas ramas `auto/*`, abres PRs, resuelves tareas `blocked` (deploys,
+decisiones de producto, secretos) y ajustas prioridades en `tasks.yaml`.
+Detalles: skill `autonomous-loop`.
+
 ## Comandos útiles
+| Comando | Qué hace |
+|---|---|
+| `/cycle` | un ciclo autónomo completo |
+| `/audit` | auditoría en 6 dimensiones → tareas |
+| `/roadmap [T-xxx]` | estado del roadmap / detalle de tarea |
 | Comando | Qué hace |
 |---|---|
 | `/check` | format + analyze + test, y arregla lo que falle |

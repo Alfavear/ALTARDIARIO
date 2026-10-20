@@ -276,6 +276,8 @@ El repositorio está preparado para que un agente de IA trabaje como primer desa
 | Pieza | Dónde |
 |---|---|
 | Contrato de trabajo | [`AGENTS.md`](AGENTS.md) |
+| **Ciclo autónomo** (la app se construye y mejora sola, por ciclos auditados) | `scripts/loop.sh N` · skill `autonomous-loop` · agente `orchestrator` |
+| Roadmap ejecutable + bitácora + panel | [`roadmap/`](roadmap/) (vía MCP `tools/roadmap-mcp`) |
 | Config OpenCode V2 (permisos, agentes, MCP) | [`opencode.jsonc`](opencode.jsonc) |
 | Agentes `planner`, `reviewer`, `rules-auditor`, `release-manager` | `.opencode/agents/` |
 | Slash commands `/feature`, `/check`, `/review`, `/migrate-feature`, `/release` | `.opencode/commands/` |
@@ -288,7 +290,8 @@ El repositorio está preparado para que un agente de IA trabaje como primer desa
 ```bash
 scripts/bootstrap.sh     # entorno + hook pre-commit
 scripts/check.sh         # format · analyze · test · reglas
-opencode                 # y luego: /feature "descripción del issue"
+opencode                 # y luego: /cycle, /audit, /roadmap, /feature "…"
+scripts/loop.sh 3        # 3 ciclos autónomos sin intervención
 ```
 
 ---

@@ -19,6 +19,9 @@ fi
 
 echo "▶ Dependencias de tests de reglas"
 (cd firestore-tests && npm install --silent)
+echo "▶ MCP del roadmap"
+(cd tools/roadmap-mcp && npm install --silent && npm test --silent)
+node tools/roadmap-mcp/cli.mjs render
 
 echo "▶ Instalando hook pre-commit"
 cat > .git/hooks/pre-commit <<'HOOK'
