@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 1
+  cycle_counter: 2
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -69,7 +69,7 @@ tasks:
     phase: 1
     priority: P0
     effort: S
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - scripts/rules_test.sh pasa todos los tests
@@ -77,6 +77,61 @@ tasks:
     files:
       - firestore.rules
       - firestore-tests/rules.test.mjs
+    started_cycle: 2
+    started_at: 2026-10-20T23:27:08.569Z
+    done_at: 2026-10-20T23:43:33.263Z
+    evidence: >-
+      scripts/rules_test.sh (exit 0):
+
+      ℹ tests 28
+
+      ℹ suites 0
+
+      ℹ pass 28
+
+      ℹ fail 0
+
+      ℹ cancelled 0
+
+      ℹ skipped 0
+
+      ℹ todo 0
+
+      duration_ms 4720.0831
+
+      +  Script exited successfully (code 0)
+
+
+      Prueba roja del test de regresion (git stash solo de firestore.rules):
+
+      ✖ REGRESIÓN: el participante que no creó el chat puede responder (mismo conjunto, distinto orden)
+      (50.7849ms)
+
+      ℹ tests 28 / ℹ pass 27 / ℹ fail 1
+
+      !  Script exited unsuccessfully (code 1)
+
+
+      Restaurado el cambio: 28/28 pass, fail 0, exit 0.
+
+
+      scripts/check.sh --fast:
+
+      Formatted 80 files (0 changed) in 0.22 seconds.
+
+      No issues found! (ran in 6.8s)
+
+      00:13 +108: All tests passed!
+
+      (--fast) saltando tests de reglas de Firestore
+
+      ✔ Todo en verde.
+
+
+      Reviewer: APROBAR CON CAMBIOS (0 bloqueantes). Los 2 cambios sugeridos (assert de participantIds
+      duplicados y assert de la rama solo-metadatos) fueron aplicados por el tester y re-verificados: 28/28
+      verde en la corrida final.
+    commit: 6c53c2b
   - id: T-003
     title: Arreglar tests existentes que rompan por las nuevas dependencias/lints
     type: test
@@ -224,3 +279,82 @@ tasks:
       - roadmap/STATE.md
     source: audit
     created_at: 2026-10-20T23:05:56.534Z
+  - id: T-014
+    title: "Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto
+      si falla"
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - sendMessage solo escribe participantIds/participantNames al crear el chat; en envíos posteriores
+        actualiza solo metadatos (lastMessage, lastUpdate, lastSenderId)
+      - chat_screen.dart hace await con try/catch y, si la escritura falla, conserva el texto en el campo y
+        muestra error reintentable
+      - test unitario de FirestoreService.sendMessage verifica que un chat existente se actualiza sin
+        participantIds
+      - scripts/check.sh --fast en verde
+    files:
+      - lib/data/services/firestore_service.dart
+      - lib/presentation/screens/chat_screen.dart
+      - test/services/firestore_service_test.dart
+    source: T-002 review
+    created_at: 2026-10-20T23:43:23.629Z
+  - id: T-015
+    title: "Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados"
+    type: security
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - el update de /chats exige
+        changedKeys().hasOnly(['participantIds','lastMessage','lastSenderId','lastUpdate','participantNames'])
+      - un create con participantIds duplicados ([ALICE, ALICE]) se deniega
+      - tests de reglas nuevos para ambos invariantes y suite completa en verde
+      - ninguna escritura legítima de ChatService/sendMessage queda bloqueada (lista de metodos verificada)
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: T-002 review
+    created_at: 2026-10-20T23:43:23.644Z
+  - id: T-016
+    title: Partir firestore-tests/rules.test.mjs (>400 lineas) por coleccion y lanzar node --test
+    type: test
+    phase: 2
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - rules.test.mjs queda dividido en archivos por area (feed, foro, perfil, chat, notificaciones) de menos
+        de 400 lineas cada uno
+      - scripts/rules_test.sh y firestore-tests/package.json usan node --test (sin fijar un unico archivo)
+      - scripts/rules_test.sh sigue en verde con el mismo numero de tests o mas
+      - ningun test se elimina ni se marca skip
+    files:
+      - firestore-tests/rules.test.mjs
+      - scripts/rules_test.sh
+      - firestore-tests/package.json
+    source: T-002 review
+    created_at: 2026-10-20T23:43:23.657Z
+  - id: T-017
+    title: "markAllNotificationsAsRead: no commitear un batch vacio cuando no hay notificaciones sin leer"
+    type: bug
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - el metodo hace return sin commit si la query de notificaciones no leidas devuelve cero documentos
+      - test unitario cubre el caso 0 notificaciones y el caso N notificaciones
+      - scripts/check.sh --fast en verde
+    files:
+      - lib/data/services/firestore_service.dart
+      - test/services/firestore_service_test.dart
+    source: T-002 planner
+    created_at: 2026-10-20T23:43:23.669Z
