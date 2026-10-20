@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'core/observability/observability.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/notification_service.dart';
 import 'data/services/storage_service.dart';
@@ -19,6 +20,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await Observability.init();
   } catch (e) {
     debugPrint("⚠️ Advertencia: Error al inicializar Firebase: $e");
   }
@@ -73,6 +75,7 @@ class AltarDiarioApp extends ConsumerWidget {
       title: 'altarDiario',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorObservers: Observability.navigatorObservers,
       home: const SplashScreen(),
       builder: (context, child) {
         return MediaQuery(

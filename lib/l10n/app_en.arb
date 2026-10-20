@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+  "appName": "AltarDiario",
+  "commonRetry": "Retry",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonErrorGeneric": "Something went wrong. Please try again.",
+  "feedEmptyTitle": "No reflections yet",
+  "feedEmptyBody": "Be the first to share what God spoke to you today.",
+  "streakDays": "{count, plural, =0{No streak} =1{1 day streak} other{{count} day streak}}",
+  "oracionAmenButton": "Amen",
+  "guestRestrictedTitle": "Create an account to take part",
+  "guestRestrictedBody": "Social features require signing in."
+}
