@@ -14,13 +14,12 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 0
+  cycle_counter: 1
   phases:
-    1: "Estabilizar (seguridad, observabilidad, CI)"
-    2: "Andamiaje IA y tests"
-    3: "Arquitectura feature-first y backend"
-    4: "Producto"
-
+    "1": Estabilizar (seguridad, observabilidad, CI)
+    "2": Andamiaje IA y tests
+    "3": Arquitectura feature-first y backend
+    "4": Producto
 tasks:
   - id: T-001
     title: Ejecutar flutter pub get y resolver conflictos de versiones de la rama de andamiaje
@@ -28,12 +27,42 @@ tasks:
     phase: 1
     priority: P0
     effort: S
-    status: ready
+    status: done
     acceptance:
-      - "flutter pub get termina sin errores"
-      - "flutter analyze no reporta errores (warnings/infos permitidos y listados en bitácora)"
-    files: [pubspec.yaml]
+      - flutter pub get termina sin errores
+      - flutter analyze no reporta errores (warnings/infos permitidos y listados en bitácora)
+    files:
+      - pubspec.yaml
+    started_cycle: 1
+    started_at: 2026-10-20T22:58:01.571Z
+    done_at: 2026-10-20T23:06:02.300Z
+    evidence: |-
+      $ flutter --version
+      Flutter 3.44.1 • channel stable • Dart 3.12.1
 
+      $ flutter pub get
+      Got dependencies!
+      (105 packages have newer versions incompatible with dependency constraints)
+      ===EXIT:0===
+      git diff --stat -- pubspec.yaml pubspec.lock  ->  VACIO (sin cambios de versiones)
+
+      $ flutter analyze --no-pub
+      No issues found! (ran in 4.9s)
+      ===EXIT:0===
+      (0 errors, 0 warnings, 0 infos)
+
+      $ bash scripts/check.sh --fast
+      ▶ flutter pub get
+      ▶ dart format
+      ▶ flutter analyze
+      ▶ flutter test
+      00:08 +108: All tests passed!
+      (--fast) saltando tests de reglas de Firestore
+      ✔ Todo en verde.
+      ===EXIT:0===
+
+      git diff feat/andamiaje-internacional...HEAD -> vacio (sin commits de codigo)
+      Reviewer: APROBAR CON CAMBIOS (0 hallazgos bloqueantes; solo bookkeeping y ruido de formato del MCP)
   - id: T-002
     title: Ejecutar suite de tests de reglas de Firestore contra el emulador y corregir fallos
     type: security
@@ -43,10 +72,11 @@ tasks:
     status: ready
     depends_on: []
     acceptance:
-      - "scripts/rules_test.sh pasa todos los tests"
-      - "ninguna escritura legítima de firestore_service.dart queda bloqueada (verificado con lista de métodos)"
-    files: [firestore.rules, firestore-tests/rules.test.mjs]
-
+      - scripts/rules_test.sh pasa todos los tests
+      - ninguna escritura legítima de firestore_service.dart queda bloqueada (verificado con lista de métodos)
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
   - id: T-003
     title: Arreglar tests existentes que rompan por las nuevas dependencias/lints
     type: test
@@ -54,11 +84,11 @@ tasks:
     priority: P0
     effort: M
     status: backlog
-    depends_on: [T-001]
+    depends_on:
+      - T-001
     acceptance:
-      - "flutter test pasa al 100%"
-      - "ningún test fue borrado ni marcado skip"
-
+      - flutter test pasa al 100%
+      - ningún test fue borrado ni marcado skip
   - id: T-004
     title: UI de reportar contenido y bloquear usuario (App Store 1.2)
     type: feature
@@ -66,14 +96,19 @@ tasks:
     priority: P1
     effort: M
     status: backlog
-    depends_on: [T-002, T-003]
+    depends_on:
+      - T-002
+      - T-003
     acceptance:
-      - "menú ⋯ en reflexión/petición/debate con opción Reportar que escribe en reports/"
-      - "opción Bloquear usuario en perfil público; feed filtra usuarios bloqueados (lista en usuarios/{uid}.bloqueados)"
-      - "widget test de ambos flujos"
+      - menú ⋯ en reflexión/petición/debate con opción Reportar que escribe en reports/
+      - opción Bloquear usuario en perfil público; feed filtra usuarios bloqueados (lista en
+        usuarios/{uid}.bloqueados)
+      - widget test de ambos flujos
       - "contenido con hidden: true no se muestra en feed"
-    files: [lib/presentation/screens/feed_screen.dart, lib/presentation/screens/public_profile_screen.dart, lib/data/services/firestore_service.dart]
-
+    files:
+      - lib/presentation/screens/feed_screen.dart
+      - lib/presentation/screens/public_profile_screen.dart
+      - lib/data/services/firestore_service.dart
   - id: T-005
     title: Tests de FirestoreService con fake_cloud_firestore (likes, reacciones, seguir, amén)
     type: test
@@ -81,11 +116,11 @@ tasks:
     priority: P1
     effort: M
     status: backlog
-    depends_on: [T-003]
+    depends_on:
+      - T-003
     acceptance:
-      - "test/services/firestore_service_test.dart cubre toggleLike, toggleReaction, follow/unfollow, amen"
-      - "cobertura de firestore_service.dart > 50%"
-
+      - test/services/firestore_service_test.dart cubre toggleLike, toggleReaction, follow/unfollow, amen
+      - cobertura de firestore_service.dart > 50%
   - id: T-006
     title: Migrar feature oracion a lib/features/oracion/ (ADR-0001)
     type: refactor
@@ -93,13 +128,14 @@ tasks:
     priority: P1
     effort: M
     status: backlog
-    depends_on: [T-003, T-005]
+    depends_on:
+      - T-003
+      - T-005
     acceptance:
-      - "lib/features/oracion/{data,providers,presentation} existe con OracionRepository"
-      - "oracion_screen.dart < 400 líneas"
-      - "app_providers.dart exporta los providers migrados para compatibilidad"
-      - "sin cambios de comportamiento (tests existentes pasan sin modificar)"
-
+      - lib/features/oracion/{data,providers,presentation} existe con OracionRepository
+      - oracion_screen.dart < 400 líneas
+      - app_providers.dart exporta los providers migrados para compatibilidad
+      - sin cambios de comportamiento (tests existentes pasan sin modificar)
   - id: T-007
     title: Paginación real del feed con startAfterDocument e infinite scroll
     type: feature
@@ -107,11 +143,11 @@ tasks:
     priority: P1
     effort: M
     status: backlog
-    depends_on: [T-003]
+    depends_on:
+      - T-003
     acceptance:
-      - "feed carga 30 reflexiones y pide más al llegar al final"
-      - "provider con estado de página testeado"
-
+      - feed carga 30 reflexiones y pide más al llegar al final
+      - provider con estado de página testeado
   - id: T-008
     title: Partir perfil_screen.dart (1956 líneas) en widgets por sección
     type: refactor
@@ -119,11 +155,11 @@ tasks:
     priority: P2
     effort: L
     status: backlog
-    depends_on: [T-003]
+    depends_on:
+      - T-003
     acceptance:
-      - "ningún archivo resultante > 400 líneas"
-      - "golden/widget tests existentes pasan"
-
+      - ningún archivo resultante > 400 líneas
+      - golden/widget tests existentes pasan
   - id: T-009
     title: Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1)
     type: infra
@@ -131,10 +167,9 @@ tasks:
     priority: P2
     effort: M
     status: blocked
-    blocked_reason: "Requiere plan Blaze y decisión humana de desplegar"
+    blocked_reason: Requiere plan Blaze y decisión humana de desplegar
     acceptance:
-      - "functions desplegadas; XP de servidor coincide con cliente en 7 días de datos"
-
+      - functions desplegadas; XP de servidor coincide con cliente en 7 días de datos
   - id: T-010
     title: Compartir versículo como imagen (WhatsApp/Instagram)
     type: feature
@@ -143,9 +178,8 @@ tasks:
     effort: M
     status: backlog
     acceptance:
-      - "botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario"
-      - "usa share_plus; funciona en Android/iOS/Web"
-
+      - botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario
+      - usa share_plus; funciona en Android/iOS/Web
   - id: T-011
     title: Planes de lectura flexibles (empezar cualquier día, ponerse al día, planes de 7/21 días)
     type: feature
@@ -154,5 +188,39 @@ tasks:
     effort: L
     status: backlog
     acceptance:
-      - "modelo PlanLectura con fecha de inicio por usuario"
-      - "al menos un plan temático corto además del anual"
+      - modelo PlanLectura con fecha de inicio por usuario
+      - al menos un plan temático corto además del anual
+  - id: T-012
+    title: Evitar que el MCP roadmap reformatee tasks.yaml completo en cada escritura
+    type: infra
+    phase: 1
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - start_task/complete_task/log_cycle producen un diff de tasks.yaml limitado a las claves que cambian
+        (sin reformateo masivo)
+      - tasks.yaml normalizado una vez en la rama base y el MCP lo respeta en escrituras posteriores
+      - roadmap.validate() sigue sin errores tras el cambio
+    files:
+      - tools/roadmap-mcp/roadmap.mjs
+    source: audit
+    created_at: 2026-10-20T23:05:56.523Z
+  - id: T-013
+    title: Corregir 'Últimos ciclos' de STATE.md cuando la bitácora aún no tiene entradas
+    type: bug
+    phase: 1
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "con BITACORA.md sin entradas de ciclo, STATE.md muestra 'Últimos ciclos: —' y no la cabecera de la
+        bitácora"
+      - con 1+ entradas, muestra solo las entradas de ciclo (no la cabecera del documento)
+    files:
+      - tools/roadmap-mcp/roadmap.mjs
+      - roadmap/STATE.md
+    source: audit
+    created_at: 2026-10-20T23:05:56.534Z
