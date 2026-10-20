@@ -54,6 +54,14 @@ service cloud.firestore {
       return after is int && (after - before) >= -1 && (after - before) <= 1;
     }
 
+    // El set de `field` es el mismo, sin importar el orden (el cliente reenvía
+    // participantIds con el uid propio primero al enviar un mensaje).
+    function sameMembers(field) {
+      let before = resource.data.get(field, []).toSet();
+      let after = request.resource.data.get(field, []).toSet();
+      return before.hasAll(after) && after.hasAll(before) && before.size() == after.size();
+    }
+
     // Un no-dueño solo puede hacer like/unlike.
     function likeOnly() {
       return changedKeys().hasOnly(['likes', 'likedBy'])
@@ -239,10 +247,13 @@ service cloud.firestore {
       allow read: if isParticipant(resource.data);
       allow create: if isParticipant(request.resource.data)
         && request.resource.data.participantIds.size() == 2;
-      // Se pueden actualizar metadatos (lastMessage, lastUpdate) pero nunca
-      // cambiar quiénes participan.
+      // Se pueden actualizar metadatos (lastMessage, lastUpdate) y reordenar
+      // `participantIds` (el emisor reenvía la lista con su uid primero), pero
+      // nunca cambiar quiénes participan.
       allow update: if isParticipant(resource.data)
-        && !changedKeys().hasAny(['participantIds']);
+        && (!changedKeys().hasAny(['participantIds'])
+            || (sameMembers('participantIds')
+                && request.resource.data.participantIds.size() == 2));
       allow delete: if false;
 
       match /messages/{messageId} {
