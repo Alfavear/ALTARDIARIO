@@ -1,7 +1,12 @@
+---
+name: testing
+description: Convenciones de testing (unit, widget, providers) y cómo mockear SharedPreferences, Firestore y Auth.
+---
+
 # Skill: Testing (Flutter + Riverpod + Firebase)
 
 ## Convenciones del Proyecto
-- **Framework**: `flutter_test` únicamente (NO mockito, NO mocktail)
+- **Framework**: `flutter_test` + `mocktail` + `fake_cloud_firestore` + `firebase_auth_mocks` (desde la rama de andamiaje; antes se prohibían mocks)
 - **Mocks**: Manuales o `SharedPreferences.setMockInitialValues({})`
 - **Wrapper**: `ProviderScope(overrides: [...], child: MaterialApp(...))`
 

@@ -1,3 +1,8 @@
+---
+name: social-features
+description: Estado e implementación de las features sociales (feed, reacciones, foro, seguir). Usar como mapa al tocar lo social.
+---
+
 # AltarDiario Social Features - Implementation Status
 
 ## Phase 2: Social Core (COMPLETED ✅)

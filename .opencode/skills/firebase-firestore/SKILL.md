@@ -1,3 +1,8 @@
+---
+name: firebase-firestore
+description: Configuración de Firebase, colecciones de Firestore, índices y patrones de acceso. Usar al tocar datos.
+---
+
 # Skill: Firebase + Firestore (AltarDiario)
 
 ## Configuración del Proyecto

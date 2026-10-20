@@ -1,0 +1,95 @@
+{
+  // Configuración de OpenCode V2 para AltarDiario.
+  // Esquema: https://opencode.ai/config.json  —  Docs: https://opencode.ai/v2/docs/config
+  // Las instrucciones vivas están en AGENTS.md (se carga automáticamente).
+  "$schema": "https://opencode.ai/config.json",
+
+  // Cambia al proveedor/modelo que tengas configurado. Ejemplos:
+  //   "anthropic/claude-sonnet-4-5", "openai/gpt-5", "google/gemini-2.5-pro"
+  // "model": "anthropic/claude-sonnet-4-5",
+
+  "default_agent": "build",
+
+  // ── Permisos: seguros por defecto ────────────────────────────────
+  // Orden importa: deny > ask > allow cuando varias reglas aplican.
+  "permissions": [
+    // Secretos: nunca
+    { "action": "read",  "resource": ".env",                    "effect": "deny" },
+    { "action": "read",  "resource": "**/google-services.json", "effect": "deny" },
+    { "action": "read",  "resource": "**/GoogleService-Info.plist", "effect": "deny" },
+    { "action": "read",  "resource": "**/key.properties",       "effect": "deny" },
+    { "action": "read",  "resource": "**/*.jks",                "effect": "deny" },
+    { "action": "edit",  "resource": "lib/firebase_options.dart", "effect": "ask" },
+    { "action": "edit",  "resource": ".github/workflows/**",    "effect": "ask" },
+
+    // Operaciones irreversibles o que tocan producción: preguntar siempre
+    { "action": "shell", "resource": "git push*",               "effect": "ask" },
+    { "action": "shell", "resource": "git reset --hard*",       "effect": "ask" },
+    { "action": "shell", "resource": "git checkout -- *",       "effect": "ask" },
+    { "action": "shell", "resource": "git rebase*",             "effect": "ask" },
+    { "action": "shell", "resource": "firebase deploy*",        "effect": "ask" },
+    { "action": "shell", "resource": "firebase firestore:delete*", "effect": "deny" },
+    { "action": "shell", "resource": "flutter build appbundle*", "effect": "ask" },
+    { "action": "shell", "resource": "flutter build ipa*",      "effect": "ask" },
+    { "action": "shell", "resource": "rm -rf*",                 "effect": "ask" },
+    { "action": "shell", "resource": "flutterfire configure*",  "effect": "ask" },
+
+    // Trabajo cotidiano: fluido
+    { "action": "shell", "resource": "flutter *",               "effect": "allow" },
+    { "action": "shell", "resource": "dart *",                  "effect": "allow" },
+    { "action": "shell", "resource": "scripts/*",               "effect": "allow" },
+    { "action": "shell", "resource": "git status*",             "effect": "allow" },
+    { "action": "shell", "resource": "git diff*",               "effect": "allow" },
+    { "action": "shell", "resource": "git log*",                "effect": "allow" },
+    { "action": "shell", "resource": "git add*",                "effect": "allow" },
+    { "action": "shell", "resource": "git commit*",             "effect": "allow" },
+    { "action": "shell", "resource": "git checkout -b*",        "effect": "allow" },
+    { "action": "shell", "resource": "git switch*",             "effect": "allow" },
+    { "action": "shell", "resource": "npm *",                   "effect": "allow" },
+    { "action": "shell", "resource": "npx firebase emulators*", "effect": "allow" },
+    { "action": "edit",  "resource": "*",                       "effect": "allow" }
+  ],
+
+  // Formatea automáticamente lo que el agente edita.
+  "formatter": {
+    "dart": {
+      "command": ["dart", "format", "$FILE"],
+      "extensions": [".dart"]
+    }
+  },
+
+  // Agentes especializados. Los de archivo viven en .opencode/agents/*.md
+  // (planner, reviewer, rules-auditor, release-manager). Aquí solo ajustes
+  // del agente principal.
+  "agents": {
+    "build": {
+      "description": "Agente principal: implementa issues siguiendo AGENTS.md",
+      "system": "Sigue AGENTS.md al pie de la letra. Antes de declarar una tarea terminada ejecuta scripts/check.sh --fast y pega el resultado. Si no puedes ejecutarlo, dilo explícitamente."
+    }
+  },
+
+  // Skills locales (además de las que OpenCode descubre en .opencode/skills/)
+  "skills": ["./.opencode/skills"],
+
+  // Comandos de archivo en .opencode/commands/*.md
+
+  "mcp": {
+    "servers": {
+      // Google Stitch: diseño → código. Requiere GOOGLE_STITCH_API_KEY en el entorno.
+      "stitch": {
+        "type": "remote",
+        "url": "https://stitch.googleapis.com/mcp",
+        "enabled": false,
+        "headers": { "X-Goog-Api-Key": "{env:GOOGLE_STITCH_API_KEY}" }
+      }
+    }
+  },
+
+  "tool_output": { "max_lines": 800, "max_bytes": 120000 },
+
+  "compaction": { "auto": true, "keep": { "tokens": 20000 } },
+
+  "watcher": {
+    "ignore": ["build/**", ".dart_tool/**", "coverage/**", "firestore-tests/node_modules/**", "functions/node_modules/**", "assets/bible/**"]
+  }
+}

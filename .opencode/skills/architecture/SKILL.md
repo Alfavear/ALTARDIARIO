@@ -1,3 +1,8 @@
+---
+name: architecture
+description: Patrones de arquitectura del proyecto (capas, providers, servicios). Usar al diseñar o ubicar código nuevo.
+---
+
 # AltarDiario Architecture Patterns
 
 ## Project Structure
