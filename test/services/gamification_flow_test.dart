@@ -1,9 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:altar_diario/core/services/gamification_service.dart';
 import 'package:altar_diario/data/models/usuario.dart';
-import 'package:altar_diario/data/services/storage_service.dart';
 import 'package:altar_diario/data/services/firestore_service.dart';
+import 'package:altar_diario/data/services/storage_service.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +40,9 @@ void main() {
       notifMin: 0,
     );
 
-    test('evaluarYNotificarBadges otorga insignias de racha y lecturas cuando se cumplen los criterios', () async {
+    test(
+        'evaluarYNotificarBadges otorga insignias de racha y lecturas cuando se cumplen los criterios',
+        () async {
       final newBadges = await GamificationService.evaluarYNotificarBadges(
         user: mockUser,
         firestore: firestore,
@@ -54,7 +56,8 @@ void main() {
       expect(ids, contains('semana_fiel'));
     });
 
-    test('evaluarYNotificarBadges no duplica insignias ya desbloqueadas', () async {
+    test('evaluarYNotificarBadges no duplica insignias ya desbloqueadas',
+        () async {
       final userWithBadges = Usuario(
         id: 'u1',
         nombre: 'Usuario Prueba',
@@ -86,5 +89,6 @@ void main() {
 
 class MockFirestoreService extends FirestoreService {
   @override
-  Future<void> updateUserConfig(String uid, Map<String, dynamic> config) async {}
+  Future<void> updateUserConfig(
+      String uid, Map<String, dynamic> config) async {}
 }

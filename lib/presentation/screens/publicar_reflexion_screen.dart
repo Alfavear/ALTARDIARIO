@@ -1,13 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/app_providers.dart';
-import '../../data/models/reflexion.dart';
-import '../../data/models/bible_models.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/services/gamification_service.dart';
+
 import '../../core/services/community_policy_service.dart';
+import '../../core/services/gamification_service.dart';
+import '../../core/theme/app_theme.dart';
+import '../../data/models/bible_models.dart';
+import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
+import '../providers/app_providers.dart';
 
 class PublicarReflexionScreen extends ConsumerStatefulWidget {
   final String pasajeDia;
@@ -86,7 +89,7 @@ class _PublicarReflexionScreenState
     final policyCheck = CommunityPolicyService.validarContenido(texto);
     if (!policyCheck.isApproved) {
       if (mounted) {
-        showDialog(
+        unawaited(showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Row(
@@ -109,7 +112,7 @@ class _PublicarReflexionScreenState
               ),
             ],
           ),
-        );
+        ));
       }
       return;
     }
@@ -230,8 +233,8 @@ class _PublicarReflexionScreenState
                   elevation: 0,
                 ),
                 child: const Text('Guardar',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               ),
             ),
         ],
@@ -243,11 +246,11 @@ class _PublicarReflexionScreenState
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
               children: [
                 CommunityPolicyService.buildPolicyBanner(context),
-                Row(
+                const Row(
                   children: [
-                    const Icon(Icons.edit_note,
+                    Icon(Icons.edit_note,
                         size: 18, color: AppTheme.primaryBlueLight),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       'Nueva Reflexión',
                       style: TextStyle(
@@ -324,8 +327,7 @@ class _PublicarReflexionScreenState
                               ),
                             ),
                             GestureDetector(
-                              onTap: () =>
-                                  setState(() => _showPassage = false),
+                              onTap: () => setState(() => _showPassage = false),
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: const BoxDecoration(
@@ -383,8 +385,8 @@ class _PublicarReflexionScreenState
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(30),
         boxShadow: AppTheme.mediumShadow,
-        border: Border.all(
-            color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

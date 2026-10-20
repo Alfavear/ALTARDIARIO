@@ -13,17 +13,17 @@ class AmigosRachasScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
-appBar: AppBar(
-  backgroundColor: Colors.white,
-  foregroundColor: AppTheme.textPrimary,
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => Navigator.pop(context),
-  ),
-  title: const Text('Rachas entre Amigos',
-      style: TextStyle(fontWeight: FontWeight.bold)),
-),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Rachas entre Amigos',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: streaksAsync.when(
         data: (streaks) {
           if (streaks.isEmpty) {
@@ -84,7 +84,8 @@ class _StreakCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isMe ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
+        color:
+            isMe ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: isMe
             ? Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3))
@@ -99,8 +100,7 @@ class _StreakCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        PublicProfileScreen(userId: streak.userId),
+                    builder: (_) => PublicProfileScreen(userId: streak.userId),
                   ),
                 );
               },
@@ -126,7 +126,10 @@ class _StreakCard extends StatelessWidget {
                   : null,
               child: isMe
                   ? null
-                  : Text(streak.nombre.isNotEmpty ? streak.nombre[0].toUpperCase() : '?',
+                  : Text(
+                      streak.nombre.isNotEmpty
+                          ? streak.nombre[0].toUpperCase()
+                          : '?',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryBlue)),
@@ -176,8 +179,7 @@ class _StreakCard extends StatelessWidget {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: _streakBgColor(streak.rachaActual),
                 borderRadius: BorderRadius.circular(16),

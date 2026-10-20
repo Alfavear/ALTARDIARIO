@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:altar_diario/presentation/screens/anual_view.dart';
 import 'package:altar_diario/data/services/storage_service.dart';
 import 'package:altar_diario/presentation/providers/app_providers.dart';
+import 'package:altar_diario/presentation/screens/anual_view.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Widget createAnualView(StorageService storageService) {
   return ProviderScope(
@@ -21,7 +21,8 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    testWidgets('renderiza encabezado de progreso', (WidgetTester tester) async {
+    testWidgets('renderiza encabezado de progreso',
+        (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       final storageService = StorageService(prefs);
 
@@ -43,7 +44,8 @@ void main() {
       expect(find.text('365'), findsOneWidget); // pendientes
     });
 
-    testWidgets('renderiza meses iniciales visibles', (WidgetTester tester) async {
+    testWidgets('renderiza meses iniciales visibles',
+        (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       final storageService = StorageService(prefs);
 
@@ -59,7 +61,8 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('renderiza circular progress indicator', (WidgetTester tester) async {
+    testWidgets('renderiza circular progress indicator',
+        (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       final storageService = StorageService(prefs);
 

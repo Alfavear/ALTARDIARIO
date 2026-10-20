@@ -39,9 +39,8 @@ class Debate {
                 : (map['fecha'] as dynamic).toDate())
             : DateTime.now(),
         upvotes: map['upvotes'] ?? 0,
-        votedBy: map['votedBy'] != null
-            ? List<String>.from(map['votedBy'])
-            : [],
+        votedBy:
+            map['votedBy'] != null ? List<String>.from(map['votedBy']) : [],
         replyCount: map['replyCount'] ?? 0,
       );
 

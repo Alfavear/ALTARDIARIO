@@ -67,20 +67,20 @@ class AppTheme {
 
   // === Sombras ===
   static List<BoxShadow> get softShadow => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.06),
-      blurRadius: 12,
-      offset: const Offset(0, 4),
-    ),
-  ];
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ];
 
   static List<BoxShadow> get mediumShadow => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.1),
-      blurRadius: 20,
-      offset: const Offset(0, 8),
-    ),
-  ];
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ];
 
   // === Tema principal de la app ===
   static ThemeData get lightTheme {

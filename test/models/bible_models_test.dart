@@ -1,10 +1,11 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:altar_diario/data/models/bible_models.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('BibleVersion', () {
     test('crea versión correctamente', () {
-      final v = BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es');
+      const v =
+          BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es');
       expect(v.id, 'rv1909');
       expect(v.name, 'Reina Valera 1909');
       expect(v.lang, 'es');
@@ -12,7 +13,8 @@ void main() {
     });
 
     test('offline se puede personalizar', () {
-      final v = BibleVersion(id: 'nvi', name: 'NVI', lang: 'es', offline: false);
+      const v =
+          BibleVersion(id: 'nvi', name: 'NVI', lang: 'es', offline: false);
       expect(v.offline, false);
     });
   });
@@ -60,7 +62,7 @@ void main() {
     });
 
     test('toMap produce el mapa correcto', () {
-      final v = BibleVerse(
+      const v = BibleVerse(
         version: 'rv1909',
         bookId: 19,
         bookName: 'Salmos',
@@ -80,13 +82,16 @@ void main() {
 
   group('BiblePassage', () {
     test('hasText es true cuando hay versículos', () {
-      final p = BiblePassage(
+      const p = BiblePassage(
         reference: 'Salmos 1',
         verses: [
           BibleVerse(
-            version: 'rv1909', bookId: 19,
-            bookName: 'Salmos', chapter: 1,
-            verse: 1, text: 'Texto',
+            version: 'rv1909',
+            bookId: 19,
+            bookName: 'Salmos',
+            chapter: 1,
+            verse: 1,
+            text: 'Texto',
           ),
         ],
       );
@@ -94,7 +99,7 @@ void main() {
     });
 
     test('hasText es false cuando no hay versículos', () {
-      final p = BiblePassage(
+      const p = BiblePassage(
         reference: 'Salmos 1',
         verses: [],
       );
@@ -104,7 +109,7 @@ void main() {
 
   group('BibleChapterAnchor', () {
     test('key devuelve formato correcto', () {
-      final a = BibleChapterAnchor(version: 'rv1909', bookId: 19, chapter: 1);
+      const a = BibleChapterAnchor(version: 'rv1909', bookId: 19, chapter: 1);
       expect(a.key, 'rv1909:19:1');
     });
   });
@@ -114,21 +119,33 @@ void main() {
 
     test('contains detecta versículos dentro del rango', () {
       final h = BibleHighlight(
-        id: 'hl_001', userId: 'u1',
-        version: 'rv1909', bookId: 19, chapter: 1,
-        verseStart: 1, verseEnd: 3,
-        colorHex: '#FFF59D', createdAt: now, updatedAt: now,
+        id: 'hl_001',
+        userId: 'u1',
+        version: 'rv1909',
+        bookId: 19,
+        chapter: 1,
+        verseStart: 1,
+        verseEnd: 3,
+        colorHex: '#FFF59D',
+        createdAt: now,
+        updatedAt: now,
         syncStatus: 'synced',
       );
-      final inside = BibleVerse(
-        version: 'rv1909', bookId: 19,
-        bookName: 'Salmos', chapter: 1,
-        verse: 2, text: 'Texto',
+      const inside = BibleVerse(
+        version: 'rv1909',
+        bookId: 19,
+        bookName: 'Salmos',
+        chapter: 1,
+        verse: 2,
+        text: 'Texto',
       );
-      final outside = BibleVerse(
-        version: 'rv1909', bookId: 19,
-        bookName: 'Salmos', chapter: 1,
-        verse: 5, text: 'Texto',
+      const outside = BibleVerse(
+        version: 'rv1909',
+        bookId: 19,
+        bookName: 'Salmos',
+        chapter: 1,
+        verse: 5,
+        text: 'Texto',
       );
       expect(h.contains(inside), true);
       expect(h.contains(outside), false);
@@ -136,10 +153,16 @@ void main() {
 
     test('toFirestoreMap produce campos camelCase', () {
       final h = BibleHighlight(
-        id: 'hl_001', userId: 'u1',
-        version: 'rv1909', bookId: 19, chapter: 1,
-        verseStart: 1, verseEnd: 2,
-        colorHex: '#FFF59D', createdAt: now, updatedAt: now,
+        id: 'hl_001',
+        userId: 'u1',
+        version: 'rv1909',
+        bookId: 19,
+        chapter: 1,
+        verseStart: 1,
+        verseEnd: 2,
+        colorHex: '#FFF59D',
+        createdAt: now,
+        updatedAt: now,
         syncStatus: 'synced',
       );
       final map = h.toFirestoreMap();
@@ -155,11 +178,16 @@ void main() {
 
     test('reference devuelve formato correcto', () {
       final n = BibleNote(
-        id: 'note_001', userId: 'u1',
-        version: 'rv1909', bookId: 19, bookName: 'Salmos',
-        chapter: 1, verse: 2,
+        id: 'note_001',
+        userId: 'u1',
+        version: 'rv1909',
+        bookId: 19,
+        bookName: 'Salmos',
+        chapter: 1,
+        verse: 2,
         body: 'Nota de prueba',
-        createdAt: now, updatedAt: now,
+        createdAt: now,
+        updatedAt: now,
         syncStatus: 'local',
       );
       expect(n.reference, 'Salmos 1:2');

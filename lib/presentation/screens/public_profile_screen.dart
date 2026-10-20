@@ -11,7 +11,8 @@ class PublicProfileScreen extends ConsumerWidget {
   final String userId;
   final String? fallbackName;
 
-  const PublicProfileScreen({super.key, required this.userId, this.fallbackName});
+  const PublicProfileScreen(
+      {super.key, required this.userId, this.fallbackName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,8 +32,8 @@ class PublicProfileScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Perfil',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title:
+            const Text('Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: userAsync.when(
         data: (user) {
@@ -40,7 +41,9 @@ class PublicProfileScreen extends ConsumerWidget {
             return const Center(child: Text('Usuario no encontrado'));
           }
           String displayName = user.displayName;
-          if (displayName == 'Invitado' && fallbackName != null && fallbackName!.isNotEmpty) {
+          if (displayName == 'Invitado' &&
+              fallbackName != null &&
+              fallbackName!.isNotEmpty) {
             displayName = fallbackName!;
           }
           return CustomScrollView(
@@ -105,7 +108,7 @@ class PublicProfileScreen extends ConsumerWidget {
     String? currentUid,
     String displayName,
   ) {
-    return Container(
+    return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
@@ -141,8 +144,8 @@ class PublicProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(user.bio,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 14)),
+                    style:
+                        const TextStyle(color: Colors.white70, fontSize: 14)),
               ],
               const SizedBox(height: 8),
               Text(
@@ -153,8 +156,7 @@ class PublicProfileScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildStatColumn(
-                      '${user.siguiendo.length}', 'Siguiendo', () {
+                  _buildStatColumn('${user.siguiendo.length}', 'Siguiendo', () {
                     if (user.siguiendo.isNotEmpty) {
                       Navigator.push(
                         context,
@@ -173,8 +175,8 @@ class PublicProfileScreen extends ConsumerWidget {
                     color: Colors.white.withValues(alpha: 0.3),
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                   ),
-                  _buildStatColumn(
-                      '${user.seguidores.length}', 'Seguidores', () {
+                  _buildStatColumn('${user.seguidores.length}', 'Seguidores',
+                      () {
                     if (user.seguidores.isNotEmpty) {
                       Navigator.push(
                         context,
@@ -201,12 +203,9 @@ class PublicProfileScreen extends ConsumerWidget {
                             .toggleFollow(currentUid, userId, isFollowing);
                         ref.invalidate(isFollowingProvider(userId));
                       },
-                      icon: Icon(isFollowing
-                          ? Icons.person_remove
-                          : Icons.person_add),
-                      label: Text(isFollowing
-                          ? 'Dejar de seguir'
-                          : 'Seguir'),
+                      icon: Icon(
+                          isFollowing ? Icons.person_remove : Icons.person_add),
+                      label: Text(isFollowing ? 'Dejar de seguir' : 'Seguir'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isFollowing
                             ? Colors.white.withValues(alpha: 0.2)
@@ -239,8 +238,7 @@ class PublicProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatColumn(
-      String value, String label, VoidCallback onTap) {
+  Widget _buildStatColumn(String value, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -251,8 +249,7 @@ class PublicProfileScreen extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.white)),
           Text(label,
-              style:
-                  const TextStyle(color: Colors.white70, fontSize: 13)),
+              style: const TextStyle(color: Colors.white70, fontSize: 13)),
         ],
       ),
     );
@@ -276,8 +273,7 @@ class PublicProfileScreen extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
@@ -340,8 +336,7 @@ class _IconCount extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 4),
-        Text('$count',
-            style: TextStyle(fontSize: 12, color: color)),
+        Text('$count', style: TextStyle(fontSize: 12, color: color)),
       ],
     );
   }

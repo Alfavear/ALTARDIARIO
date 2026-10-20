@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class BibleVersion {
   final String id;
   final String name;
@@ -293,10 +295,6 @@ DateTime _readDate(Object? value) {
   if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
 
-  final dynamic maybeTimestamp = value;
-  try {
-    return maybeTimestamp.toDate() as DateTime;
-  } catch (_) {
-    return DateTime.now();
-  }
+  if (value is Timestamp) return value.toDate();
+  return DateTime.now();
 }

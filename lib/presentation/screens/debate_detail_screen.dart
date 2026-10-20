@@ -12,8 +12,7 @@ class DebateDetailScreen extends ConsumerStatefulWidget {
   const DebateDetailScreen({super.key, required this.debateId});
 
   @override
-  ConsumerState<DebateDetailScreen> createState() =>
-      _DebateDetailScreenState();
+  ConsumerState<DebateDetailScreen> createState() => _DebateDetailScreenState();
 }
 
 class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
@@ -30,15 +29,15 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
     if (text.isEmpty) return;
     final user = ref.read(userProfileProvider).value;
     await ref.read(firestoreServiceProvider).crearRespuesta(
-      DebateReply(
-        id: '',
-        debateId: debateId,
-        userId: uid,
-        userName: user?.displayName ?? '',
-        texto: text,
-        fecha: DateTime.now(),
-      ),
-    );
+          DebateReply(
+            id: '',
+            debateId: debateId,
+            userId: uid,
+            userName: user?.displayName ?? '',
+            texto: text,
+            fecha: DateTime.now(),
+          ),
+        );
     _replyCtrl.clear();
   }
 
@@ -46,24 +45,26 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
   Widget build(BuildContext context) {
     final uid = ref.watch(effectiveUserUidProvider);
     final debatesAsync = ref.watch(debatesStreamProvider(null));
-    final repliesAsync = ref.watch(debateRepliesStreamProvider(widget.debateId));
+    final repliesAsync =
+        ref.watch(debateRepliesStreamProvider(widget.debateId));
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
-    appBar: AppBar(
-      backgroundColor: Colors.white,
-      foregroundColor: AppTheme.textPrimary,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.pop(context),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title:
+            const Text('Debate', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      title: const Text('Debate',
-          style: TextStyle(fontWeight: FontWeight.bold)),
-    ),
       body: debatesAsync.when(
         data: (debates) {
-          final debate = debates.where((d) => d.id == widget.debateId).firstOrNull;
+          final debate =
+              debates.where((d) => d.id == widget.debateId).firstOrNull;
           if (debate == null) {
             return const Center(child: Text('Debate no encontrado'));
           }
@@ -85,8 +86,7 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Text('Respuestas',
                           style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700)),
+                              fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                     repliesAsync.when(
                       data: (replies) {
@@ -96,23 +96,20 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                             child: Center(
                               child: Text(
                                 'Sé el primero en responder.',
-                                style: TextStyle(
-                                    color: AppTheme.textSecondary),
+                                style: TextStyle(color: AppTheme.textSecondary),
                               ),
                             ),
                           );
                         }
                         return Column(
                           children: replies
-                              .map((r) => _ReplyTile(
-                                  reply: r, uid: uid))
+                              .map((r) => _ReplyTile(reply: r, uid: uid))
                               .toList(),
                         );
                       },
-                      loading: () => const Center(
-                          child: CircularProgressIndicator()),
-                      error: (e, _) =>
-                          Center(child: Text('Error: $e')),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('Error: $e')),
                     ),
                   ],
                 ),
@@ -140,22 +137,18 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                             decoration: InputDecoration(
                               hintText: 'Escribe una respuesta...',
                               border: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.circular(24),
-                                borderSide: BorderSide(
-                                    color:
-                                        AppTheme.pendingGrayDark),
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: const BorderSide(
+                                    color: AppTheme.pendingGrayDark),
                               ),
-                              contentPadding:
-                                  const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 10),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               isDense: true,
                             ),
                             textInputAction: TextInputAction.send,
                             onSubmitted: (v) {
                               if (v.trim().isEmpty) return;
-                              _sendReply(
-                                  widget.debateId, uid, debate);
+                              _sendReply(widget.debateId, uid, debate);
                             },
                           ),
                         ),
@@ -164,7 +157,7 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                           icon: const Icon(Icons.send_rounded,
                               color: AppTheme.primaryBlue),
                           onPressed: () {
-if (_replyCtrl.text.trim().isEmpty) {
+                            if (_replyCtrl.text.trim().isEmpty) {
                               return;
                             }
                             _sendReply(widget.debateId, uid, debate);
@@ -211,8 +204,7 @@ class _DebateHeader extends ConsumerWidget {
               Expanded(
                 child: Text(debate.titulo,
                     style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800)),
+                        fontSize: 20, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -222,9 +214,7 @@ class _DebateHeader extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(debate.contenido,
                   style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.4,
-                      color: AppTheme.textPrimary)),
+                      fontSize: 15, height: 1.4, color: AppTheme.textPrimary)),
             ),
           Row(
             children: [
@@ -232,12 +222,11 @@ class _DebateHeader extends ConsumerWidget {
                 onTap: () {
                   ref
                       .read(firestoreServiceProvider)
-                      .toggleDebateVote(
-                          debate.id, uid ?? '', hasVoted);
+                      .toggleDebateVote(debate.id, uid ?? '', hasVoted);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: hasVoted
                         ? AppTheme.primaryBlue.withValues(alpha: 0.1)
@@ -269,8 +258,7 @@ class _DebateHeader extends ConsumerWidget {
               const SizedBox(width: 4),
               Text('${debate.replyCount} respuestas',
                   style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary)),
+                      fontSize: 13, color: AppTheme.textSecondary)),
               const Spacer(),
               GestureDetector(
                 onTap: () {
@@ -278,8 +266,7 @@ class _DebateHeader extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PublicProfileScreen(
-                          userId: debate.userId,
-                          fallbackName: debate.userName),
+                          userId: debate.userId, fallbackName: debate.userName),
                     ),
                   );
                 },
@@ -294,17 +281,14 @@ class _DebateHeader extends ConsumerWidget {
           if (debate.libroNombre.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlueLight
-                    .withValues(alpha: 0.1),
+                color: AppTheme.primaryBlueLight.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(debate.libroNombre,
                   style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.primaryBlue)),
+                      fontSize: 12, color: AppTheme.primaryBlue)),
             ),
           ],
         ],
@@ -334,10 +318,8 @@ class _ReplyTile extends ConsumerWidget {
         children: [
           GestureDetector(
             onTap: () {
-              ref
-                  .read(firestoreServiceProvider)
-                  .toggleReplyVote(reply.debateId, reply.id,
-                      uid ?? '', hasVoted);
+              ref.read(firestoreServiceProvider).toggleReplyVote(
+                  reply.debateId, reply.id, uid ?? '', hasVoted);
             },
             child: Container(
               width: 32,
@@ -392,18 +374,15 @@ class _ReplyTile extends ConsumerWidget {
                     ),
                     const Spacer(),
                     Text(
-                      DateFormat('d MMM HH:mm')
-                          .format(reply.fecha),
+                      DateFormat('d MMM HH:mm').format(reply.fecha),
                       style: const TextStyle(
-                          fontSize: 10,
-                          color: AppTheme.textSecondary),
+                          fontSize: 10, color: AppTheme.textSecondary),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(reply.texto,
-                    style: const TextStyle(
-                        fontSize: 14, height: 1.3)),
+                    style: const TextStyle(fontSize: 14, height: 1.3)),
               ],
             ),
           ),

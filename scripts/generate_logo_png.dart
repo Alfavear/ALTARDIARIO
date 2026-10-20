@@ -3,9 +3,9 @@ import 'dart:math' as math;
 import 'package:image/image.dart' as img;
 
 void main() {
-  final size = 1024;
+  const size = 1024;
   final image = img.Image(width: size, height: size);
-  final h = size ~/ 2;
+  const h = size ~/ 2;
 
   // Colors
   final bg = img.ColorRgba8(13, 71, 161, 255);
@@ -39,8 +39,8 @@ void main() {
     final rad = angleDeg * math.pi / 180;
     final cosA = math.cos(rad);
     final sinA = math.sin(rad);
-    final hw = 180;
-    final hh = 28;
+    const hw = 180;
+    const hh = 28;
     final pts = <img.Point>[
       img.Point((cx + (-cosA * hw + sinA * hh)).toInt(),
           (cy + (-sinA * hw - cosA * hh)).toInt()),

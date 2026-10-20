@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:altar_diario/presentation/screens/bible_compare_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('BibleCompareScreen', () {
-    testWidgets('renderiza correctamente el comparador de versiones con pasaje y pestañas', (tester) async {
+    testWidgets(
+        'renderiza correctamente el comparador de versiones con pasaje y pestañas',
+        (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(

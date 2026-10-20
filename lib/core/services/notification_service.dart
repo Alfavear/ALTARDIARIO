@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart' show Color;
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/material.dart' show Color;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 
 /// Servicio de notificaciones (locales + FCM push) para recordatorios diarios de lectura.
 class NotificationService {
@@ -23,7 +23,8 @@ class NotificationService {
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
@@ -125,7 +126,8 @@ class NotificationService {
   }) async {
     if (kIsWeb || !_initialized) return;
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'altar_diario_fcm',
       'Notificaciones Push',
       channelDescription: 'Notificaciones push de altarDiario',
@@ -163,7 +165,8 @@ class NotificationService {
   }) async {
     if (kIsWeb || !_initialized) return;
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'altar_diario_badges',
       'Insignias y Logros',
       channelDescription: 'Notificaciones de nuevas insignias desbloqueadas',
@@ -236,7 +239,8 @@ class NotificationService {
         AndroidNotificationDetails(
       'altar_diario_reminder',
       'Recordatorio Diario',
-      channelDescription: 'Recordatorio para completar tu lectura bíblica diaria',
+      channelDescription:
+          'Recordatorio para completar tu lectura bíblica diaria',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',

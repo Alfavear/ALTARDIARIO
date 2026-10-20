@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart' hide Badge;
+
 import '../../data/models/badge.dart';
-import '../../data/models/usuario.dart';
 import '../../data/models/reflexion.dart';
+import '../../data/models/usuario.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/storage_service.dart';
 import '../theme/app_theme.dart';
@@ -260,45 +261,46 @@ class GamificationService {
 
       switch (badge.criteria['tipo']) {
         case 'racha':
-          final racha = stats['rachaActual'] ?? 0;
+          final racha = (stats['rachaActual'] as int?) ?? 0;
           shouldUnlock = racha >= (badge.criteria['valor'] as int);
           break;
         case 'lecturas_completadas':
-          final completadas = stats['totalCompletadas'] ?? 0;
+          final completadas = (stats['totalCompletadas'] as int?) ?? 0;
           shouldUnlock = completadas >= (badge.criteria['valor'] as int);
           break;
         case 'likes_dados':
-          final likes = stats['likesDados'] ?? 0;
+          final likes = (stats['likesDados'] as int?) ?? 0;
           shouldUnlock = likes >= (badge.criteria['valor'] as int);
           break;
         case 'comentarios':
-          final comentarios = stats['comentarios'] ?? 0;
+          final comentarios = (stats['comentarios'] as int?) ?? 0;
           shouldUnlock = comentarios >= (badge.criteria['valor'] as int);
           break;
         case 'peticiones_publicadas':
-          final peticiones = stats['peticionesPublicadas'] ?? 0;
+          final peticiones = (stats['peticionesPublicadas'] as int?) ?? 0;
           shouldUnlock = peticiones >= (badge.criteria['valor'] as int);
           break;
         case 'reflexiones_publicadas':
-          final reflexiones = stats['reflexionesPublicadas'] ?? 0;
+          final reflexiones = (stats['reflexionesPublicadas'] as int?) ?? 0;
           shouldUnlock = reflexiones >= (badge.criteria['valor'] as int);
           break;
         case 'dias_enfoque':
-          final diasEnfoque = stats['diasEnfoque'] ?? 0;
+          final diasEnfoque = (stats['diasEnfoque'] as int?) ?? 0;
           shouldUnlock = diasEnfoque >= (badge.criteria['valor'] as int);
           break;
         case 'siguiendo':
-          final siguiendo = stats['siguiendo'] ?? 0;
+          final siguiendo = (stats['siguiendo'] as int?) ?? 0;
           shouldUnlock = siguiendo >= (badge.criteria['valor'] as int);
           break;
         case 'seguidores':
-          final seguidores = stats['seguidores'] ?? 0;
+          final seguidores = (stats['seguidores'] as int?) ?? 0;
           shouldUnlock = seguidores >= (badge.criteria['valor'] as int);
           break;
         case 'fecha_especial':
           final fechaEspecial = badge.criteria['valor'] as String;
           final hoy = DateTime.now();
-final hoyStr = "${hoy.year}-${hoy.month.toString().padLeft(2, "0")}-${hoy.day.toString().padLeft(2, "0")}";
+          final hoyStr =
+              "${hoy.year}-${hoy.month.toString().padLeft(2, "0")}-${hoy.day.toString().padLeft(2, "0")}";
           shouldUnlock = hoyStr == fechaEspecial;
           break;
       }
@@ -339,7 +341,7 @@ final hoyStr = "${hoy.year}-${hoy.month.toString().padLeft(2, "0")}-${hoy.day.to
       if (!snapshot.exists) return;
 
       final data = snapshot.data() as Map<String, dynamic>;
-      final currentPoints = data['totalPuntos'] ?? 0;
+      final int currentPoints = (data['totalPuntos'] as int?) ?? 0;
       final newPoints = currentPoints + points;
       final newLevel = calculateLevel(newPoints);
 
@@ -373,10 +375,8 @@ final hoyStr = "${hoy.year}-${hoy.month.toString().padLeft(2, "0")}-${hoy.day.to
       stats: stats,
     );
 
-    final newBadges = unlockedIds
-        .map((id) => _allBadges[id])
-        .whereType<Badge>()
-        .toList();
+    final newBadges =
+        unlockedIds.map((id) => _allBadges[id]).whereType<Badge>().toList();
 
     if (newBadges.isNotEmpty) {
       for (final badge in newBadges) {
@@ -471,9 +471,8 @@ class __BadgeUnlockedCelebrationDialogState
   Future<void> _compartirEnAltar(Badge badge) async {
     setState(() => _isSharing = true);
     try {
-      final userName = widget.user?.nombre.isNotEmpty == true
-          ? widget.user!.nombre
-          : '';
+      final userName =
+          widget.user?.nombre.isNotEmpty == true ? widget.user!.nombre : '';
       final uid = widget.user?.id ?? 'anonimo';
 
       final reflexionCelebracion = Reflexion(
@@ -622,9 +621,8 @@ class __BadgeUnlockedCelebrationDialogState
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _isSharing
-                      ? null
-                      : () => _compartirEnAltar(firstBadge),
+                  onPressed:
+                      _isSharing ? null : () => _compartirEnAltar(firstBadge),
                   icon: _isSharing
                       ? const SizedBox(
                           width: 18,

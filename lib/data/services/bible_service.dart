@@ -142,7 +142,8 @@ class BibleService {
     if (response.statusCode != 200) return {};
     final books = jsonDecode(response.body) as List<dynamic>;
     return {
-      for (final b in books) b['bookid'] as int: b['name'] as String,
+      for (final b in books.cast<Map<String, dynamic>>())
+        b['bookid'] as int: b['name'] as String,
     };
   }
 
@@ -296,9 +297,7 @@ class BibleService {
       results.add(BiblePassage(
         reference: passage,
         verses: rows.map(BibleVerse.fromMap).toList(),
-        message: rows.isEmpty
-            ? 'Este pasaje aún no está disponible.'
-            : null,
+        message: rows.isEmpty ? 'Este pasaje aún no está disponible.' : null,
       ));
     }
 
@@ -311,7 +310,7 @@ class BibleService {
   ) async {
     final apiSlug = versionId.toUpperCase();
     final results = <Map<String, Object?>>[];
-    
+
     final startCh = passage.chapterStart;
     final endCh = passage.chapterEnd ?? startCh;
 
@@ -324,9 +323,17 @@ class BibleService {
         for (final v in verses) {
           final item = v as Map<String, dynamic>;
           final verseNum = item['verse'] as int;
-          
-          if (ch == startCh && passage.verseStart != null && verseNum < passage.verseStart!) continue;
-          if (ch == endCh && passage.verseEnd != null && verseNum > passage.verseEnd!) continue;
+
+          if (ch == startCh &&
+              passage.verseStart != null &&
+              verseNum < passage.verseStart!) {
+            continue;
+          }
+          if (ch == endCh &&
+              passage.verseEnd != null &&
+              verseNum > passage.verseEnd!) {
+            continue;
+          }
 
           final text = _stripHtml(item['text'] as String);
           final map = <String, Object?>{
@@ -481,7 +488,8 @@ class BibleService {
       syncStatus: userId == null ? 'local' : 'pending',
     );
     if (_memoryMode) {
-      _memoryHighlights.removeWhere((h) => h.anchor == highlight.anchor && h.verseStart == highlight.verseStart);
+      _memoryHighlights.removeWhere((h) =>
+          h.anchor == highlight.anchor && h.verseStart == highlight.verseStart);
       _memoryHighlights.add(highlight);
       return highlight;
     }
@@ -772,7 +780,14 @@ class BibleService {
           final verseText = verseMap['text'] as String;
           final key = '$version:$bookId:$chapterNumber:$verseNumber';
           _memoryVerses[key] = [
-            {'version': version, 'book_id': bookId, 'book_name': bookName, 'chapter': chapterNumber, 'verse': verseNumber, 'text': verseText}
+            {
+              'version': version,
+              'book_id': bookId,
+              'book_name': bookName,
+              'chapter': chapterNumber,
+              'verse': verseNumber,
+              'text': verseText
+            }
           ];
         }
       }
@@ -867,7 +882,7 @@ class BibleService {
             ).toMap(),
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
-          
+
           inserted++;
           if (inserted % 1000 == 0) {
             await batch.commit(noResult: true);
@@ -965,8 +980,12 @@ class BibleService {
           if (key.startsWith(prefix)) {
             for (final v in verses) {
               final vn = v['verse'] as int;
-              if (ch == passage.chapterStart && vn < passage.verseStart!) continue;
-              if (ch == passage.chapterEnd && vn > passage.verseEnd!) continue;
+              if (ch == passage.chapterStart && vn < passage.verseStart!) {
+                continue;
+              }
+              if (ch == passage.chapterEnd && vn > passage.verseEnd!) {
+                continue;
+              }
               results.add(v);
             }
           }
@@ -978,7 +997,8 @@ class BibleService {
         if (key.startsWith(prefix)) {
           for (final v in verses) {
             final vn = v['verse'] as int;
-            if (vn >= passage.verseStart! && (passage.verseEnd == null || vn <= passage.verseEnd!)) {
+            if (vn >= passage.verseStart! &&
+                (passage.verseEnd == null || vn <= passage.verseEnd!)) {
               results.add(v);
             }
           }

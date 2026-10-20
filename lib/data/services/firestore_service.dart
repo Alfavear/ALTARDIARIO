@@ -1,14 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../models/reflexion.dart';
+
+import '../models/bible_models.dart';
 import '../models/comment.dart';
 import '../models/debate.dart';
 import '../models/debate_reply.dart';
-import '../models/peticion_oracion.dart';
-import '../models/usuario.dart';
 import '../models/message.dart';
-import '../models/bible_models.dart';
 import '../models/note.dart';
+import '../models/peticion_oracion.dart';
+import '../models/reflexion.dart';
+import '../models/usuario.dart';
 
 class FirestoreService {
   final FirebaseFirestore? _firestore;
@@ -68,8 +69,7 @@ class FirestoreService {
         .orderBy('fecha', descending: true)
         .limit(feedPageSize)
         .snapshots()
-        .map(
-        (s) => s.docs
+        .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -90,7 +90,8 @@ class FirestoreService {
     await _reflexiones.add(reflexion.toMap());
   }
 
-  Future<void> toggleLike(String reflexionId, String userId, bool isLiked) async {
+  Future<void> toggleLike(
+      String reflexionId, String userId, bool isLiked) async {
     if (!_available) return;
     if (isLiked) {
       await _reflexiones.doc(reflexionId).update({
@@ -203,10 +204,10 @@ class FirestoreService {
     if (libroId != null && libroId.isNotEmpty) {
       query = query.where('libroId', isEqualTo: libroId);
     }
-    return query.snapshots().map(
-        (s) => s.docs
-            .map((d) => Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
-            .toList());
+    return query.snapshots().map((s) => s.docs
+        .map((d) =>
+            Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
+        .toList());
   }
 
   Future<void> crearDebate(Debate debate) async {
@@ -267,8 +268,8 @@ class FirestoreService {
     }
   }
 
-  Future<void> toggleReplyVote(String debateId, String replyId,
-      String userId, bool hasVoted) async {
+  Future<void> toggleReplyVote(
+      String debateId, String replyId, String userId, bool hasVoted) async {
     if (!_available) return;
     if (hasVoted) {
       await _debateReplies(debateId).doc(replyId).update({
@@ -285,8 +286,8 @@ class FirestoreService {
 
   // ── Reacciones ───────────────────────────────────────────────────────────
 
-  Future<void> toggleReaction(String reflexionId, String userId,
-      String? emoji, String? currentEmoji) async {
+  Future<void> toggleReaction(String reflexionId, String userId, String? emoji,
+      String? currentEmoji) async {
     if (!_available) return;
     if (currentEmoji == emoji) {
       await _reflexiones.doc(reflexionId).update({
@@ -317,10 +318,8 @@ class FirestoreService {
   Stream<List<Usuario>> getUsuariosStream(List<String> uids) {
     if (!_available) return Stream.value([]);
     if (uids.isEmpty) return Stream.value([]);
-    return _usuarios
-        .where(FieldPath.documentId, whereIn: uids)
-        .snapshots()
-        .map((s) => s.docs
+    return _usuarios.where(FieldPath.documentId, whereIn: uids).snapshots().map(
+        (s) => s.docs
             .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -363,9 +362,8 @@ class FirestoreService {
       List<String> uids) async {
     if (!_available || uids.isEmpty) return {};
     final result = <String, Map<String, dynamic>>{};
-    final snapshot = await _usuarios
-        .where(FieldPath.documentId, whereIn: uids)
-        .get();
+    final snapshot =
+        await _usuarios.where(FieldPath.documentId, whereIn: uids).get();
     for (final doc in snapshot.docs) {
       final data = doc.data();
       result[doc.id] = {
@@ -448,7 +446,9 @@ class FirestoreService {
   /// Elimina el token FCM del usuario (logout).
   Future<void> clearFCMToken(String uid) async {
     if (!_available) return;
-    await _usuarios.doc(uid).set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
+    await _usuarios
+        .doc(uid)
+        .set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
   }
 
   /// Crea una notificación en la subcolección del usuario (para Cloud Functions).
@@ -492,7 +492,11 @@ class FirestoreService {
   /// Marca una notificación como leída.
   Future<void> markNotificationAsRead(String uid, String notificationId) async {
     if (!_available) return;
-    await _usuarios.doc(uid).collection('notifications').doc(notificationId).update({'read': true});
+    await _usuarios
+        .doc(uid)
+        .collection('notifications')
+        .doc(notificationId)
+        .update({'read': true});
   }
 
   /// Marca todas las notificaciones como leídas.

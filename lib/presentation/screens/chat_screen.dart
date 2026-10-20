@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/app_providers.dart';
+
 import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -100,8 +101,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         fontWeight: FontWeight.w700,
                         fontSize: 15)),
                 const Text('En línea',
-                    style: TextStyle(
-                        color: Colors.white70, fontSize: 11)),
+                    style: TextStyle(color: Colors.white70, fontSize: 11)),
               ],
             ),
           ],
@@ -145,10 +145,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       children: [
                         if (showDateHeader)
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                            child: _DateChip(
-                                date: msg.timestamp),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: _DateChip(date: msg.timestamp),
                           ),
                         _MessageBubble(
                           text: msg.text,
@@ -160,10 +158,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   },
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (err, stack) =>
-                  Center(child: Text('Error: $err')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
           _buildInputBar(),
@@ -191,14 +187,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const SizedBox(height: 20),
             const Text(
               'Envía un mensaje para empezar',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             const Text(
               'Comparte tus reflexiones y oraciones',
-              style: TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary),
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -235,8 +229,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.pendingGray,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: AppTheme.pendingGrayDark),
+                border: Border.all(color: AppTheme.pendingGrayDark),
               ),
               child: Row(
                 children: [
@@ -247,8 +240,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         hintText: 'Escribe un mensaje...',
                         border: InputBorder.none,
                         isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
                       style: const TextStyle(fontSize: 14),
                       onSubmitted: (_) => _sendMessage(),
@@ -270,8 +262,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: AppTheme.primaryBlue,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send,
-                  color: Colors.white, size: 20),
+              child: const Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -339,14 +330,10 @@ class _MessageBubble extends StatelessWidget {
           if (!isMe) const SizedBox(width: 0),
           Container(
             constraints: BoxConstraints(
-                maxWidth:
-                    MediaQuery.of(context).size.width * 0.75),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                maxWidth: MediaQuery.of(context).size.width * 0.75),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isMe
-                  ? AppTheme.primaryBlue
-                  : AppTheme.pendingGray,
+              color: isMe ? AppTheme.primaryBlue : AppTheme.pendingGray,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -355,9 +342,8 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
             child: Column(
-              crossAxisAlignment: isMe
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Text(
                   text,
@@ -375,9 +361,7 @@ class _MessageBubble extends StatelessWidget {
                       DateFormat('HH:mm').format(time),
                       style: TextStyle(
                         fontSize: 10,
-                        color: isMe
-                            ? Colors.white70
-                            : AppTheme.textSecondary,
+                        color: isMe ? Colors.white70 : AppTheme.textSecondary,
                       ),
                     ),
                     if (isMe) ...[

@@ -1,15 +1,15 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:altar_diario/presentation/screens/home_screen.dart';
-import 'package:altar_diario/presentation/providers/app_providers.dart';
+import 'package:altar_diario/data/models/comment.dart';
+import 'package:altar_diario/data/models/peticion_oracion.dart';
 import 'package:altar_diario/data/models/reflexion.dart';
 import 'package:altar_diario/data/models/usuario.dart';
-import 'package:altar_diario/data/models/peticion_oracion.dart';
-import 'package:altar_diario/data/models/comment.dart';
-import 'package:altar_diario/data/services/storage_service.dart';
 import 'package:altar_diario/data/services/firestore_service.dart';
+import 'package:altar_diario/data/services/storage_service.dart';
+import 'package:altar_diario/presentation/providers/app_providers.dart';
+import 'package:altar_diario/presentation/screens/home_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -61,24 +61,28 @@ void main() {
       ),
     ];
 
-    testWidgets('renderiza HomeScreen con elementos principales', (tester) async {
+    testWidgets('renderiza HomeScreen con elementos principales',
+        (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             storageProvider.overrideWithValue(mockStorage),
             authStateProvider.overrideWithValue(const AsyncValue.data(null)),
-            localUidProvider.overrideWith(() => _MockLocalUidNotifier('demo_user')),
+            localUidProvider
+                .overrideWith(() => _MockLocalUidNotifier('demo_user')),
             effectiveUserUidProvider.overrideWithValue('demo_user'),
-            reflexionesStreamProvider.overrideWithValue(AsyncValue.data(mockReflexiones)),
+            reflexionesStreamProvider
+                .overrideWithValue(AsyncValue.data(mockReflexiones)),
             userProfileProvider.overrideWithValue(AsyncValue.data(mockUsuario)),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
-            sugerenciasAmistadProvider.overrideWithValue(const AsyncValue.data([])),
+            sugerenciasAmistadProvider
+                .overrideWithValue(const AsyncValue.data([])),
             friendStreaksProvider.overrideWithValue(const AsyncValue.data([])),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
-          child: MediaQuery(
-            data: const MediaQueryData(size: Size(1000, 1400)),
-            child: const MaterialApp(home: HomeScreen()),
+          child: const MediaQuery(
+            data: MediaQueryData(size: Size(1000, 1400)),
+            child: MaterialApp(home: HomeScreen()),
           ),
         ),
       );
@@ -115,34 +119,42 @@ class MockFirestoreService extends FirestoreService {
   Stream<List<Reflexion>> getUserReflexiones(String userId) => Stream.value([]);
 
   @override
-  Stream<List<Comment>> comentariosStream(String reflexionId) => Stream.value([]);
+  Stream<List<Comment>> comentariosStream(String reflexionId) =>
+      Stream.value([]);
 
   @override
   Stream<List<PeticionOracion>> peticionesStream() => Stream.value([]);
 
   @override
-  Future<void> toggleLike(String reflexionId, String userId, bool isLiked) async {}
+  Future<void> toggleLike(
+      String reflexionId, String userId, bool isLiked) async {}
 
   @override
-  Future<void> toggleReaction(String reflexionId, String userId, String? emoji, String? currentEmoji) async {}
+  Future<void> toggleReaction(String reflexionId, String userId, String? emoji,
+      String? currentEmoji) async {}
 
   @override
   Future<void> publicarComentario(Comment comment) async {}
 
   @override
-  Future<void> toggleCommentLike(String reflexionId, String commentId, String userId, bool isLiked) async {}
+  Future<void> toggleCommentLike(String reflexionId, String commentId,
+      String userId, bool isLiked) async {}
 
   @override
-  Future<void> toggleFollow(String currentUserId, String targetUserId, bool isFollowing) async {}
+  Future<void> toggleFollow(
+      String currentUserId, String targetUserId, bool isFollowing) async {}
 
   @override
   Future<Usuario?> getUsuarioOnce(String uid) async => null;
 
   @override
-  Future<void> updateUserConfig(String uid, Map<String, dynamic> config) async {}
+  Future<void> updateUserConfig(
+      String uid, Map<String, dynamic> config) async {}
 
   @override
-  Future<Map<String, Map<String, dynamic>>> getStreaksData(List<String> uids) async => {};
+  Future<Map<String, Map<String, dynamic>>> getStreaksData(
+          List<String> uids) async =>
+      {};
 
   @override
   Future<List<Usuario>> getAllUsuarios() async => [];

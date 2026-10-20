@@ -34,9 +34,8 @@ class Observability {
         appleProvider:
             kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
         // Web: reemplazar por la site key de reCAPTCHA v3 del proyecto.
-        webProvider: kIsWeb
-            ? ReCaptchaV3Provider('RECAPTCHA_V3_SITE_KEY')
-            : null,
+        webProvider:
+            kIsWeb ? ReCaptchaV3Provider('RECAPTCHA_V3_SITE_KEY') : null,
       );
     } catch (e) {
       debugPrint('App Check no disponible: $e');
@@ -121,6 +120,7 @@ class Observability {
 
   /// Observer para que Analytics registre pantallas automáticamente con
   /// `Navigator`. Añadir a `MaterialApp(navigatorObservers: [...])`.
-  static List<NavigatorObserver> get navigatorObservers =>
-      _analytics == null ? const [] : [FirebaseAnalyticsObserver(analytics: _analytics!)];
+  static List<NavigatorObserver> get navigatorObservers => _analytics == null
+      ? const []
+      : [FirebaseAnalyticsObserver(analytics: _analytics!)];
 }

@@ -23,6 +23,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - `sendMessage` crea el documento del chat antes del mensaje (requerido por las reglas).
 - `analysis_options.yaml` con lints adicionales.
 - Mocks permitidos en tests (`mocktail`, `fake_cloud_firestore`, `firebase_auth_mocks`).
+- Formato y lints alineados con Dart 3.12 / Flutter 3.44; `pubspec.lock` y registro de plugins regenerados.
 
 ### Pendiente (no incluido en esta rama)
 - UI de reportar/bloquear usuario.

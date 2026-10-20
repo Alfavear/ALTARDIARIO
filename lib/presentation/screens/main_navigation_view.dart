@@ -45,7 +45,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
         index: _selectedIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(

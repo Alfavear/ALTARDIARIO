@@ -58,8 +58,7 @@ class NotesScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         backgroundColor: AppTheme.primaryBlue,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () async {
           final result = await Navigator.push<bool>(
             context,
@@ -106,8 +105,9 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
         final filtered = _selectedFilter == 'Todas'
             ? notes
             : notes
-                .where((n) =>
-                    n.title.toLowerCase().contains(_selectedFilter.toLowerCase()))
+                .where((n) => n.title
+                    .toLowerCase()
+                    .contains(_selectedFilter.toLowerCase()))
                 .toList();
         final sorted = [...filtered]
           ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -115,16 +115,16 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.edit_note,
+                      Icon(Icons.edit_note,
                           size: 18, color: AppTheme.primaryBlueLight),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         'MIS NOTAS',
                         style: TextStyle(
@@ -136,18 +136,19 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'Reflexiones y momentos compartidos con Dios.',
-                    style: TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 15),
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 15),
                   ),
                 ],
               ),
             ),
             _buildFilterChips(),
             Expanded(
-              child: notes.isEmpty ? _buildEmptyState() : _buildNotesGrid(sorted),
+              child:
+                  notes.isEmpty ? _buildEmptyState() : _buildNotesGrid(sorted),
             ),
           ],
         );
@@ -171,9 +172,7 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: selected
-                    ? AppTheme.primaryBlue
-                    : Colors.white,
+                color: selected ? AppTheme.primaryBlue : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: selected
@@ -248,7 +247,8 @@ class _NoteCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: AppTheme.softShadow,
-        border: Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,11 +289,11 @@ class _NoteCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.favorite_outline,
                       size: 18, color: AppTheme.textSecondary),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Icon(Icons.share_outlined,
                       size: 18, color: AppTheme.textSecondary),
                 ],
@@ -303,8 +303,7 @@ class _NoteCard extends ConsumerWidget {
                   final result = await Navigator.push<bool>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          NoteEditorScreen(existingNote: note),
+                      builder: (_) => NoteEditorScreen(existingNote: note),
                     ),
                   );
                   if (result == true && context.mounted) {
@@ -323,7 +322,9 @@ class _NoteCard extends ConsumerWidget {
 
   String _guessCategory(String title) {
     final t = title.toLowerCase();
-    if (t.contains('gratitud') || t.contains('gracias') || t.contains('salmo')) {
+    if (t.contains('gratitud') ||
+        t.contains('gracias') ||
+        t.contains('salmo')) {
       return 'Gratitud';
     }
     if (t.contains('orac') || t.contains('interces') || t.contains('familia')) {
@@ -332,7 +333,10 @@ class _NoteCard extends ConsumerWidget {
     if (t.contains('aprend') || t.contains('lecc') || t.contains('roman')) {
       return 'Aprendizaje';
     }
-    if (t.contains('biblia') || t.contains('pasaje') || t.contains('lectura') || t.contains('vers')) {
+    if (t.contains('biblia') ||
+        t.contains('pasaje') ||
+        t.contains('lectura') ||
+        t.contains('vers')) {
       return 'Biblia';
     }
     return 'Gratitud';

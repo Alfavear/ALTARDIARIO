@@ -14,7 +14,7 @@ class Message {
   });
 
   factory Message.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map<String, dynamic>;
+    final Map data = doc.data() as Map<String, dynamic>;
     return Message(
       id: doc.id,
       senderId: data['senderId'] ?? '',
@@ -28,13 +28,15 @@ class Message {
       id: data['id'] ?? '',
       senderId: data['senderId'] ?? '',
       text: data['text'] ?? '',
-      timestamp: data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
+      timestamp: data['timestamp'] != null
+          ? (data['timestamp'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toMap() => {
-    'senderId': senderId,
-    'text': text,
-    'timestamp': Timestamp.fromDate(timestamp),
-  };
+        'senderId': senderId,
+        'text': text,
+        'timestamp': Timestamp.fromDate(timestamp),
+      };
 }

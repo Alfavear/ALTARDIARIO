@@ -50,7 +50,7 @@ class Usuario {
   }) : fechaCreacion = fechaCreacion ?? DateTime.now();
 
   factory Usuario.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map<String, dynamic>;
+    final Map data = doc.data() as Map<String, dynamic>;
     return Usuario(
       id: doc.id,
       nombre: data['nombre'] ?? '',
@@ -93,22 +93,22 @@ class Usuario {
   }
 
   Map<String, dynamic> toMap() => {
-    'nombre': nombre,
-    'email': email,
-    'fotoUrl': fotoUrl,
-    'bio': bio,
-    'fechaCreacion': fechaCreacion.toIso8601String(),
-    'siguiendo': siguiendo,
-    'seguidores': seguidores,
-    'modoEnfoque': modoEnfoque,
-    'notifHour': notifHour,
-    'notifMin': notifMin,
-    'badges': badges,
-    'totalPuntos': totalPuntos,
-    'nivel': nivel,
-    'progresoLectura': progresoLectura,
-    'maxStreak': maxStreak,
-  };
+        'nombre': nombre,
+        'email': email,
+        'fotoUrl': fotoUrl,
+        'bio': bio,
+        'fechaCreacion': fechaCreacion.toIso8601String(),
+        'siguiendo': siguiendo,
+        'seguidores': seguidores,
+        'modoEnfoque': modoEnfoque,
+        'notifHour': notifHour,
+        'notifMin': notifMin,
+        'badges': badges,
+        'totalPuntos': totalPuntos,
+        'nivel': nivel,
+        'progresoLectura': progresoLectura,
+        'maxStreak': maxStreak,
+      };
 
   static DateTime _readDate(Object? value) {
     if (value is DateTime) return value;

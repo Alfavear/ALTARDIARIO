@@ -23,8 +23,18 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
   final int _year = DateTime.now().year;
 
   final List<String> _monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre'
   ];
 
   final List<String> _dayHeaders = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
@@ -163,8 +173,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
   void _showLecturaBottomSheet(
       BuildContext context, LecturaDia lectura, int mes, int dayNum) {
     final fecha = DateTime(_year, mes, dayNum);
-    final fechaFormateada = DateFormat("EEEE, d 'de' MMMM", 'es')
-        .format(fecha);
+    final fechaFormateada = DateFormat("EEEE, d 'de' MMMM", 'es').format(fecha);
     final diaCapitalizado =
         fechaFormateada[0].toUpperCase() + fechaFormateada.substring(1);
 
@@ -204,12 +213,12 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                   ),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded,
+                      const Icon(Icons.calendar_today_rounded,
                           size: 16, color: AppTheme.textSecondary),
                       const SizedBox(width: 6),
                       Text(
                         diaCapitalizado,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.textSecondary,
@@ -222,9 +231,7 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: isCompleted
-                          ? AppTheme.completedGradient
-                          : null,
+                      gradient: isCompleted ? AppTheme.completedGradient : null,
                       color: isCompleted ? null : AppTheme.scaffoldBg,
                       borderRadius:
                           BorderRadius.circular(AppTheme.radiusMedium),
@@ -287,7 +294,8 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                         await storageService.toggleLectura(lectura.fechaClave);
                         final uid = ref.read(effectiveUserUidProvider);
                         if (uid != null) {
-                          final completed = await storageService.getCompletedDates();
+                          final completed =
+                              await storageService.getCompletedDates();
                           final maxStreak = storageService.getMaxStreak();
                           await syncProgressGuarded(
                               ref, uid, completed, maxStreak);
@@ -300,8 +308,8 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                           setState(() {});
 
                           if (ahoraCompletado) {
-                            Future.delayed(
-                                const Duration(milliseconds: 400), () {
+                            Future.delayed(const Duration(milliseconds: 400),
+                                () {
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 Navigator.push(
@@ -388,9 +396,9 @@ class _CalendarioViewState extends ConsumerState<CalendarioView>
                   Center(
                     child: TextButton.icon(
                       onPressed: () => _openBibleOnline(lectura.pasajes),
-                      icon: Icon(Icons.open_in_new,
+                      icon: const Icon(Icons.open_in_new,
                           size: 16, color: AppTheme.textSecondary),
-                      label: Text(
+                      label: const Text(
                         'Leer pasajes en línea',
                         style: TextStyle(
                           fontSize: 13,
@@ -540,7 +548,7 @@ class _DayCell extends StatelessWidget {
             else
               const SizedBox(height: 14),
             if (isToday && !isCompleted)
-              Text(
+              const Text(
                 'Hoy',
                 style: TextStyle(
                   fontSize: 8,
@@ -609,8 +617,7 @@ class _StatsSection extends StatelessWidget {
                   ),
                   const Text(
                     'Racha actual',
-                    style: TextStyle(
-                        color: Colors.white70, fontSize: 10),
+                    style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                 ],
               ),
@@ -665,7 +672,7 @@ class _MiniStatCard extends StatelessWidget {
           ],
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppTheme.textPrimary,
@@ -673,8 +680,7 @@ class _MiniStatCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(
-                fontSize: 10, color: AppTheme.textSecondary),
+            style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
           ),
         ],
       ),

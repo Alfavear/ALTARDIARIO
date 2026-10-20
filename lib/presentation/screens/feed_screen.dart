@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/app_providers.dart';
+
+import '../../core/theme/app_theme.dart';
 import '../../data/models/comment.dart';
 import '../../data/models/reflexion.dart';
-import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
 import '../widgets/guest_access_restricted_widget.dart';
+import '../widgets/shimmer_loading_widget.dart';
 import 'public_profile_screen.dart';
 import 'publicar_reflexion_screen.dart';
-import '../widgets/shimmer_loading_widget.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -39,9 +40,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     var filtered = reflexiones;
     final query = _searchController.text.trim().toLowerCase();
     if (query.isNotEmpty) {
-      filtered = filtered
-          .where((r) => r.texto.toLowerCase().contains(query))
-          .toList();
+      filtered =
+          filtered.where((r) => r.texto.toLowerCase().contains(query)).toList();
     }
     if (_selectedTag != 'Todo') {
       final tag = _selectedTag.toLowerCase();
@@ -95,8 +95,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         scrolledUnderElevation: 1,
         title: Row(
           children: [
-            const Icon(Icons.menu_book,
-                color: AppTheme.primaryBlue, size: 22),
+            const Icon(Icons.menu_book, color: AppTheme.primaryBlue, size: 22),
             const SizedBox(width: 8),
             Text('Altar Comunitario',
                 style: Theme.of(context)
@@ -127,17 +126,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   onRefresh: () =>
                       ref.refresh(reflexionesStreamProvider.future),
                   child: ListView.builder(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     itemCount: filtered.length,
-                    itemBuilder: (context, index) => _ReflexionCard(
-                        reflexion: filtered[index]),
+                    itemBuilder: (context, index) =>
+                        _ReflexionCard(reflexion: filtered[index]),
                   ),
                 );
               },
               loading: () => const ShimmerListLoading(itemCount: 4),
-              error: (err, stack) =>
-                  Center(child: Text('Error: $err')),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
         ],
@@ -145,12 +142,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         backgroundColor: AppTheme.primaryBlue,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (_) => const PublicarReflexionScreen(pasajeDia: ''),
-          ));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PublicarReflexionScreen(pasajeDia: ''),
+              ));
         },
         child: const Icon(Icons.edit, color: Colors.white, size: 28),
       ),
@@ -163,8 +161,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       child: Column(
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(30),
@@ -183,11 +180,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       hintText: 'Buscar reflexiones o temas...',
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
                     ),
-                    style: const TextStyle(
-                        fontSize: 14, fontFamily: 'Inter'),
+                    style: const TextStyle(fontSize: 14, fontFamily: 'Inter'),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -224,15 +219,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 final tag = _tags[i];
                 final selected = tag == _selectedTag;
                 return GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedTag = tag),
+                  onTap: () => setState(() => _selectedTag = tag),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: selected
-                          ? AppTheme.primaryBlue
-                          : Colors.white,
+                      color: selected ? AppTheme.primaryBlue : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: selected
@@ -245,9 +237,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected
-                            ? Colors.white
-                            : AppTheme.textSecondary,
+                        color: selected ? Colors.white : AppTheme.textSecondary,
                       ),
                     ),
                   ),
@@ -279,8 +269,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             const SizedBox(height: 20),
             const Text(
               'Aún no hay reflexiones',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -306,8 +295,7 @@ class _ReflexionCard extends ConsumerWidget {
     final isFollowingAsync = uid != null && !isSelf
         ? ref.watch(isFollowingProvider(reflexion.userId))
         : null;
-    final userReaction =
-        uid != null ? reflexion.getReaction(uid) : null;
+    final userReaction = uid != null ? reflexion.getReaction(uid) : null;
     final commentCount = reflexion.commentCount;
 
     final authorProfile =
@@ -335,15 +323,13 @@ class _ReflexionCard extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PublicProfileScreen(
-                          userId: reflexion.userId,
-                          fallbackName: authorName),
+                          userId: reflexion.userId, fallbackName: authorName),
                     ),
                   );
                 },
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundColor:
-                      AppTheme.primaryBlue.withValues(alpha: 0.12),
+                  backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
                   child: Text(
                     authorName.isNotEmpty ? authorName[0].toUpperCase() : '?',
                     style: const TextStyle(
@@ -359,8 +345,8 @@ class _ReflexionCard extends ConsumerWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => PublicProfileScreen(
-                            userId: reflexion.userId),
+                        builder: (_) =>
+                            PublicProfileScreen(userId: reflexion.userId),
                       ),
                     );
                   },
@@ -375,8 +361,7 @@ class _ReflexionCard extends ConsumerWidget {
                       Text(
                         _formatTime(reflexion.fecha),
                         style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary),
+                            fontSize: 12, color: AppTheme.textSecondary),
                       ),
                     ],
                   ),
@@ -385,72 +370,71 @@ class _ReflexionCard extends ConsumerWidget {
               if (isFollowingAsync != null)
                 isFollowingAsync.when(
                   data: (isFollowing) => GestureDetector(
-                        onTap: () async {
-                          await ref.read(firestoreServiceProvider).toggleFollow(
-                                uid!,
-                                reflexion.userId,
-                                isFollowing,
-                              );
-                          ref.invalidate(isFollowingProvider(reflexion.userId));
-                        },
-                        child: isFollowing
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.todayHighlight,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                      color: AppTheme.completedGreen.withValues(alpha: 0.4)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.check,
-                                        size: 12, color: AppTheme.completedGreen),
-                                    SizedBox(width: 3),
-                                    Text('Siguiendo',
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppTheme.completedGreen)),
-                                  ],
-                                ),
-                              )
-                            : Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlue,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text('Seguir',
+                    onTap: () async {
+                      await ref.read(firestoreServiceProvider).toggleFollow(
+                            uid!,
+                            reflexion.userId,
+                            isFollowing,
+                          );
+                      ref.invalidate(isFollowingProvider(reflexion.userId));
+                    },
+                    child: isFollowing
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppTheme.todayHighlight,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: AppTheme.completedGreen
+                                      .withValues(alpha: 0.4)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check,
+                                    size: 12, color: AppTheme.completedGreen),
+                                SizedBox(width: 3),
+                                Text('Siguiendo',
                                     style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.white)),
-                              ),
-                      ),
+                                        color: AppTheme.completedGreen)),
+                              ],
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text('Seguir',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white)),
+                          ),
+                  ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.todayHighlight,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.local_fire_department,
-                          size: 14,
-                          color: AppTheme.streakOrange,
-                          fill: 1),
-                      const SizedBox(width: 4),
-                      const Text('Tú',
+                          size: 14, color: AppTheme.streakOrange, fill: 1),
+                      SizedBox(width: 4),
+                      Text('Tú',
                           style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -462,8 +446,7 @@ class _ReflexionCard extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: AppTheme.primaryBlueLight.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(6),
@@ -530,8 +513,7 @@ class _ReflexionCard extends ConsumerWidget {
                       '${reflexion.pasajeDia}\n\n${reflexion.texto}\n\n— ${reflexion.userName}';
                   Clipboard.setData(ClipboardData(text: text));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('¡Copiado al portapapeles!')),
+                    const SnackBar(content: Text('¡Copiado al portapapeles!')),
                   );
                 },
               ),
@@ -542,8 +524,7 @@ class _ReflexionCard extends ConsumerWidget {
     );
   }
 
-  void _showCommentsSheet(
-      BuildContext context, WidgetRef ref, Reflexion r) {
+  void _showCommentsSheet(BuildContext context, WidgetRef ref, Reflexion r) {
     final uid = ref.read(effectiveUserUidProvider);
     final commentCtrl = TextEditingController();
 
@@ -561,37 +542,34 @@ class _ReflexionCard extends ConsumerWidget {
             child: Column(
               children: [
                 const Text('Comentarios',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Expanded(
                   child: ref.watch(comentariosStreamProvider(r.id)).when(
-                    data: (comments) {
-                      if (comments.isEmpty) {
-                        return const Center(
-                          child: Text('Sin comentarios aún.',
-                              style: TextStyle(
-                                  color: AppTheme.textSecondary)),
-                        );
-                      }
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16),
-                        itemCount: comments.length,
-                        itemBuilder: (_, i) =>
-                            _CommentTile(comment: comments[i]),
-                      );
-                    },
-                    loading: () => const Center(
-                        child: CircularProgressIndicator()),
-                    error: (e, _) =>
-                        Center(child: Text('Error: $e')),
-                  ),
+                        data: (comments) {
+                          if (comments.isEmpty) {
+                            return const Center(
+                              child: Text('Sin comentarios aún.',
+                                  style:
+                                      TextStyle(color: AppTheme.textSecondary)),
+                            );
+                          }
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: comments.length,
+                            itemBuilder: (_, i) =>
+                                _CommentTile(comment: comments[i]),
+                          );
+                        },
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Center(child: Text('Error: $e')),
+                      ),
                 ),
                 if (uid != null)
                   Container(
-                    padding: const EdgeInsets.fromLTRB(
-                        16, 8, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -612,15 +590,12 @@ class _ReflexionCard extends ConsumerWidget {
                               decoration: InputDecoration(
                                 hintText: 'Escribe un comentario...',
                                 border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(24),
-                                  borderSide: BorderSide(
-                                      color:
-                                          AppTheme.pendingGrayDark),
+                                  borderRadius: BorderRadius.circular(24),
+                                  borderSide: const BorderSide(
+                                      color: AppTheme.pendingGrayDark),
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 10),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
                                 isDense: true,
                               ),
                               textInputAction: TextInputAction.send,
@@ -640,8 +615,7 @@ class _ReflexionCard extends ConsumerWidget {
                                 Navigator.pop(ctx);
                                 return;
                               }
-                              _sendComment(ref, r, uid,
-                                  commentCtrl.text);
+                              _sendComment(ref, r, uid, commentCtrl.text);
                               commentCtrl.clear();
                             },
                           ),
@@ -657,20 +631,19 @@ class _ReflexionCard extends ConsumerWidget {
     );
   }
 
-  void _sendComment(
-      WidgetRef ref, Reflexion r, String uid, String text) {
+  void _sendComment(WidgetRef ref, Reflexion r, String uid, String text) {
     final user = ref.read(userProfileProvider).value;
     ref.read(firestoreServiceProvider).publicarComentario(
-      Comment(
-        id: '',
-        reflexionId: r.id,
-        userId: uid,
-        userName: user?.displayName ?? '',
-        userFotoUrl: user?.fotoUrl ?? '',
-        texto: text.trim(),
-        fecha: DateTime.now(),
-      ),
-    );
+          Comment(
+            id: '',
+            reflexionId: r.id,
+            userId: uid,
+            userName: user?.displayName ?? '',
+            userFotoUrl: user?.fotoUrl ?? '',
+            texto: text.trim(),
+            fecha: DateTime.now(),
+          ),
+        );
   }
 
   String _formatTime(DateTime date) {
@@ -702,19 +675,18 @@ class _CommentTile extends ConsumerWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => PublicProfileScreen(
-                      userId: comment.userId,
-                      fallbackName: comment.userName),
+                      userId: comment.userId, fallbackName: comment.userName),
                 ),
               );
             },
             child: CircleAvatar(
               radius: 16,
-              backgroundColor:
-                  AppTheme.primaryBlue.withValues(alpha: 0.12),
+              backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
               backgroundImage: comment.userFotoUrl.isNotEmpty
                   ? NetworkImage(comment.userFotoUrl)
                   : null,
-              child: Text(comment.userName.isNotEmpty
+              child: Text(
+                  comment.userName.isNotEmpty
                       ? comment.userName[0].toUpperCase()
                       : '?',
                   style: const TextStyle(
@@ -749,38 +721,31 @@ class _CommentTile extends ConsumerWidget {
                         },
                         child: Text(comment.userName,
                             style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13)),
+                                fontWeight: FontWeight.w600, fontSize: 13)),
                       ),
                       const Spacer(),
                       Text(
                         _formatCommentTime(comment.fecha),
                         style: const TextStyle(
-                            fontSize: 10,
-                            color: AppTheme.textSecondary),
+                            fontSize: 10, color: AppTheme.textSecondary),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(comment.texto,
-                      style: const TextStyle(
-                          fontSize: 14, height: 1.3)),
+                      style: const TextStyle(fontSize: 14, height: 1.3)),
                   const SizedBox(height: 6),
                   GestureDetector(
                     onTap: () {
                       if (uid == null) return;
-                      ref
-                          .read(firestoreServiceProvider)
-                          .toggleCommentLike(comment.reflexionId,
-                              comment.id, uid, isLiked);
+                      ref.read(firestoreServiceProvider).toggleCommentLike(
+                          comment.reflexionId, comment.id, uid, isLiked);
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isLiked
-                              ? Icons.favorite
-                              : Icons.favorite_border,
+                          isLiked ? Icons.favorite : Icons.favorite_border,
                           size: 14,
                           color: isLiked ? Colors.red : Colors.grey,
                         ),
@@ -789,9 +754,7 @@ class _CommentTile extends ConsumerWidget {
                           Text('${comment.likes}',
                               style: TextStyle(
                                   fontSize: 11,
-                                  color: isLiked
-                                      ? Colors.red
-                                      : Colors.grey)),
+                                  color: isLiked ? Colors.red : Colors.grey)),
                         ],
                       ],
                     ),
@@ -836,13 +799,13 @@ class _ReactionStrip extends ConsumerWidget {
           return GestureDetector(
             onTap: () async {
               if (uid == null) return;
-              await ref.read(firestoreServiceProvider).toggleReaction(
-                  reflexionId, uid, e, currentReaction);
+              await ref
+                  .read(firestoreServiceProvider)
+                  .toggleReaction(reflexionId, uid, e, currentReaction);
             },
             child: Container(
               margin: const EdgeInsets.only(right: 6),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: isActive
                     ? AppTheme.primaryBlue.withValues(alpha: 0.1)
@@ -858,8 +821,7 @@ class _ReactionStrip extends ConsumerWidget {
                 '$e${count > 0 ? ' $count' : ''}',
                 style: TextStyle(
                     fontSize: 12,
-                    fontWeight:
-                        isActive ? FontWeight.bold : FontWeight.normal),
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal),
               ),
             ),
           );

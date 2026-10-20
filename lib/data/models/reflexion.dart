@@ -35,16 +35,13 @@ class Reflexion {
             ? DateTime.parse(map['fecha'])
             : DateTime.now(),
         likes: map['likes'] ?? 0,
-        likedBy: map['likedBy'] != null
-            ? List<String>.from(map['likedBy'])
-            : [],
+        likedBy:
+            map['likedBy'] != null ? List<String>.from(map['likedBy']) : [],
         commentCount: map['commentCount'] ?? 0,
         reactions: map['reactions'] != null
             ? Map<String, String>.from(map['reactions'])
             : {},
-        tags: map['tags'] != null
-            ? List<String>.from(map['tags'])
-            : [],
+        tags: map['tags'] != null ? List<String>.from(map['tags']) : [],
       );
 
   Map<String, dynamic> toMap() => {

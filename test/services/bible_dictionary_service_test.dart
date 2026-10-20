@@ -1,13 +1,13 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:altar_diario/data/models/bible_dictionary_term.dart';
 import 'package:altar_diario/data/services/bible_dictionary_service.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('BibleDictionaryTerm Model', () {
     test('toMap y fromMap deben serializar y deserializar correctamente', () {
-      final term = const BibleDictionaryTerm(
+      const term = BibleDictionaryTerm(
         id: 'selah',
         palabra: 'Selah',
         origen: 'Hebreo: סֶלָה',

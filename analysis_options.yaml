@@ -11,6 +11,8 @@ analyzer:
     - lib/l10n/generated/**
     - "**/*.g.dart"
     - build/**
+    # Herramientas CLI de desarrollo (usan print a propósito).
+    - scripts/**
   errors:
     # Promover a warning lo que suele esconder bugs
     unused_import: warning

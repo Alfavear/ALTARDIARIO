@@ -38,8 +38,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       _error = null;
     });
     try {
-      final translations =
-          await _downloadService.fetchAvailableTranslations();
+      final translations = await _downloadService.fetchAvailableTranslations();
       if (!mounted) return;
       setState(() {
         _translations = translations;
@@ -156,17 +155,29 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
 
   String _getLanguageBadge(String lang) {
     final lower = lang.toLowerCase();
-    if (lower.contains('spanish') || lower.contains('español') || lower == 'es') {
+    if (lower.contains('spanish') ||
+        lower.contains('español') ||
+        lower == 'es') {
       return '🇪🇸 Español';
-    } else if (lower.contains('english') || lower.contains('inglés') || lower == 'en') {
+    } else if (lower.contains('english') ||
+        lower.contains('inglés') ||
+        lower == 'en') {
       return '🇺🇸 English';
-    } else if (lower.contains('portuguese') || lower.contains('portugués') || lower == 'pt') {
+    } else if (lower.contains('portuguese') ||
+        lower.contains('portugués') ||
+        lower == 'pt') {
       return '🇧🇷 Português';
-    } else if (lower.contains('french') || lower.contains('francés') || lower == 'fr') {
+    } else if (lower.contains('french') ||
+        lower.contains('francés') ||
+        lower == 'fr') {
       return '🇫🇷 Français';
-    } else if (lower.contains('german') || lower.contains('alemán') || lower == 'de') {
+    } else if (lower.contains('german') ||
+        lower.contains('alemán') ||
+        lower == 'de') {
       return '🇩🇪 Deutsch';
-    } else if (lower.contains('italian') || lower.contains('italiano') || lower == 'it') {
+    } else if (lower.contains('italian') ||
+        lower.contains('italiano') ||
+        lower == 'it') {
       return '🇮🇹 Italiano';
     }
     return '🌐 $lang';
@@ -176,7 +187,9 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
     var list = _translations;
 
     if (_selectedLangFilter == 'instaladas') {
-      list = list.where((t) => t.isDownloaded || _downloading.contains(t.slug)).toList();
+      list = list
+          .where((t) => t.isDownloaded || _downloading.contains(t.slug))
+          .toList();
     } else if (_selectedLangFilter == 'es') {
       list = list.where((t) {
         final l = t.language.toLowerCase();
@@ -190,8 +203,12 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
     } else if (_selectedLangFilter == 'otros') {
       list = list.where((t) {
         final l = t.language.toLowerCase();
-        return !l.contains('spanish') && !l.contains('español') && l != 'es' &&
-            !l.contains('english') && !l.contains('inglés') && l != 'en';
+        return !l.contains('spanish') &&
+            !l.contains('español') &&
+            l != 'es' &&
+            !l.contains('english') &&
+            !l.contains('inglés') &&
+            l != 'en';
       }).toList();
     }
 
@@ -206,10 +223,10 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final featured =
-        _filtered.where((t) => t.isDownloaded || _downloading.contains(t.slug)).toList();
-    final others =
-        _filtered.where((t) => !featured.contains(t)).toList();
+    final featured = _filtered
+        .where((t) => t.isDownloaded || _downloading.contains(t.slug))
+        .toList();
+    final others = _filtered.where((t) => !featured.contains(t)).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
@@ -353,7 +370,8 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                     color: AppTheme.textPrimary)),
             Text(
               '${others.length} disponibles',
-              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+              style:
+                  const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -376,8 +394,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.search,
-              size: 20, color: AppTheme.textSecondary),
+          const Icon(Icons.search, size: 20, color: AppTheme.textSecondary),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -391,8 +408,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
               style: const TextStyle(fontSize: 14),
             ),
           ),
-          const Icon(Icons.tune,
-              size: 18, color: AppTheme.textSecondary),
+          const Icon(Icons.tune, size: 18, color: AppTheme.textSecondary),
         ],
       ),
     );
@@ -437,8 +453,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                             color: AppTheme.textPrimary)),
                     Text(_getLanguageBadge(t.language),
                         style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary)),
+                            fontSize: 12, color: AppTheme.textSecondary)),
                   ],
                 ),
               ),
@@ -457,16 +472,15 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                       Text(
                         '${(progress * 100).toInt()}%',
                         style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold),
+                            fontSize: 9, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.completedGreenLight,
                     borderRadius: BorderRadius.circular(8),
@@ -485,8 +499,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor:
-                    AppTheme.primaryBlue.withValues(alpha: 0.1),
+                backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
                 color: AppTheme.completedGreen,
                 minHeight: 6,
               ),
@@ -506,8 +519,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
       child: Row(
         children: [
-          const Icon(Icons.translate,
-              size: 22, color: AppTheme.textSecondary),
+          const Icon(Icons.translate, size: 22, color: AppTheme.textSecondary),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -520,8 +532,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                         color: AppTheme.textPrimary)),
                 Text(_getLanguageBadge(t.language),
                     style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary)),
+                        fontSize: 12, color: AppTheme.textSecondary)),
               ],
             ),
           ),
@@ -539,8 +550,7 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                   ),
                   Text('${(progress * 100).toInt()}%',
                       style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold)),
+                          fontSize: 9, fontWeight: FontWeight.bold)),
                 ],
               ),
             )
@@ -560,16 +570,15 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppTheme.pendingGrayDark),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.download,
+                    Icon(Icons.download,
                         size: 16, color: AppTheme.textSecondary),
-                    const SizedBox(width: 4),
-                    const Text('Descargar',
+                    SizedBox(width: 4),
+                    Text('Descargar',
                         style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary)),
+                            fontSize: 12, color: AppTheme.textSecondary)),
                   ],
                 ),
               ),
@@ -585,31 +594,28 @@ class _BibleVersionsScreenState extends ConsumerState<BibleVersionsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.primaryBlueLight.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppTheme.primaryBlueLight.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: AppTheme.primaryBlueLight.withValues(alpha: 0.2)),
       ),
-      child: Row(
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info,
-              size: 18, color: AppTheme.primaryBlue),
-          const SizedBox(width: 10),
+          Icon(Icons.info, size: 18, color: AppTheme.primaryBlue),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Lectura Offline',
+                Text('Lectura Offline',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                         color: AppTheme.primaryBlue)),
-                const SizedBox(height: 4),
-                const Text(
+                SizedBox(height: 4),
+                Text(
                   'Descarga tus versiones favoritas para leer la Palabra de Dios incluso sin conexión.',
                   style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                      height: 1.4),
+                      fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
                 ),
               ],
             ),

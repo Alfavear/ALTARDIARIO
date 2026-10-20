@@ -32,9 +32,8 @@ class Comment {
             ? DateTime.parse(map['fecha'])
             : DateTime.now(),
         likes: map['likes'] ?? 0,
-        likedBy: map['likedBy'] != null
-            ? List<String>.from(map['likedBy'])
-            : [],
+        likedBy:
+            map['likedBy'] != null ? List<String>.from(map['likedBy']) : [],
       );
 
   Map<String, dynamic> toMap() => {

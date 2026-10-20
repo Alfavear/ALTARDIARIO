@@ -227,7 +227,7 @@ class _LogoPainter extends CustomPainter {
     canvas.drawLine(Offset(-halfW, -h / 4), Offset(halfW, -h / 4), rings);
     canvas.drawLine(Offset(-halfW, h / 4), Offset(halfW, h / 4), rings);
 
-    canvas.drawCircle(Offset(0, 0), 1.5, knot);
+    canvas.drawCircle(const Offset(0, 0), 1.5, knot);
 
     final endGrain = Paint()
       ..color = const Color(0xFF5D4037)
@@ -246,10 +246,10 @@ class _LogoPainter extends CustomPainter {
 
     // Main flame gradient
     final flameGradient = Paint()
-      ..shader = LinearGradient(
+      ..shader = const LinearGradient(
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
-        colors: const [
+        colors: [
           Color(0xFFD84315),
           Color(0xFFFF6F00),
           Color(0xFFFFA726),
@@ -277,44 +277,62 @@ class _LogoPainter extends CustomPainter {
 
     // Left side going up
     flame.cubicTo(
-      leftBaseX - 3 * s, flameBottom - 5 * s,
-      leftBaseX - 8 * s, flameBottom - 15 * s,
-      leftBaseX - 5 * s + wave2 * 2 * s, flameBottom - 22 * s,
+      leftBaseX - 3 * s,
+      flameBottom - 5 * s,
+      leftBaseX - 8 * s,
+      flameBottom - 15 * s,
+      leftBaseX - 5 * s + wave2 * 2 * s,
+      flameBottom - 22 * s,
     );
 
     // Left side tongue
     flame.cubicTo(
-      leftBaseX - 10 * s + wave2 * 2 * s, flameBottom - 30 * s,
-      leftBaseX - 4 * s + wave * 1.5 * s, flameBottom - 38 * s,
-      cx - baseW * 0.3 + wave2 * 1.5 * s, flameBottom - 35 * s,
+      leftBaseX - 10 * s + wave2 * 2 * s,
+      flameBottom - 30 * s,
+      leftBaseX - 4 * s + wave * 1.5 * s,
+      flameBottom - 38 * s,
+      cx - baseW * 0.3 + wave2 * 1.5 * s,
+      flameBottom - 35 * s,
     );
 
     // Curve up to main peak (right-leaning)
     flame.cubicTo(
-      cx - 2 * s + wave * 2 * s, flameBottom - 40 * s,
-      cx - 4 * s + wave * 2 * s, flameBottom - 47 * s,
-      cx + wave * 2.5 * s, flameBottom - 55 * s + wave.abs() * 0.5 * s,
+      cx - 2 * s + wave * 2 * s,
+      flameBottom - 40 * s,
+      cx - 4 * s + wave * 2 * s,
+      flameBottom - 47 * s,
+      cx + wave * 2.5 * s,
+      flameBottom - 55 * s + wave.abs() * 0.5 * s,
     );
 
     // Right side coming down
     flame.cubicTo(
-      cx + 6 * s + wave * 2 * s, flameBottom - 47 * s,
-      cx + 5 * s + wave2 * 1.5 * s, flameBottom - 40 * s,
-      cx + baseW * 0.3 + wave2 * 1.5 * s, flameBottom - 35 * s,
+      cx + 6 * s + wave * 2 * s,
+      flameBottom - 47 * s,
+      cx + 5 * s + wave2 * 1.5 * s,
+      flameBottom - 40 * s,
+      cx + baseW * 0.3 + wave2 * 1.5 * s,
+      flameBottom - 35 * s,
     );
 
     // Right side tongue
     flame.cubicTo(
-      rightBaseX + 5 * s + wave2 * 1.5 * s, flameBottom - 32 * s,
-      rightBaseX + 8 * s + wave * 1.5 * s, flameBottom - 25 * s,
-      rightBaseX + 3 * s, flameBottom - 18 * s,
+      rightBaseX + 5 * s + wave2 * 1.5 * s,
+      flameBottom - 32 * s,
+      rightBaseX + 8 * s + wave * 1.5 * s,
+      flameBottom - 25 * s,
+      rightBaseX + 3 * s,
+      flameBottom - 18 * s,
     );
 
     // Right side going down to base
     flame.cubicTo(
-      rightBaseX + 6 * s, flameBottom - 12 * s,
-      rightBaseX + 2 * s, flameBottom - 5 * s,
-      cx + 2 * s, flameBottom,
+      rightBaseX + 6 * s,
+      flameBottom - 12 * s,
+      rightBaseX + 2 * s,
+      flameBottom - 5 * s,
+      cx + 2 * s,
+      flameBottom,
     );
 
     flame.close();
@@ -323,10 +341,10 @@ class _LogoPainter extends CustomPainter {
 
     // === INNER FLAME CORE (yellow/white) ===
     final corePaint = Paint()
-      ..shader = LinearGradient(
+      ..shader = const LinearGradient(
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
-        colors: const [
+        colors: [
           Color(0xFFFFCA28),
           Color(0xFFFFF176),
           Color(0xFFFFF9C4),
@@ -339,28 +357,41 @@ class _LogoPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final core = Path();
-    final coreTop = flameBottom - 38 * s + wave * 1.5 * s + wave.abs() * 0.5 * s;
+    final coreTop =
+        flameBottom - 38 * s + wave * 1.5 * s + wave.abs() * 0.5 * s;
 
     core.moveTo(cx - 1 * s, flameBottom - 3 * s);
     core.cubicTo(
-      cx - 4 * s, flameBottom - 10 * s,
-      cx - baseW * 0.2 + wave2 * s, flameBottom - 20 * s,
-      cx - baseW * 0.15 + wave * 1.5 * s, flameBottom - 26 * s,
+      cx - 4 * s,
+      flameBottom - 10 * s,
+      cx - baseW * 0.2 + wave2 * s,
+      flameBottom - 20 * s,
+      cx - baseW * 0.15 + wave * 1.5 * s,
+      flameBottom - 26 * s,
     );
     core.cubicTo(
-      cx - 2 * s + wave * 2 * s, flameBottom - 32 * s,
-      cx - 3 * s + wave * 2 * s, flameBottom - 36 * s,
-      cx + wave * 2 * s, coreTop,
+      cx - 2 * s + wave * 2 * s,
+      flameBottom - 32 * s,
+      cx - 3 * s + wave * 2 * s,
+      flameBottom - 36 * s,
+      cx + wave * 2 * s,
+      coreTop,
     );
     core.cubicTo(
-      cx + 3 * s + wave * 2 * s, flameBottom - 36 * s,
-      cx + 2 * s + wave2 * 1.5 * s, flameBottom - 32 * s,
-      cx + baseW * 0.15 + wave2 * s, flameBottom - 26 * s,
+      cx + 3 * s + wave * 2 * s,
+      flameBottom - 36 * s,
+      cx + 2 * s + wave2 * 1.5 * s,
+      flameBottom - 32 * s,
+      cx + baseW * 0.15 + wave2 * s,
+      flameBottom - 26 * s,
     );
     core.cubicTo(
-      cx + baseW * 0.2 + wave2 * s, flameBottom - 20 * s,
-      cx + 4 * s, flameBottom - 10 * s,
-      cx + 1 * s, flameBottom - 3 * s,
+      cx + baseW * 0.2 + wave2 * s,
+      flameBottom - 20 * s,
+      cx + 4 * s,
+      flameBottom - 10 * s,
+      cx + 1 * s,
+      flameBottom - 3 * s,
     );
     core.close();
     canvas.drawPath(core, corePaint);
@@ -390,15 +421,27 @@ class _LogoPainter extends CustomPainter {
       ..strokeWidth = 1.0 * faceScale;
     canvas.drawCircle(Offset(leftEyeX, eyeY), eyeR, eyeOutline);
     // Left pupil
-    canvas.drawCircle(Offset(leftEyeX + 0.5 * faceScale, eyeY + 0.3 * faceScale), pupilR, eyePupil);
+    canvas.drawCircle(
+        Offset(leftEyeX + 0.5 * faceScale, eyeY + 0.3 * faceScale),
+        pupilR,
+        eyePupil);
     // Left highlight
-    canvas.drawCircle(Offset(leftEyeX - 1.0 * faceScale, eyeY - 1.2 * faceScale), highlightR, eyeHighlight);
+    canvas.drawCircle(
+        Offset(leftEyeX - 1.0 * faceScale, eyeY - 1.2 * faceScale),
+        highlightR,
+        eyeHighlight);
 
     // Right eye white
     canvas.drawCircle(Offset(rightEyeX, eyeY), eyeR, eyeWhite);
     canvas.drawCircle(Offset(rightEyeX, eyeY), eyeR, eyeOutline);
-    canvas.drawCircle(Offset(rightEyeX + 0.5 * faceScale, eyeY + 0.3 * faceScale), pupilR, eyePupil);
-    canvas.drawCircle(Offset(rightEyeX - 1.0 * faceScale, eyeY - 1.2 * faceScale), highlightR, eyeHighlight);
+    canvas.drawCircle(
+        Offset(rightEyeX + 0.5 * faceScale, eyeY + 0.3 * faceScale),
+        pupilR,
+        eyePupil);
+    canvas.drawCircle(
+        Offset(rightEyeX - 1.0 * faceScale, eyeY - 1.2 * faceScale),
+        highlightR,
+        eyeHighlight);
 
     // Eyebrows (cute little arcs)
     final browPaint = Paint()
@@ -409,14 +452,14 @@ class _LogoPainter extends CustomPainter {
 
     final browPath = Path()
       ..moveTo(leftEyeX - 4 * faceScale, eyeY - 4.5 * faceScale)
-      ..quadraticBezierTo(
-          leftEyeX, eyeY - 6.5 * faceScale, leftEyeX + 4 * faceScale, eyeY - 4.5 * faceScale);
+      ..quadraticBezierTo(leftEyeX, eyeY - 6.5 * faceScale,
+          leftEyeX + 4 * faceScale, eyeY - 4.5 * faceScale);
     canvas.drawPath(browPath, browPaint);
 
     final browPath2 = Path()
       ..moveTo(rightEyeX - 4 * faceScale, eyeY - 4.5 * faceScale)
-      ..quadraticBezierTo(
-          rightEyeX, eyeY - 6.5 * faceScale, rightEyeX + 4 * faceScale, eyeY - 4.5 * faceScale);
+      ..quadraticBezierTo(rightEyeX, eyeY - 6.5 * faceScale,
+          rightEyeX + 4 * faceScale, eyeY - 4.5 * faceScale);
     canvas.drawPath(browPath2, browPaint);
 
     // Smile
@@ -428,7 +471,8 @@ class _LogoPainter extends CustomPainter {
 
     final smile = Path()
       ..moveTo(cx - 4.5 * faceScale, eyeY + 5 * faceScale)
-      ..quadraticBezierTo(cx, eyeY + 8.5 * faceScale, cx + 4.5 * faceScale, eyeY + 5 * faceScale);
+      ..quadraticBezierTo(cx, eyeY + 8.5 * faceScale, cx + 4.5 * faceScale,
+          eyeY + 5 * faceScale);
     canvas.drawPath(smile, smilePaint);
 
     // Cheeks (blush)
@@ -436,8 +480,10 @@ class _LogoPainter extends CustomPainter {
       ..color = const Color(0xFFFF8A80).withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(leftEyeX - 5 * faceScale, eyeY + 2.5 * faceScale), 2.5 * faceScale, blushPaint);
-    canvas.drawCircle(Offset(rightEyeX + 5 * faceScale, eyeY + 2.5 * faceScale), 2.5 * faceScale, blushPaint);
+    canvas.drawCircle(Offset(leftEyeX - 5 * faceScale, eyeY + 2.5 * faceScale),
+        2.5 * faceScale, blushPaint);
+    canvas.drawCircle(Offset(rightEyeX + 5 * faceScale, eyeY + 2.5 * faceScale),
+        2.5 * faceScale, blushPaint);
   }
 
   @override
