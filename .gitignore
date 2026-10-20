@@ -35,6 +35,7 @@ ios/Runner/GeneratedPluginRegistrant.*
 # macOS
 macos/Pods/
 macos/Flutter/GeneratedPluginRegistrant.swift
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # IDE
 .idea/
