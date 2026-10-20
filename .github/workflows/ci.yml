@@ -80,6 +80,15 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::error::Falta el secret GOOGLE_SERVICES_JSON_BASE64 (ver docs/SECURITY.md)"
+            exit 1
+          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
       - name: Build APK debug
         run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
