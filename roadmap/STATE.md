@@ -1,51 +1,24 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 2 · **Fase actual:** 1 · **Progreso global:** ██░░░░░░░░░░░░░░░░░░ 2/17 (12%)
+**Ciclo:** 3 · **Fase actual:** 1 · **Progreso global:** ████░░░░░░░░░░░░░░░░ 3/17 (18%)
 
 | Fase | Progreso |
 |---|---|
-| 1. Estabilizar (seguridad, observabilidad, CI) | ████░░░░░░░░░░░░░░░░ 2/9 |
+| 1. Estabilizar (seguridad, observabilidad, CI) | ███████░░░░░░░░░░░░░ 3/9 |
 | 2. Andamiaje IA y tests | ░░░░░░░░░░░░░░░░░░░░ 0/2 |
 | 3. Arquitectura feature-first y backend | ░░░░░░░░░░░░░░░░░░░░ 0/4 |
 | 4. Producto | ░░░░░░░░░░░░░░░░░░░░ 0/2 |
 
 **En curso:** —
-**Siguiente:** T-003 · Arreglar tests existentes que rompan por las nuevas dependencias/lints (P0, M)
+**Siguiente:** T-014 · Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla (P1, S)
 
-**Conteo:** backlog=14 · ready=0 · in_progress=0 · review=0 · done=2 · blocked=1 · dropped=0
+**Conteo:** backlog=13 · ready=0 · in_progress=0 · review=0 · done=3 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
 
 
 ## Últimos ciclos
-
-**Decisiones:**
-- No se modifico pubspec.yaml ni pubspec.lock: no habia conflicto que resolver. Cualquier cambio de version habria sido un downgrade/upgrade gratuito con riesgo de regresion en produccion.
-- No se delego al implementer ni al tester: la tarea es pura ejecucion de toolchain y no produce codigo; el tester no tenia comportamiento nuevo que cubrir y 'probar que pub get funciona' ya lo hace check.sh.
-- Sin entrada en CHANGELOG.md: no hay cambio funcional ni de versiones, solo verificacion. Lo confirmo el reviewer (hallazgo verde). El registro correcto es esta bitacora.
-- No se toco environment.sdk (^3.5.0) aunque el lock exige Dart >=3.12: es una decision de politica de toolchain/CI que afecta a quien compile el repo, no al resultado de esta tarea. Dejado como observacion del reviewer.
-- Los tests de reglas de Firestore no se ejecutaron (--fast): quedan para T-002, que es la tarea que los cubre.
-
-**Siguiente:** Siguiente elegible: T-002 (P0, security) ejecutar los tests de reglas contra el emulador y corregir fallos. Ojo antes de T-003: su premisa ('arreglar tests que rompan por nuevas dependencias/lints') no se cumple, flutter test da 108/108 y analyze esta limpio; conviene revisarla o reducirla. Pendiente humano: decidir si se sube environment.sdk a ^3.12.0 y si el CI fija Flutter >= 3.44.
-
----
-## ## Ciclo 2 — 2026-10-20T23:43:59.481Z
-- **Tarea:** T-002 · Ejecutar suite de tests de reglas de Firestore contra el emulador y corregir fallos
-- **Resultado:** done
-- **Rama/commit:** auto/T-002-rules-tests-emulador @ 6c53c2b
-- **check.sh:** ✅ verde
-- **Reviewer:** APROBAR CON CAMBIOS (0 bloqueantes; 2 asserts sugeridos aplicados y re-verificados)
-
-La suite de reglas ya pasaba 20/20 al empezar, asi que el criterio 1 estaba cubierto sin cambios. El trabajo real fue el criterio 2: inventariar las 34 escrituras de Firestore del cliente (firestore_service.dart mas auth_service y gamification_service) y cruzarlas con firestore.rules y rules.test.mjs. Aparecio un bug real: sendMessage escribe SIEMPRE participantIds con el uid del emisor primero (chat_screen pasa [currentUid, otherUserId]) y la regla de /chats exigia !changedKeys().hasAny(['participantIds']), de modo que el participante que no creo el chat recibia PERMISSION_DENIED en el set previo al mensaje y el mensaje nunca se enviaba. Arreglo en reglas (sin release de app): helper sameMembers() y update de /chats que permite reordenar participantIds solo si el conjunto de miembros es identico y siguen siendo exactamente 2. Se anadieron 8 tests de reglas (foro, peticiones/feedback, perfil con set merge y deleteField, seguir, subcolecciones privadas, notificaciones en batch, regresion del chat): 28/28 en verde. Prueba roja verificada revirtiendo SOLO firestore.rules: el test de regresion cae (27/28, exit 1) y vuelve a verde al restaurarlo. check.sh --fast: 108/108 tests, analyze limpio, Todo en verde. Reviewer: APROBAR CON CAMBIOS, 0 bloqueantes; los 2 asserts que pedia se anadieron (duplicados que solo bloquea size()==2, y rama solo-metadatos). Commit 6c53c2b. NO se ha desplegado nada: las reglas nuevas llegan a produccion cuando un humano mergee a main (deploy-firebase.yml despliega firestore.rules al mergear).
-
-**Problemas:**
-- El primer run tras implementar dio 27/28: el test A7 de batch mezclaba instancias de Firestore (writeBatch(as(ALICE)) con doc(as(ALICE))) y lanzaba 'Provided document reference is from a different Firestore instance'. Arreglado guardando una sola instancia. Ademas el assertFails de ese test era un falso verde: pasaba por invalid-argument, no por permission-denied. Ahora comparte instancia y ejercita la regla real.
-- Los subagentes (planner, implementer, tester, reviewer) siguen sin shell: no pueden ejecutar tests. Toda la verificacion (rules_test.sh, prueba roja con git stash, check.sh --fast) la hizo el orquestador. Funciona, pero el paso 7 del protocolo depende de que el orquestador tenga shell.
-- firestore-tests/rules.test.mjs queda en 422 lineas, por encima del limite de 400 de AGENTS.md. Es deuda previa que este cambio cruza; registrada como T-016 junto con migrar a node --test para no fijar el nombre del archivo en duro.
-- Al empezar, ningun test fallaba: la tarea estaba enunciada como 'corregir fallos' y no habia fallos, solo 1 escritura legitima bloqueada por las reglas. Conviene enunciar las tareas de este tipo como auditoria de cobertura, no como arreglo de fallos.
-- La relajacion de /chats no tenia allowlist de campos (preexistente): cualquier participante puede sobrescribir lastMessage/lastSenderId/participantNames de un chat existente. Integridad, no confidencialidad. Registrado como T-015.
-- T-003 ('arreglar tests existentes que rompan por las nuevas dependencias/lints') tiene la premisa rota: flutter test da 108/108 y analyze esta limpio. Es candidata a que un humano la reduzca o la descarte.
 
 **Decisiones:**
 - No se toco codigo Dart de produccion: el arreglo va en firestore.rules para proteger tambien a los usuarios con la app ya instalada, sin esperar a un release. El cambio de cliente (no reenviar participantIds en chats existentes, y no perder el texto si falla el envio) queda como T-014.
@@ -56,6 +29,33 @@ La suite de reglas ya pasaba 20/20 al empezar, asi que el criterio 1 estaba cubi
 - Se crearon 4 tareas de seguimiento: T-014 (cliente de chat), T-015 (allowlist en /chats y create sin duplicados), T-016 (partir rules.test.mjs), T-017 (batch vacio en markAllNotificationsAsRead).
 
 **Siguiente:** Siguiente elegible segun el roadmap: T-003 (P0, test), pero su premisa ya no se cumple (108/108 verde, analyze limpio): el siguiente ciclo deberia evaluarla y proponer reducirla/descartarla, no rehacer trabajo. Despues, P1 de la fase 1: T-014 y T-015 salen directamente de este ciclo (cliente de chat y endurecimiento de /chats). Pendiente humano: mergear esta rama a main para que firestore.rules llegue a produccion, y decidir sobre T-003.
+
+---
+## ## Ciclo 3 — 2026-10-20T23:57:23.037Z
+- **Tarea:** T-003 · Arreglar tests existentes que rompan por las nuevas dependencias/lints
+- **Resultado:** done
+- **Rama/commit:** auto/T-003-tests-verdes @ 886fb4e
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR CON CAMBIOS (0 bloqueantes; las 2 comprobaciones por caso sugeridas se ejecutaron y pasan)
+
+Verificacion no-op de T-003: la premisa era obsoleta y NO habia ningun test roto. flutter test 108/108 en verde, flutter analyze limpio y el gate de formato de CI que faltaba por demostrar tambien pasa ('Formatted 80 files (0 changed)'). Criterio 2 demostrado a nivel de caso y de archivo contra main: 108 declaraciones test/testWidgets en main y 108 en HEAD, 14 eliminadas y 14 anadidas (solo reflow de formato), 7 expect eliminadas y 7 anadidas, 0 archivos de test borrados y 0 coincidencias de skip/markTestSkipped/@Skip en test/. scripts/check.sh --fast: format 0 changed, analyze 'No issues found!', '00:12 +108: All tests passed!', 'Todo en verde' (exit 0). Sin cambios de codigo ni CHANGELOG: no hay cambio funcional. Reviewer: APROBAR CON CAMBIOS, 0 bloqueantes. Se cierra T-003 con evidencia y se desbloquean T-004, T-005, T-006, T-007 y T-008.
+
+**Problemas:**
+- T-003 estaba enunciada como 'arreglar tests que rompan' cuando no habia ningun test roto: el criterio 1 ya se cumplia antes de empezar. Conviene reescribir tareas de este tipo como auditoria de estado ('verificar que la suite sigue en verde'), no como arreglo, para que el ciclo no parezca trabajo inexistente.
+- El criterio 2 ('ningun test borrado ni skip') solo estaba demostrado a nivel de archivo; el reviewer pidio prueba por caso. Se ejecuto: 108 == 108 declaraciones test/testWidgets y 14 eliminadas == 14 anadidas por reflow, sin 'D' en git diff. Queda cubierto.
+- Los tests de reglas de Firestore no se ejecutaron en este ciclo (--fast). El arbol de firestore.rules/rules.test.mjs es identico al de 6c53c2b, donde dieron 28/28, porque los unicos commits posteriores tocan roadmap/. No hay corrida unica que demuestre ambos verdes en el mismo proceso.
+- integration_test/app_test.dart no lo ejecuta nadie: ni flutter test (solo recorre test/) ni la CI. El '100%' es de test/, no del arranque real con Firebase. Ademas dart format solo cubre lib y test, no integration_test/.
+- Fijar la version de Flutter en los 4 workflows (hoy channel: stable sin version) y anadir un job de integration_test requieren editar .github/workflows, que el ciclo autonomo tiene prohibido tocar. Queda como decision humana, no como tarea auto.
+- Al arrancar el ciclo, el MCP start_task habia dejado roadmap/STATE.md y roadmap/tasks.yaml modificados en el arbol; no eran cambios de codigo y se commitean con el cierre del ciclo.
+
+**Decisiones:**
+- Cerrar T-003 como verificacion no-op con evidencia real en vez de bloquearla: los dos criterios literales se cumplen y la tarea desbloquea cinco tareas de fase 1-3. Se deja escrito en la evidencia '0 tests rotos, 0 cambios de codigo' para que el historial no sugiera un arreglo inexistente.
+- No se toco CHANGELOG: no hay cambio funcional, de API ni de versiones; el registro correcto es la evidencia de la tarea y esta bitacora.
+- No se delego al implementer ni al tester: no hay comportamiento nuevo que implementar ni tests que anadir; el plan del planner concluyo 'cero archivos modificados' y el unico gate sin evidencia (formato) se ejecuto en el orquestador.
+- No se crearon tareas para fijar Flutter en CI ni para integration_test porque ambas exigen editar workflows de CI, prohibido para el ciclo autonomo; se dejan como pendientes humanos en esta entrada.
+- El commit asociado a la tarea es 886fb4e (tip de la rama base sobre el que se verifico). La rama auto/T-003-tests-verdes no aporta commits de codigo propios.
+
+**Siguiente:** Siguiente elegible: T-014 (P1, S, bug) - sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla. Despues T-015 (P1, S, rules allowlist en /chats). Pendiente humano: (1) mergear auto/T-002-rules-tests-emulador para que firestore.rules llegue a produccion; (2) decidir si se fija la version de Flutter en los workflows; (3) decidir si integration_test/app_test.dart se ejecuta en CI o se documenta como manual; (4) valorar reescribir T-003-like tasks como auditorias.
 
 ---
 

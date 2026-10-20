@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 2
+  cycle_counter: 3
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -138,12 +138,28 @@ tasks:
     phase: 1
     priority: P0
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-001
     acceptance:
       - flutter test pasa al 100%
       - ningún test fue borrado ni marcado skip
+    started_cycle: 3
+    started_at: 2026-10-20T23:49:17.283Z
+    done_at: 2026-10-20T23:56:50.320Z
+    evidence: "Verificacion no-op: 0 tests rotos, 0 cambios de codigo. bash scripts/check.sh --fast -> dart
+      format: 'Formatted 80 files (0 changed)'; flutter analyze: 'No issues found!'; flutter test: '00:12
+      +108: All tests passed!'; '(--fast) saltando tests de reglas de Firestore'; '(check) Todo en verde.'
+      (exit 0). dart format --output=none --set-exit-if-changed lib test -> 'Formatted 80 files (0 changed)',
+      exit 0 (gate de CI de formato, unico no demostrado antes). Criterio 2: git grep -cE
+      '^\\s*(test|testWidgets)\\(' main -> 108; HEAD -> 108. git diff main..HEAD -- test/: 14 lineas
+      test/testWidgets eliminadas, 14 anadidas (solo reflow); 7 expect eliminadas, 7 anadidas. git diff
+      --diff-filter=D main..HEAD -- test/ vacio (0 archivos borrados). git grep
+      'skip:|markTestSkipped|@Skip|skipGroup' -- test/ sin coincidencias (exit 1). HEAD verificado:
+      886fb4e59888fa3bc4d3af39b03d1e37a64bbbb5 (auto/T-003-tests-verdes, sin commits propios; incluye T-002).
+      Reviewer: APROBAR CON CAMBIOS, 0 bloqueantes; las 2 comprobaciones por caso sugeridas fueron ejecutadas
+      y pasan."
+    commit: 886fb4e
   - id: T-004
     title: UI de reportar contenido y bloquear usuario (App Store 1.2)
     type: feature
