@@ -269,6 +269,30 @@ flutter pub run flutter_launcher_icons   # Regenerar íconos de app
 
 ---
 
+## 🤖 Desarrollo con IA (OpenCode) y calidad
+
+El repositorio está preparado para que un agente de IA trabaje como primer desarrollador con puertas de calidad reales:
+
+| Pieza | Dónde |
+|---|---|
+| Contrato de trabajo | [`AGENTS.md`](AGENTS.md) |
+| Config OpenCode V2 (permisos, agentes, MCP) | [`opencode.jsonc`](opencode.jsonc) |
+| Agentes `planner`, `reviewer`, `rules-auditor`, `release-manager` | `.opencode/agents/` |
+| Slash commands `/feature`, `/check`, `/review`, `/migrate-feature`, `/release` | `.opencode/commands/` |
+| Skills (reglas, feature-scaffold, i18n, observabilidad, release…) | `.opencode/skills/` |
+| Puerta de calidad local (= CI) | `scripts/check.sh` |
+| Tests de reglas de Firestore | `firestore-tests/` · `scripts/rules_test.sh` |
+| CI/CD | `.github/workflows/` |
+| Plan y decisiones | [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/adr/`](docs/adr/) · [`docs/AI_WORKFLOW.md`](docs/AI_WORKFLOW.md) |
+
+```bash
+scripts/bootstrap.sh     # entorno + hook pre-commit
+scripts/check.sh         # format · analyze · test · reglas
+opencode                 # y luego: /feature "descripción del issue"
+```
+
+---
+
 ## 🤝 Contribuciones
 
 ¡Las contribuciones son bienvenidas! Para contribuir:
