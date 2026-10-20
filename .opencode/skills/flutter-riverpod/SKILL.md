@@ -1,6 +1,6 @@
 ---
 name: flutter-riverpod
-description: Patrones de Riverpod 3 en este proyecto: tipos de provider, overrides en tests, errores comunes.
+description: "Patrones de Riverpod 3 en este proyecto: tipos de provider, overrides en tests, errores comunes."
 ---
 
 # Skill: Flutter + Riverpod Development
