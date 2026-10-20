@@ -14,7 +14,7 @@
 ## Secretos y dónde van
 | Secreto | Dónde | Nunca |
 |---|---|---|
-| `google-services.json`, `GoogleService-Info.plist` | local, `flutterfire configure` | git |
+| `google-services.json`, `GoogleService-Info.plist` | local, `flutterfire configure`; en CI, secret `GOOGLE_SERVICES_JSON_BASE64` | git |
 | Keystore Android | `android/app/upload-keystore.jks` local + secret `ANDROID_KEYSTORE_BASE64` en GitHub | git |
 | Cuenta de servicio Firebase | secret `FIREBASE_SERVICE_ACCOUNT` en GitHub | git, `.env` |
 | `GOOGLE_STITCH_API_KEY` | `.env` / entorno | git |

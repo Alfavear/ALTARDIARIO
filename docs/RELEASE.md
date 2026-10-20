@@ -14,4 +14,5 @@
 ## Secrets de GitHub necesarios
 - `FIREBASE_SERVICE_ACCOUNT`: JSON de cuenta de servicio (Firebase Admin).
 - `ANDROID_KEYSTORE_BASE64`: `base64 -w0 upload-keystore.jks`.
+- `GOOGLE_SERVICES_JSON_BASE64`: `base64 -w0 android/app/google-services.json` (lo usa la CI; el archivo sigue sin versionarse).
 - `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
