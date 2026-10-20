@@ -57,9 +57,18 @@ class FirestoreService {
 
   // ── Reflexiones ──────────────────────────────────────────────────────────
 
+  /// Tamaño de página del feed. Sin límite, cada apertura del feed leía TODA
+  /// la colección (coste y latencia lineales con el número de reflexiones).
+  /// TODO(roadmap-fase-1): paginación real con startAfterDocument.
+  static const int feedPageSize = 100;
+
   Stream<List<Reflexion>> reflexionesStream() {
     if (!_available) return Stream.value([]);
-    return _reflexiones.orderBy('fecha', descending: true).snapshots().map(
+    return _reflexiones
+        .orderBy('fecha', descending: true)
+        .limit(feedPageSize)
+        .snapshots()
+        .map(
         (s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
@@ -662,11 +671,9 @@ class FirestoreService {
     Map<String, String>? participantNames,
   }) async {
     if (!_available) return;
-    await _chats.doc(chatId).collection('messages').add({
-      'senderId': senderId,
-      'text': text,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    // IMPORTANTE: el documento del chat debe existir ANTES del mensaje.
+    // Las reglas de seguridad verifican `participantIds` del chat padre
+    // para autorizar la escritura del mensaje (firestore.rules → /chats).
     await _chats.doc(chatId).set({
       'lastUpdate': FieldValue.serverTimestamp(),
       'lastMessage': text,
@@ -674,6 +681,11 @@ class FirestoreService {
       if (participantIds != null) 'participantIds': participantIds,
       if (participantNames != null) 'participantNames': participantNames,
     }, SetOptions(merge: true));
+    await _chats.doc(chatId).collection('messages').add({
+      'senderId': senderId,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
   }
 
   Stream<List<Map<String, dynamic>>> getUserChats(String userId) {
