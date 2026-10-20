@@ -1,0 +1,22 @@
+{
+  "name": "altardiario-functions",
+  "private": true,
+  "description": "Cloud Functions de AltarDiario: gamificación en servidor, moderación, notificaciones",
+  "main": "lib/index.js",
+  "engines": { "node": "20" },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "serve": "npm run build && firebase emulators:start --only functions,firestore",
+    "deploy": "firebase deploy --only functions",
+    "test": "npm run build && node --test lib/**/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.6.0"
+  }
+}

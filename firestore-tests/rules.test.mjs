@@ -209,6 +209,16 @@ test('chat: solo un participante puede crearlo y enviar mensajes firmados', asyn
   await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { participantIds: [ALICE, EVE] }));
 });
 
+// ───────────────────────── Reportes ─────────────────────────
+
+test('reportes: se crean con el uid propio y nadie los lee desde el cliente', async () => {
+  const r = { reporterId: BOB, targetType: 'reflexion', targetId: 'r1', reason: 'spam', createdAt: new Date() };
+  await assertSucceeds(setDoc(doc(as(BOB), 'reports', 'rep1'), r));
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep2'), { ...r, reporterId: ALICE }));
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep3'), { ...r, targetType: 'otro' }));
+  await assertFails(getDoc(doc(as(BOB), 'reports', 'rep1')));
+});
+
 // ───────────────────────── Config / catch-all ─────────────────────────
 
 test('config es solo lectura; colecciones desconocidas están cerradas', async () => {

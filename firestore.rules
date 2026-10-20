@@ -206,6 +206,20 @@ service cloud.firestore {
       allow read: if isOwner(resource.data);
     }
 
+    // ───────────── Reportes de contenido (moderación) ─────────────
+    // Cualquier usuario puede reportar; nadie lee reportes desde el cliente.
+    // Los procesa functions/src/moderation.ts.
+    match /reports/{reportId} {
+      allow read: if false;
+      allow create: if signedIn()
+        && request.resource.data.reporterId == uid()
+        && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario']
+        && request.resource.data.targetId is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() <= 500;
+      allow update, delete: if false;
+    }
+
     // ───────────── Configuración global (solo lectura) ─────────────
     match /config/{configId} {
       allow read: if true;
