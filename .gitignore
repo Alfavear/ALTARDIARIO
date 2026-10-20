@@ -19,6 +19,7 @@ GoogleService-Info.plist
 # Android
 android/local.properties
 android/.gradle/
+android/.kotlin/
 android/key.properties
 *.jks
 *.keystore
