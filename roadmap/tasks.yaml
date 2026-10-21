@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 3
+  cycle_counter: 4
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -302,7 +302,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - sendMessage solo escribe participantIds/participantNames al crear el chat; en envíos posteriores
@@ -318,6 +318,24 @@ tasks:
       - test/services/firestore_service_test.dart
     source: T-002 review
     created_at: 2026-10-20T23:43:23.629Z
+    started_cycle: 4
+    started_at: 2026-10-21T00:00:57.717Z
+    done_at: 2026-10-21T00:43:38.636Z
+    evidence: |-
+      scripts/check.sh --fast (commit 2ea3366):
+      Formatted 80 files (0 changed)
+      No issues found!
+      00:11 +122: All tests passed!
+      (--fast) saltando tests de reglas de Firestore
+      ✔ Todo en verde.
+
+      Tests nuevos (14): 7 de FirestoreService.sendMessage y 7 de ChatScreen.
+      - sendMessage con chat existente y participantIds pasados conserva participantIds/participantNames.
+      - sendMessage sin participantes actualiza solo metadatos y añade el mensaje.
+      - crear chat escribe participantes; participantIds con 1 miembro lanza StateError.
+      - UI: éxito limpia el campo; fallo conserva el texto y muestra REINTENTAR; el reintento reenvía;
+        guard _isSending evita doble envío; no borra lo que el usuario escribió mientras se enviaba.
+    commit: 2ea3366
   - id: T-015
     title: "Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados"
     type: security

@@ -85,3 +85,26 @@ Verificacion no-op de T-003: la premisa era obsoleta y NO habia ningun test roto
 **Siguiente:** Siguiente elegible: T-014 (P1, S, bug) - sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla. Despues T-015 (P1, S, rules allowlist en /chats). Pendiente humano: (1) mergear auto/T-002-rules-tests-emulador para que firestore.rules llegue a produccion; (2) decidir si se fija la version de Flutter en los workflows; (3) decidir si integration_test/app_test.dart se ejecuta en CI o se documenta como manual; (4) valorar reescribir T-003-like tasks como auditorias.
 
 ---
+## Ciclo 4 — 2026-10-21T00:43:38.664Z
+- **Tarea:** T-014 · Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla
+- **Resultado:** done
+- **Rama/commit:** auto/T-014-chat-sendmessage @ 2ea3366
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR (revisión manual del diff tras timeout del ciclo; 0 bloqueantes)
+
+sendMessage ahora distingue creación de chat (participantIds + participantNames, exactamente 2) de envío a chat existente (solo lastUpdate/lastMessage/lastSenderId). La UI dejó de pasar participantes, hace await con try/catch, conserva el texto si falla y ofrece REINTENTAR; el guard _isSending evita dobles envíos. Se añadió un constructor opcional FirestoreService({firestore}) para inyectar FakeFirebaseFirestore en tests. check.sh --fast: 122/122 tests, analyze limpio.
+
+**Problemas:**
+- El ciclo 4 se interrumpió por el timeout de 40 min del runner durante la fase de revisión; el trabajo quedó sin commitear. Se verificó y cerró manualmente vía MCP.
+- Los subagentes planner/implementer/tester/reviewer no tienen shell; el orquestador ejecutó check.sh y las verificaciones.
+- scripts/loop.sh sigue terminando con exit 1 por SIGPIPE del `state | head` final; no afecta al ciclo pero confunde.
+
+**Decisiones:**
+- No se reescriben participantIds/participantNames en chats existentes: se ignoran aunque el llamador los pase.
+- El camino caliente de la UI no hace get() extra: llama sendMessage sin participantes y usa update().
+- Se inyecta FirebaseFirestore opcional para tests con fake_cloud_firestore.
+- No se tocó firestore.rules en este ciclo; T-015 queda para la allowlist de campos en /chats.
+
+**Siguiente:** Siguiente elegible: T-015 (allowlist de campos en /chats y create sin duplicados) o T-017; revisar/mergear la pila auto/*. Pendiente humano: mergear T-002 a main para desplegar firestore.rules.
+
+---
