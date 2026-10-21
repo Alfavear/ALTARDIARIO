@@ -5,6 +5,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 ## [Unreleased]
 
 ### Corregido
+- Los reportes de perfiles ya no se descartan silenciosamente: al alcanzar tres reporteros distintos, el perfil queda marcado para revisión humana sin ocultarse automáticamente.
 - El feed deja de mostrar reflexiones, debates y peticiones marcados como ocultos por moderación; los documentos antiguos sin el campo `hidden` siguen visibles.
 
 ### Seguridad
