@@ -36,7 +36,6 @@ void main() {
     );
   });
 
-
   group('FirestoreService moderación de contenido oculto', () {
     late FakeFirebaseFirestore fake;
     late FirestoreService service;
