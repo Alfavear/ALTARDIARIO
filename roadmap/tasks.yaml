@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 4
+  cycle_counter: 5
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -342,7 +342,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - el update de /chats exige
@@ -355,6 +355,13 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: T-002 review
     created_at: 2026-10-20T23:43:23.644Z
+    started_cycle: 5
+    started_at: 2026-10-21T02:31:36.243Z
+    done_at: 2026-10-21T02:36:45.756Z
+    evidence: "scripts/check.sh (completo, con emulador): Formatted 82 files (0 changed) | No issues found!
+      (10.8s) | flutter test 123/123 All tests passed | suite de reglas de Firestore: tests 30, pass 30, fail
+      0 | Todo en verde, exit 0. Hook pre-commit (check.sh --fast): 123/123 verde. Commit 1469b62."
+    commit: 1469b62
   - id: T-016
     title: Partir firestore-tests/rules.test.mjs (>400 lineas) por coleccion y lanzar node --test
     type: test
@@ -392,3 +399,81 @@ tasks:
       - test/services/firestore_service_test.dart
     source: T-002 planner
     created_at: 2026-10-20T23:43:23.669Z
+  - id: T-018
+    title: "Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos"
+    type: security
+    phase: 1
+    priority: P0
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - script o Cloud Function idempotente copia email/fcmToken de usuarios/{uid} a
+        usuarios/{uid}/private/account y los borra del documento publico
+      - la migracion corre por lotes, con dry-run y verificacion final de que no quedan campos privados en
+        documentos publicos
+      - las reglas de /usuarios siguen rechazando email/fcmToken en el documento publico sin romper a los
+        clientes antiguos en produccion (ventana de transicion documentada)
+      - tests de reglas y de la migracion (idempotencia y documentos legacy) y suite completa en verde
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+      - lib/data/services/firestore_service.dart
+    source: "audit docs/AUDIT_REMEDIATION_PLAN.md seccion 2 (bloquea el PR #21)"
+    created_at: 2026-10-21T02:36:45.757Z
+  - id: T-019
+    title: Bloqueo de usuarios y ocultacion de contenido y contactos bloqueados
+    type: feature
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on:
+      - T-004
+    acceptance:
+      - acciones de reportar y bloquear disponibles desde perfil publico, feed, peticiones y debates
+      - las consultas y pantallas ocultan contenido y contactos de usuarios bloqueados
+      - reglas de Firestore para el documento de bloqueo con test dedicado
+      - tests de widget del flujo de bloqueo en la pantalla de perfil
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+      - lib/presentation/screens/public_profile_screen.dart
+    source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 3
+    created_at: 2026-10-21T02:36:45.757Z
+  - id: T-020
+    title: Paginacion por cursor en comentarios, debates y chats
+    type: feature
+    phase: 3
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - comentarios, respuestas de debate y mensajes de chat se paginan con cursor (startAfterDocument) e
+        infinite scroll
+      - la UI indica que hay mas contenido y no repite documentos al hacer scroll
+      - tests de widget y de servicio del cursor de paginacion
+    files:
+      - lib/data/services/firestore_service.dart
+    source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 5 (extiende T-007)
+    created_at: 2026-10-21T02:36:45.757Z
+  - id: T-021
+    title: Flujo de eliminacion de cuenta (Auth, perfil, datos privados y contenido)
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - eliminacion de cuenta accesible desde Perfil, con confirmacion explicita y aviso de que es irreversible
+      - una Cloud Function administrativa borra el usuario de Auth, el perfil, los datos privados y el
+        contenido asociado
+      - documentacion del alcance y del efecto en datos de terceros (reflexiones, debates, chats)
+      - test de la funcion y test de widget del flujo de confirmacion
+    files:
+      - functions/src/index.ts
+      - lib/presentation/screens/perfil_screen.dart
+    source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 4 (cumplimiento de tiendas)
+    created_at: 2026-10-21T02:36:45.757Z
