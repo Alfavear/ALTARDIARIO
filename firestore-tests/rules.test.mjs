@@ -249,6 +249,37 @@ test('seguir: set merge sobre el propio siguiendo y el seguidores del otro', asy
   await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE), { seguidores: arrayUnion(EVE) }, { merge: true }));
 });
 
+test('documento privado: el dueño puede borrarlo; otro usuario no', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice' }));
+  const cuenta = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
+  await assertSucceeds(setDoc(cuenta, { email: 'alice@ejemplo.com' }));
+
+  // El dueño puede borrar su documento privado (las reglas lo permiten).
+  await assertSucceeds(deleteDoc(cuenta));
+
+  // Otro usuario no puede escribir en el privado ajeno.
+  await admin((db) => setDoc(doc(db, 'usuarios', BOB), { nombre: 'Bob' }));
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account'), { email: 'robado' }));
+});
+
+test('borrar el perfil público borra también el documento privado (batch)', async () => {
+  await admin((db) => {
+    setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice', email: 'alice@ejemplo.com' });
+    setDoc(doc(db, 'usuarios', ALICE, 'private', 'account'), { email: 'alice@ejemplo.com' });
+  });
+
+  // Borrado del perfil público + privado (simula borrarCuenta del cliente).
+  // Una sola instancia de Firestore para el batch y las referencias.
+  const aliceDb = as(ALICE);
+  const batch = writeBatch(aliceDb);
+  batch.delete(doc(aliceDb, 'usuarios', ALICE, 'private', 'account'));
+  batch.delete(doc(aliceDb, 'usuarios', ALICE));
+  // Las reglas permiten al dueño borrar su perfil y su documento privado en batch.
+  await assertSucceeds(batch.commit());
+});
+
+// ───────────────────────── Notas y subrayados ─────────────────────────
+
 test('notas y subrayados bíblicos son privados', async () => {
   // Note.toMap() (lib/data/models/note.dart): payload real de la app.
   const nota = {

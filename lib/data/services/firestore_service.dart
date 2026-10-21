@@ -397,6 +397,17 @@ class FirestoreService {
         .set(usuario.toMap(), SetOptions(merge: true));
   }
 
+  /// Borra el perfil público y su documento privado (`private/account`) en
+  /// una sola operación. Si el documento privado no existe, el batch sigue
+  /// adelante y borra el público.
+  Future<void> borrarCuenta(String uid) async {
+    if (!_available) return;
+    final batch = _firestore!.batch();
+    batch.delete(_usuarios.doc(uid).collection('private').doc('account'));
+    batch.delete(_usuarios.doc(uid));
+    await batch.commit();
+  }
+
   Future<void> toggleFollow(
       String currentUserId, String targetUserId, bool isFollowing) async {
     if (!_available) return;

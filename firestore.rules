@@ -198,6 +198,30 @@ service cloud.firestore {
       );
       allow delete: if signedIn() && uid() == userId;
 
+      match /private/{privateId} {
+        // Solo el dueño lee/escribe/borra su documento privado. NUNCA añadir
+        // `match /{path=**}/private/{doc}`: abriría un collection group
+        // que expone los datos privados de todos los usuarios.
+        allow read: if signedIn() && uid() == userId && privateId == 'account';
+        allow create: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (request.resource.data.get('email', '') is string
+              && request.resource.data.get('email', '').size() <= 320)
+          && (request.resource.data.get('fcmToken', '') is string
+              && request.resource.data.get('fcmToken', '').size() <= 4096);
+        allow update: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && changedKeys().hasOnly(['email', 'fcmToken'])
+          && (!changedKeys().hasAny(['email'])
+              || (request.resource.data.get('email', '') is string
+                  && request.resource.data.get('email', '').size() <= 320))
+          && (!changedKeys().hasAny(['fcmToken'])
+              || (request.resource.data.get('fcmToken', '') is string
+                  && request.resource.data.get('fcmToken', '').size() <= 4096));
+        allow delete: if signedIn() && uid() == userId && privateId == 'account';
+      }
+
       match /bible_highlights/{highlightId} {
         allow read, write: if signedIn() && uid() == userId;
       }
