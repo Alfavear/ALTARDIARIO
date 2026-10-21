@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:altar_diario/presentation/screens/splash_screen.dart';
 import 'package:altar_diario/data/services/storage_service.dart';
 import 'package:altar_diario/presentation/providers/app_providers.dart';
+import 'package:altar_diario/presentation/screens/splash_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Widget createSplashScreen(StorageService storageService) {
   return ProviderScope(
@@ -40,7 +40,8 @@ void main() {
       await pumpAndClearTimer(tester);
     });
 
-    testWidgets('tiene gradiente azul en el fondo', (WidgetTester tester) async {
+    testWidgets('tiene gradiente azul en el fondo',
+        (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       final storageService = StorageService(prefs);
 

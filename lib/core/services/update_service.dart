@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
 
@@ -22,12 +23,15 @@ class UpdateService {
       final latestVersion = data['latestVersion'] as String?;
       final updateUrl = data['updateUrl'] as String?;
 
-      if (minVersion == null || latestVersion == null || updateUrl == null) return;
+      if (minVersion == null || latestVersion == null || updateUrl == null) {
+        return;
+      }
 
-      final current = AppConstants.currentVersion;
-      
+      const current = AppConstants.currentVersion;
+
       final isRequired = _isVersionLower(current, minVersion);
-      final isRecommended = !isRequired && _isVersionLower(current, latestVersion);
+      final isRecommended =
+          !isRequired && _isVersionLower(current, latestVersion);
 
       if (isRequired || isRecommended) {
         if (!context.mounted) return;
@@ -41,7 +45,7 @@ class UpdateService {
   static bool _isVersionLower(String current, String target) {
     final v1 = current.split('.').map(int.parse).toList();
     final v2 = target.split('.').map(int.parse).toList();
-    
+
     for (int i = 0; i < 3; i++) {
       final p1 = i < v1.length ? v1[i] : 0;
       final p2 = i < v2.length ? v2[i] : 0;
@@ -51,37 +55,42 @@ class UpdateService {
     return false; // Son iguales
   }
 
-  static void _showUpdateDialog(BuildContext context, bool isRequired, String url) {
+  static void _showUpdateDialog(
+      BuildContext context, bool isRequired, String url) {
     showDialog(
       context: context,
       barrierDismissible: !isRequired,
       builder: (ctx) => PopScope(
         canPop: !isRequired,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
             children: [
               Icon(Icons.system_update_alt, color: AppTheme.primaryBlue),
-              const SizedBox(width: 8),
-              const Text('Nueva versión', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(width: 8),
+              Text('Nueva versión',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           content: Text(
-            isRequired 
-              ? 'Es necesario actualizar la aplicación para continuar usándola.'
-              : 'Hay una nueva versión disponible con mejoras y correcciones. ¿Deseas actualizar ahora?',
+            isRequired
+                ? 'Es necesario actualizar la aplicación para continuar usándola.'
+                : 'Hay una nueva versión disponible con mejoras y correcciones. ¿Deseas actualizar ahora?',
             style: const TextStyle(fontSize: 14),
           ),
           actions: [
             if (!isRequired)
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Más tarde', style: TextStyle(color: AppTheme.textSecondary)),
+                child: const Text('Más tarde',
+                    style: TextStyle(color: AppTheme.textSecondary)),
               ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryBlue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () async {
                 final uri = Uri.parse(url);
@@ -89,7 +98,8 @@ class UpdateService {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }
               },
-              child: const Text('Actualizar', style: TextStyle(color: Colors.white)),
+              child: const Text('Actualizar',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

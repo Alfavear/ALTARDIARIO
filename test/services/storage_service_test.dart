@@ -1,6 +1,6 @@
+import 'package:altar_diario/data/services/storage_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:altar_diario/data/services/storage_service.dart';
 
 void main() {
   group('StorageService', () {
@@ -104,7 +104,10 @@ void main() {
       });
 
       test('getProgreso calcula correctamente', () {
-        final completadas = List.generate(73, (i) => '2026-${(i ~/ 28 + 1).toString().padLeft(2, '0')}-${(i % 28 + 1).toString().padLeft(2, '0')}');
+        final completadas = List.generate(
+            73,
+            (i) =>
+                '2026-${(i ~/ 28 + 1).toString().padLeft(2, '0')}-${(i % 28 + 1).toString().padLeft(2, '0')}');
         expect(storage.getProgreso(completadas), closeTo(73 / 365, 0.001));
       });
 
@@ -149,8 +152,7 @@ void main() {
 
       test('setPendingSyncDates guarda y recupera fechas', () async {
         await storage.setPendingSyncDates(['2026-06-01', '2026-06-02']);
-        expect(storage.getPendingSyncDates(),
-            ['2026-06-01', '2026-06-02']);
+        expect(storage.getPendingSyncDates(), ['2026-06-01', '2026-06-02']);
       });
 
       test('clearPendingSync vacía la cola', () async {

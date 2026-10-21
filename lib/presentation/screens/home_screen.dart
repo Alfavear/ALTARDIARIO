@@ -1,23 +1,26 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../core/services/update_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/lectura_dia.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
-import '../../core/services/update_service.dart';
 import '../providers/app_providers.dart';
-import 'bible_reader_screen.dart';
-import 'notes_screen.dart';
-import 'public_profile_screen.dart';
 import 'amigos_rachas_screen.dart';
+import 'bible_reader_screen.dart';
 import 'foro_screen.dart';
-import 'notificaciones_screen.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'leaderboard_screen.dart';
+import 'notes_screen.dart';
+import 'notificaciones_screen.dart';
+import 'public_profile_screen.dart';
+
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int tabIndex)? onNavigateTo;
 
@@ -94,499 +97,503 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (!didPop) _showFocusModeWarning();
       },
       child: Scaffold(
-      backgroundColor: AppTheme.scaffoldBg,
-      appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+        backgroundColor: AppTheme.scaffoldBg,
+        appBar: AppBar(
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
             ),
           ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Row(
-          children: [
-            const Icon(Icons.local_fire_department,
-                color: Colors.white, size: 22),
-            const SizedBox(width: 8),
-            Text('AltarDiario',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20)),
-          ],
-        ),
-        actions: [
-          if (focusMode)
-            const Padding(
-              padding: EdgeInsets.only(right: 4),
-              child: Icon(Icons.lock, color: Colors.white, size: 20),
-            ),
-          Consumer(
-            builder: (context, ref, child) {
-              final unreadCount = ref.watch(unreadNotificationsCountProvider);
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificacionesScreen()));
-                    },
-                  ),
-                  if (unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          unreadCount > 9 ? '9+' : '$unreadCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Row(
+            children: [
+              Icon(Icons.local_fire_department, color: Colors.white, size: 22),
+              SizedBox(width: 8),
+              Text('AltarDiario',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20)),
+            ],
+          ),
+          actions: [
+            if (focusMode)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(Icons.lock, color: Colors.white, size: 20),
+              ),
+            Consumer(
+              builder: (context, ref, child) {
+                final unreadCount = ref.watch(unreadNotificationsCountProvider);
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined,
+                          color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const NotificacionesScreen()));
+                      },
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            unreadCount > 9 ? '9+' : '$unreadCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(userProfileProvider);
-          ref.invalidate(unreadNotificationsCountProvider);
-          setState(() {});
-          await Future.delayed(const Duration(milliseconds: 500));
-        },
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        children: [
-          const Text('Mi Lectura Hoy',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary)),
-          const SizedBox(height: 4),
-          const Text('Continúa tu camino de fe y reflexión.',
-              style: TextStyle(
-                  fontSize: 14, color: AppTheme.textSecondary)),
-          if (kIsWeb) ...[
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: () async {
-                final url = Uri.parse('https://github.com/Alfavear/ALTARDIARIO/releases/download/v1.0.2/altardiario.apk');
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url);
-                }
-              },
-              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-                  ),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
                   ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.android, color: Colors.white, size: 28),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Descargar App Nativa',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16)),
-                          Text('Mejor rendimiento y acceso offline',
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.download, color: Colors.white),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          _buildReadingCard(isCompleted),
-          const SizedBox(height: 16),
-          _buildStreakCard(racha),
-          const SizedBox(height: 24),
-          _buildUpcomingReadings(),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.menu_book_rounded,
-                  label: 'Devocional',
-                  color: AppTheme.primaryBlue,
-                  onTap: () => _handleNavigate(1, isCompleted),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.book_rounded,
-                  label: 'Biblia',
-                  color: AppTheme.primaryBlue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BibleReaderScreen(
-                          pasajes: 'Salmo 1',
-                          fechaClave:
-                              DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                          readOnly: true,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          if (!isGuest) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionCard(
-                    icon: Icons.forum_rounded,
-                    label: 'Comunidad',
-                    color: AppTheme.streakOrange,
-                    onTap: () => _handleNavigate(2, isCompleted),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ActionCard(
-                    icon: Icons.auto_awesome_rounded,
-                    label: 'Oración',
-                    color: AppTheme.completedGreen,
-                    onTap: () => _handleNavigate(3, isCompleted),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionCard(
-                    icon: Icons.forum,
-                    label: 'Foro Bíblico',
-                    color: AppTheme.primaryBlue,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const ForoScreen()),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ActionCard(
-                    icon: Icons.emoji_events_rounded,
-                    label: 'Leaderboard',
-                    color: AppTheme.streakOrange,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const LeaderboardScreen()),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.local_fire_department,
-                  label: 'Racha',
-                  value: '$racha días',
-                  color: AppTheme.streakOrange,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.check_circle,
-                  label: 'Completadas',
-                  value: '$total/365',
-                  color: isCompleted
-                      ? AppTheme.completedGreen
-                      : AppTheme.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          if (!isGuest) ...[
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AmigosRachasScreen()),
                 );
               },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: AppTheme.softShadow,
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(userProfileProvider);
+            ref.invalidate(unreadNotificationsCountProvider);
+            setState(() {});
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            children: [
+              const Text('Mi Lectura Hoy',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary)),
+              const SizedBox(height: 4),
+              const Text('Continúa tu camino de fe y reflexión.',
+                  style:
+                      TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+              if (kIsWeb) ...[
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final url = Uri.parse(
+                        'https://github.com/Alfavear/ALTARDIARIO/releases/download/v1.0.2/altardiario.apk');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusMedium),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.android, color: Colors.white, size: 28),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Descargar App Nativa',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                              Text('Mejor rendimiento y acceso offline',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.download, color: Colors.white),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Row(
+              ],
+              const SizedBox(height: 16),
+              _buildReadingCard(isCompleted),
+              const SizedBox(height: 16),
+              _buildStreakCard(racha),
+              const SizedBox(height: 24),
+              _buildUpcomingReadings(),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionCard(
+                      icon: Icons.menu_book_rounded,
+                      label: 'Devocional',
+                      color: AppTheme.primaryBlue,
+                      onTap: () => _handleNavigate(1, isCompleted),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionCard(
+                      icon: Icons.book_rounded,
+                      label: 'Biblia',
+                      color: AppTheme.primaryBlue,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BibleReaderScreen(
+                              pasajes: 'Salmo 1',
+                              fechaClave: DateFormat('yyyy-MM-dd')
+                                  .format(DateTime.now()),
+                              readOnly: true,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              if (!isGuest) ...[
+                const SizedBox(height: 12),
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.streakOrange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.emoji_events_rounded,
-                          color: AppTheme.streakOrange),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Rachas entre Amigos',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600)),
-                          Text('Compite y motívate con tu comunidad',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppTheme.textSecondary)),
-                        ],
+                    Expanded(
+                      child: _ActionCard(
+                        icon: Icons.forum_rounded,
+                        label: 'Comunidad',
+                        color: AppTheme.streakOrange,
+                        onTap: () => _handleNavigate(2, isCompleted),
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        color: AppTheme.textSecondary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        icon: Icons.auto_awesome_rounded,
+                        label: 'Oración',
+                        color: AppTheme.completedGreen,
+                        onTap: () => _handleNavigate(3, isCompleted),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Consumer(builder: (_, ref2, __) {
-              final sugerenciasAsync = ref2.watch(sugerenciasAmistadProvider);
-              return sugerenciasAsync.when(
-                data: (usuarios) {
-                  if (usuarios.isEmpty) return const SizedBox.shrink();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Personas que quizás conozcas',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 100,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: usuarios.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (_, i) {
-                            final u = usuarios[i];
-                            final displayName = u.displayName;
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PublicProfileScreen(
-                                        userId: u.id),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: 100,
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                      AppTheme.radiusMedium),
-                                  boxShadow: AppTheme.softShadow,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: AppTheme.primaryBlue
-                                          .withValues(alpha: 0.12),
-                                      backgroundImage: u.fotoUrl.isNotEmpty
-                                          ? NetworkImage(u.fotoUrl)
-                                          : null,
-                                      child: Text(
-                                          displayName[0].toUpperCase(),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color:
-                                                  AppTheme.primaryBlue)),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(displayName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                            ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionCard(
+                        icon: Icons.forum,
+                        label: 'Foro Bíblico',
+                        color: AppTheme.primaryBlue,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ForoScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        icon: Icons.emoji_events_rounded,
+                        label: 'Leaderboard',
+                        color: AppTheme.streakOrange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const LeaderboardScreen()),
                           );
                         },
                       ),
                     ),
                   ],
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            );
-          }),
-          ],
-          const SizedBox(height: 16),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotesScreen()),
-              );
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: AppTheme.softShadow,
-              ),
-              child: Row(
+                ),
+              ],
+              const SizedBox(height: 24),
+              Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                  Expanded(
+                    child: _StatTile(
+                      icon: Icons.local_fire_department,
+                      label: 'Racha',
+                      value: '$racha días',
+                      color: AppTheme.streakOrange,
                     ),
-                    child: const Icon(Icons.note_alt_rounded,
-                        color: AppTheme.primaryBlue),
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatTile(
+                      icon: Icons.check_circle,
+                      label: 'Completadas',
+                      value: '$total/365',
+                      color: isCompleted
+                          ? AppTheme.completedGreen
+                          : AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              if (!isGuest) ...[
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const AmigosRachasScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: AppTheme.softShadow,
+                    ),
+                    child: Row(
                       children: [
-                        Text('Mis Notas',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
-                        Text('Apuntes, prédicas e ideas',
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary)),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.streakOrange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.emoji_events_rounded,
+                              color: AppTheme.streakOrange),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Rachas entre Amigos',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600)),
+                              Text('Compite y motívate con tu comunidad',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right,
+                            color: AppTheme.textSecondary),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right,
-                      color: AppTheme.textSecondary),
-                ],
-              ),
-            ),
-          ),
-          if (!isGuest) ...[
-            const SizedBox(height: 24),
-            const Text('Últimas reflexiones',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            reflexionesAsync.when(
-              data: (reflexiones) {
-                final preview = reflexiones.take(3).toList();
-                if (preview.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text(
-                      'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textSecondary),
-                    ),
+                ),
+                const SizedBox(height: 16),
+                Consumer(builder: (_, ref2, __) {
+                  final sugerenciasAsync =
+                      ref2.watch(sugerenciasAmistadProvider);
+                  return sugerenciasAsync.when(
+                    data: (usuarios) {
+                      if (usuarios.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Personas que quizás conozcas',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: usuarios.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (_, i) {
+                                final u = usuarios[i];
+                                final displayName = u.displayName;
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            PublicProfileScreen(userId: u.id),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 100,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(
+                                          AppTheme.radiusMedium),
+                                      boxShadow: AppTheme.softShadow,
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: AppTheme.primaryBlue
+                                              .withValues(alpha: 0.12),
+                                          backgroundImage: u.fotoUrl.isNotEmpty
+                                              ? NetworkImage(u.fotoUrl)
+                                              : null,
+                                          child: Text(
+                                              displayName[0].toUpperCase(),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppTheme.primaryBlue)),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(displayName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
                   );
-                }
-                return Column(
-                  children: [
-                    for (final r in preview)
-                      _ReflexionPreviewCard(reflexion: r),
-                    if (reflexiones.length > 3)
-                      TextButton(
-                        onPressed: () =>
-                            _handleNavigate(2, isCompleted),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
+                }),
+              ],
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotesScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: AppTheme.softShadow,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.note_alt_rounded,
+                            color: AppTheme.primaryBlue),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Ver todas en Altar'),
-                            SizedBox(width: 4),
-                            Icon(Icons.arrow_forward, size: 16),
+                            Text('Mis Notas',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                            Text('Apuntes, prédicas e ideas',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textSecondary)),
                           ],
                         ),
                       ),
-                  ],
-                );
-              },
-              loading: () => const SizedBox(
-                height: 80,
-                child: Center(child: CircularProgressIndicator()),
+                      const Icon(Icons.chevron_right,
+                          color: AppTheme.textSecondary),
+                    ],
+                  ),
+                ),
               ),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ],
-        ],
-      ),
-      ), // Closes ListView
+              if (!isGuest) ...[
+                const SizedBox(height: 24),
+                const Text('Últimas reflexiones',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                reflexionesAsync.when(
+                  data: (reflexiones) {
+                    final preview = reflexiones.take(3).toList();
+                    if (preview.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'Aún no hay reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: [
+                        for (final r in preview)
+                          _ReflexionPreviewCard(reflexion: r),
+                        if (reflexiones.length > 3)
+                          TextButton(
+                            onPressed: () => _handleNavigate(2, isCompleted),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Ver todas en Altar'),
+                                SizedBox(width: 4),
+                                Icon(Icons.arrow_forward, size: 16),
+                              ],
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    height: 80,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ],
+            ],
+          ),
+        ), // Closes ListView
       ), // Closes RefreshIndicator
     );
   }
@@ -654,8 +661,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryBlue,
                       borderRadius: BorderRadius.circular(20),
@@ -690,8 +697,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2))),
+                            child: CircularProgressIndicator(strokeWidth: 2))),
                   )
                 else if (_verseText != null)
                   Column(
@@ -725,8 +731,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     const Text('Progreso del capítulo',
                         style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary)),
+                            fontSize: 12, color: AppTheme.textSecondary)),
                     const Spacer(),
                     Text(
                       isCompleted ? '100%' : '0%',
@@ -772,13 +777,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             size: 18, color: Colors.white),
                         label: const Text('Leer pasaje',
                             style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13)),
+                                fontWeight: FontWeight.w600, fontSize: 13)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -789,7 +792,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(width: 10),
                     GestureDetector(
                       onTap: () async {
-                        HapticFeedback.mediumImpact();
+                        unawaited(HapticFeedback.mediumImpact());
                         final storage = ref.read(storageProvider);
                         final now = DateTime.now();
                         final dateKey = DateFormat('yyyy-MM-dd').format(now);
@@ -870,8 +873,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     fontWeight: FontWeight.w800),
               ),
               const Text('¡Vas excelente! No rompas el hábito.',
-                  style: TextStyle(
-                      color: Colors.white70, fontSize: 13)),
+                  style: TextStyle(color: Colors.white70, fontSize: 13)),
             ],
           ),
         ],
@@ -887,14 +889,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Próximas Lecturas',
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             TextButton(
               onPressed: () => widget.onNavigateTo?.call(1),
               child: const Text('Ver plan',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.primaryBlue)),
+                  style: TextStyle(fontSize: 13, color: AppTheme.primaryBlue)),
             ),
           ],
         ),
@@ -903,15 +902,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _MiniReadingCard(
+              const _MiniReadingCard(
                 day: 'Mañana',
                 passage: 'Génesis 1:11-20',
               ),
-              _MiniReadingCard(
+              const _MiniReadingCard(
                 day: 'Miércoles',
                 passage: 'Génesis 1:21-31',
               ),
-              _MiniReadingCard(
+              const _MiniReadingCard(
                 day: 'Jueves',
                 passage: 'Génesis 2:1-7',
               ),
@@ -937,8 +936,8 @@ class _MiniReadingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppTheme.pendingGrayDark.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.3)),
         boxShadow: AppTheme.softShadow,
       ),
       child: Column(
@@ -959,16 +958,14 @@ class _MiniReadingCard extends StatelessWidget {
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.primaryBlue)),
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.schedule,
-                  size: 14, color: AppTheme.pendingGrayDark),
-              const SizedBox(width: 4),
+              Icon(Icons.schedule, size: 14, color: AppTheme.pendingGrayDark),
+              SizedBox(width: 4),
               Flexible(
                 child: Text('Planificado',
-                    style: const TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.pendingGrayDark)),
+                    style: TextStyle(
+                        fontSize: 11, color: AppTheme.pendingGrayDark)),
               ),
             ],
           ),
@@ -1012,9 +1009,7 @@ class _ActionCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(label,
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
+                      fontSize: 12, fontWeight: FontWeight.w600, color: color)),
             ],
           ),
         ),
@@ -1057,9 +1052,7 @@ class _StatTile extends StatelessWidget {
                       fontSize: 11, color: AppTheme.textSecondary)),
               Text(value,
                   style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: color)),
+                      fontSize: 15, fontWeight: FontWeight.bold, color: color)),
             ],
           ),
         ],
@@ -1117,8 +1110,8 @@ class _ReflexionPreviewCard extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => PublicProfileScreen(
-                          userId: reflexion.userId,
-                          fallbackName: reflexion.userName),
+                            userId: reflexion.userId,
+                            fallbackName: reflexion.userName),
                       ),
                     );
                   },

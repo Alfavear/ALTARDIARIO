@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/theme/app_theme.dart';
-import '../providers/app_providers.dart';
 import '../../data/services/storage_service.dart';
+import '../providers/app_providers.dart';
 
 class AnualView extends ConsumerWidget {
   const AnualView({super.key});
 
   static const List<String> _monthNames = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
   ];
 
   @override
@@ -26,8 +37,7 @@ class AnualView extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(
               child: _buildProgressHeader(context, progreso, total)),
-          SliverToBoxAdapter(
-              child: _buildStatsRow(streak, maxStreak, total)),
+          SliverToBoxAdapter(child: _buildStatsRow(streak, maxStreak, total)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -150,10 +160,10 @@ class AnualView extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          _buildStatCard('🔥', '$streak', 'Racha actual', AppTheme.streakOrange),
-          const SizedBox(width: 8),
           _buildStatCard(
-              '🏆', '$maxStreak', 'Máx. racha', AppTheme.accentGold),
+              '🔥', '$streak', 'Racha actual', AppTheme.streakOrange),
+          const SizedBox(width: 8),
+          _buildStatCard('🏆', '$maxStreak', 'Máx. racha', AppTheme.accentGold),
           const SizedBox(width: 8),
           _buildStatCard(
               '📖', '${365 - total}', 'Pendientes', AppTheme.primaryBlue),
@@ -162,8 +172,7 @@ class AnualView extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(
-      String emoji, String value, String label, Color color) {
+  Widget _buildStatCard(String emoji, String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
@@ -178,12 +187,10 @@ class AnualView extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(value,
                 style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: color)),
+                    fontSize: 22, fontWeight: FontWeight.w800, color: color)),
             const SizedBox(height: 2),
             Text(label,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.textSecondary)),
@@ -276,8 +283,7 @@ class AnualView extends ConsumerWidget {
           Expanded(
             child: GridView.builder(
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 crossAxisSpacing: 2,
                 mainAxisSpacing: 2,

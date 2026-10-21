@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/app_providers.dart';
+
 import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
 import 'chat_screen.dart';
 
 class ChatListScreen extends ConsumerWidget {
@@ -43,7 +44,8 @@ class ChatListScreen extends ConsumerWidget {
             icon: const Icon(Icons.edit_square, color: Colors.white),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Nueva conversación — próximamente')),
+                const SnackBar(
+                    content: Text('Nueva conversación — próximamente')),
               );
             },
           ),
@@ -80,7 +82,8 @@ class ChatListScreen extends ConsumerWidget {
                   TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Función de limpiar — próximamente')),
+                        const SnackBar(
+                            content: Text('Función de limpiar — próximamente')),
                       );
                     },
                     child: const Text('Limpiar',
@@ -90,15 +93,13 @@ class ChatListScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              ...chats.map((chat) => _buildChatCard(
-                  context, ref, chat, currentUid!)),
+              ...chats.map(
+                  (chat) => _buildChatCard(context, ref, chat, currentUid!)),
             ],
           );
         },
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
-        error: (err, stack) =>
-            Center(child: Text('Error: $err')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
@@ -132,15 +133,13 @@ class ChatListScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             const Text(
               'Sin conversaciones aún',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             const Text(
               'Da like a una reflexión y escribe\npara iniciar un chat',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary),
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -158,8 +157,7 @@ class ChatListScreen extends ConsumerWidget {
       ),
       child: const Row(
         children: [
-          Icon(Icons.search,
-              size: 20, color: AppTheme.textSecondary),
+          Icon(Icons.search, size: 20, color: AppTheme.textSecondary),
           SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -202,13 +200,12 @@ class ChatListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildChatCard(
-      BuildContext context, WidgetRef ref, Map<String, dynamic> chat, String currentUid) {
+  Widget _buildChatCard(BuildContext context, WidgetRef ref,
+      Map<String, dynamic> chat, String currentUid) {
     final chatId = chat['id'] as String;
     final participantNames =
         chat['participantNames'] as Map<String, dynamic>? ?? {};
-    final participantIds =
-        chat['participantIds'] as List<dynamic>? ?? [];
+    final participantIds = chat['participantIds'] as List<dynamic>? ?? [];
     final lastMessage = chat['lastMessage'] as String? ?? '';
     final lastUpdate = chat['lastUpdate'] as dynamic;
 
@@ -262,12 +259,9 @@ class ChatListScreen extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor:
-                      AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
                   child: Text(
-                    otherName.isNotEmpty
-                        ? otherName[0].toUpperCase()
-                        : '?',
+                    otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
                     style: const TextStyle(
                         color: AppTheme.primaryBlue,
                         fontWeight: FontWeight.w700,
@@ -282,8 +276,7 @@ class ChatListScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(otherName,
@@ -295,8 +288,7 @@ class ChatListScreen extends ConsumerWidget {
                       ),
                       Text(timeAgo,
                           style: const TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textSecondary)),
+                              fontSize: 11, color: AppTheme.textSecondary)),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -305,8 +297,7 @@ class ChatListScreen extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary),
+                        fontSize: 13, color: AppTheme.textSecondary),
                   ),
                 ],
               ),
@@ -335,13 +326,11 @@ class _OnlineUser extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor:
-                    AppTheme.primaryBlue.withValues(alpha: 0.1),
+                backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
                 child: Text(
                   name[0],
                   style: const TextStyle(
-                      color: AppTheme.primaryBlue,
-                      fontWeight: FontWeight.w700),
+                      color: AppTheme.primaryBlue, fontWeight: FontWeight.w700),
                 ),
               ),
               Positioned(
@@ -353,8 +342,8 @@ class _OnlineUser extends StatelessWidget {
                   decoration: const BoxDecoration(
                     color: AppTheme.completedGreen,
                     shape: BoxShape.circle,
-                    border: Border.fromBorderSide(BorderSide(
-                        color: Colors.white, width: 2)),
+                    border: Border.fromBorderSide(
+                        BorderSide(color: Colors.white, width: 2)),
                   ),
                 ),
               ),
@@ -362,9 +351,8 @@ class _OnlineUser extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(name,
-              style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary)),
+              style:
+                  const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         ],
       ),
     );

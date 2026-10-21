@@ -1,0 +1,49 @@
+name: Ciclo autónomo nocturno (opcional)
+
+# Desactivado por defecto: para activarlo, añade el secret OPENCODE_MODEL_API_KEY
+# (y ajusta provider/model) y quita el `if: false`. Cada ejecución corre UN ciclo
+# y abre un PR con la rama auto/* resultante. Nunca mergea ni despliega.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1-5'   # 03:00 UTC, lunes a viernes
+  workflow_dispatch:
+
+jobs:
+  cycle:
+    if: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - name: Instalar OpenCode y deps
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+          (cd tools/roadmap-mcp && npm ci || npm install)
+          (cd firestore-tests && npm ci || npm install)
+      - name: Un ciclo
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.OPENCODE_MODEL_API_KEY }}
+        run: |
+          git config user.name "altardiario-bot"
+          git config user.email "bot@altardiario.app"
+          scripts/loop.sh 1
+      - name: Abrir PR con la rama producida
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BR="$(git branch --list 'auto/*' --sort=-committerdate | head -1 | tr -d ' *')"
+          [ -z "$BR" ] && { echo "sin rama producida"; exit 0; }
+          git push origin "$BR" "HEAD:refs/heads/roadmap-state-$(date +%Y%m%d)" || true
+          gh pr create --head "$BR" --base main --fill --label autonomous || true

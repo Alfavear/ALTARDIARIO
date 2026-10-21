@@ -1,19 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../models/reflexion.dart';
+
+import '../models/bible_models.dart';
 import '../models/comment.dart';
 import '../models/debate.dart';
 import '../models/debate_reply.dart';
-import '../models/peticion_oracion.dart';
-import '../models/usuario.dart';
 import '../models/message.dart';
-import '../models/bible_models.dart';
 import '../models/note.dart';
+import '../models/peticion_oracion.dart';
+import '../models/reflexion.dart';
+import '../models/usuario.dart';
 
 class FirestoreService {
   final FirebaseFirestore? _firestore;
 
-  FirestoreService() : _firestore = _initFirestore();
+  FirestoreService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? _initFirestore();
 
   static FirebaseFirestore? _initFirestore() {
     try {
@@ -57,10 +59,18 @@ class FirestoreService {
 
   // ── Reflexiones ──────────────────────────────────────────────────────────
 
+  /// Tamaño de página del feed. Sin límite, cada apertura del feed leía TODA
+  /// la colección (coste y latencia lineales con el número de reflexiones).
+  /// TODO(roadmap-fase-1): paginación real con startAfterDocument.
+  static const int feedPageSize = 100;
+
   Stream<List<Reflexion>> reflexionesStream() {
     if (!_available) return Stream.value([]);
-    return _reflexiones.orderBy('fecha', descending: true).snapshots().map(
-        (s) => s.docs
+    return _reflexiones
+        .orderBy('fecha', descending: true)
+        .limit(feedPageSize)
+        .snapshots()
+        .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -81,7 +91,8 @@ class FirestoreService {
     await _reflexiones.add(reflexion.toMap());
   }
 
-  Future<void> toggleLike(String reflexionId, String userId, bool isLiked) async {
+  Future<void> toggleLike(
+      String reflexionId, String userId, bool isLiked) async {
     if (!_available) return;
     if (isLiked) {
       await _reflexiones.doc(reflexionId).update({
@@ -194,10 +205,10 @@ class FirestoreService {
     if (libroId != null && libroId.isNotEmpty) {
       query = query.where('libroId', isEqualTo: libroId);
     }
-    return query.snapshots().map(
-        (s) => s.docs
-            .map((d) => Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
-            .toList());
+    return query.snapshots().map((s) => s.docs
+        .map((d) =>
+            Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
+        .toList());
   }
 
   Future<void> crearDebate(Debate debate) async {
@@ -258,8 +269,8 @@ class FirestoreService {
     }
   }
 
-  Future<void> toggleReplyVote(String debateId, String replyId,
-      String userId, bool hasVoted) async {
+  Future<void> toggleReplyVote(
+      String debateId, String replyId, String userId, bool hasVoted) async {
     if (!_available) return;
     if (hasVoted) {
       await _debateReplies(debateId).doc(replyId).update({
@@ -276,8 +287,8 @@ class FirestoreService {
 
   // ── Reacciones ───────────────────────────────────────────────────────────
 
-  Future<void> toggleReaction(String reflexionId, String userId,
-      String? emoji, String? currentEmoji) async {
+  Future<void> toggleReaction(String reflexionId, String userId, String? emoji,
+      String? currentEmoji) async {
     if (!_available) return;
     if (currentEmoji == emoji) {
       await _reflexiones.doc(reflexionId).update({
@@ -308,10 +319,8 @@ class FirestoreService {
   Stream<List<Usuario>> getUsuariosStream(List<String> uids) {
     if (!_available) return Stream.value([]);
     if (uids.isEmpty) return Stream.value([]);
-    return _usuarios
-        .where(FieldPath.documentId, whereIn: uids)
-        .snapshots()
-        .map((s) => s.docs
+    return _usuarios.where(FieldPath.documentId, whereIn: uids).snapshots().map(
+        (s) => s.docs
             .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -354,9 +363,8 @@ class FirestoreService {
       List<String> uids) async {
     if (!_available || uids.isEmpty) return {};
     final result = <String, Map<String, dynamic>>{};
-    final snapshot = await _usuarios
-        .where(FieldPath.documentId, whereIn: uids)
-        .get();
+    final snapshot =
+        await _usuarios.where(FieldPath.documentId, whereIn: uids).get();
     for (final doc in snapshot.docs) {
       final data = doc.data();
       result[doc.id] = {
@@ -439,7 +447,9 @@ class FirestoreService {
   /// Elimina el token FCM del usuario (logout).
   Future<void> clearFCMToken(String uid) async {
     if (!_available) return;
-    await _usuarios.doc(uid).set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
+    await _usuarios
+        .doc(uid)
+        .set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
   }
 
   /// Crea una notificación en la subcolección del usuario (para Cloud Functions).
@@ -483,7 +493,11 @@ class FirestoreService {
   /// Marca una notificación como leída.
   Future<void> markNotificationAsRead(String uid, String notificationId) async {
     if (!_available) return;
-    await _usuarios.doc(uid).collection('notifications').doc(notificationId).update({'read': true});
+    await _usuarios
+        .doc(uid)
+        .collection('notifications')
+        .doc(notificationId)
+        .update({'read': true});
   }
 
   /// Marca todas las notificaciones como leídas.
@@ -654,6 +668,11 @@ class FirestoreService {
             .toList());
   }
 
+  /// Envía un mensaje al chat [chatId].
+  ///
+  /// `participantIds`/`participantNames` son SOLO para crear el chat; en un
+  /// chat existente se ignoran (solo se actualizan los metadatos). Si no se
+  /// pasan, se asume que el chat ya existe y no se hace ninguna lectura extra.
   Future<void> sendMessage(
     String chatId,
     String senderId,
@@ -661,19 +680,58 @@ class FirestoreService {
     List<String>? participantIds,
     Map<String, String>? participantNames,
   }) async {
-    if (!_available) return;
-    await _chats.doc(chatId).collection('messages').add({
+    if (!_available) {
+      throw StateError('sendMessage: Firestore no está disponible');
+    }
+    final chatRef = _chats.doc(chatId);
+    final metadata = <String, dynamic>{
+      'lastUpdate': FieldValue.serverTimestamp(),
+      'lastMessage': text,
+      'lastSenderId': senderId,
+    };
+
+    if (participantIds == null && participantNames == null) {
+      // Camino caliente: chat existente (la UI solo abre chats ya creados).
+      // Sin `get()`: 0 lecturas y ninguna posibilidad de reescribir quiénes
+      // participan.
+      await chatRef.update(metadata);
+    } else {
+      if (participantIds == null || participantIds.length != 2) {
+        throw StateError(
+            'sendMessage: participantIds con exactamente 2 miembros es obligatorio para crear el chat $chatId');
+      }
+      // El documento del chat debe existir ANTES del mensaje (las reglas leen
+      // participantIds del padre para autorizar la escritura en /messages).
+      var exists = false;
+      try {
+        exists = (await chatRef.get()).exists;
+      } on FirebaseException catch (e) {
+        // Las reglas actuales (`allow read: if isParticipant(resource.data)`)
+        // devuelven permission-denied cuando el documento aún no existe
+        // (resource == null). Se interpreta como "no existe": si el chat
+        // existiera y el llamador no fuera participante, el `set` de abajo
+        // también sería denegado por la regla de create.
+        if (e.code != 'permission-denied') rethrow;
+        exists = false;
+      }
+      if (exists) {
+        // Chat existente: solo metadatos. participantIds/participantNames se
+        // ignoran a propósito (era el bug de T-014: se reescribían).
+        await chatRef.update(metadata);
+      } else {
+        await chatRef.set({
+          ...metadata,
+          'participantIds': participantIds,
+          if (participantNames != null) 'participantNames': participantNames,
+        });
+      }
+    }
+
+    await chatRef.collection('messages').add({
       'senderId': senderId,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
     });
-    await _chats.doc(chatId).set({
-      'lastUpdate': FieldValue.serverTimestamp(),
-      'lastMessage': text,
-      'lastSenderId': senderId,
-      if (participantIds != null) 'participantIds': participantIds,
-      if (participantNames != null) 'participantNames': participantNames,
-    }, SetOptions(merge: true));
   }
 
   Stream<List<Map<String, dynamic>>> getUserChats(String userId) {

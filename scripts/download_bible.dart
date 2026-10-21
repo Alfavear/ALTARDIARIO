@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
-final _baseUrl = 'https://bolls.life';
-final _slug = 'RV1960';
+const _baseUrl = 'https://bolls.life';
+const _slug = 'RV1960';
 
 Future<void> main() async {
   print('Fetching book names...');

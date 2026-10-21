@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:altar_diario/data/services/bible_service.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('BibleService', () {

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 
 void main() {
-  final sourcePath = r'C:\Users\ALVEAR\.gemini\antigravity-ide\brain\6c8a2f47-f072-4b66-8bfd-9a658732b4cd\media__1785286736401.png';
+  const sourcePath = r'C:\Users\ALVEAR\.gemini\antigravity-ide\brain\6c8a2f47-f072-4b66-8bfd-9a658732b4cd\media__1785286736401.png';
   final sourceFile = File(sourcePath);
 
   if (!sourceFile.existsSync()) {

@@ -20,17 +20,17 @@ class FollowersScreen extends ConsumerWidget {
       initialIndex: tabIndex,
       length: 2,
       child: Scaffold(
-appBar: AppBar(
-  backgroundColor: Colors.white,
-  foregroundColor: AppTheme.textPrimary,
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => Navigator.pop(context),
-  ),
-  title: const Text('Conexiones',
-      style: TextStyle(fontWeight: FontWeight.bold)),
-  bottom: const TabBar(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: AppTheme.textPrimary,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text('Conexiones',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          bottom: const TabBar(
             labelColor: AppTheme.primaryBlue,
             unselectedLabelColor: AppTheme.textSecondary,
             indicatorColor: AppTheme.primaryBlue,
@@ -93,10 +93,12 @@ class _UserListTab extends ConsumerWidget {
               leading: CircleAvatar(
                 radius: 22,
                 backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                backgroundImage: u.fotoUrl.isNotEmpty
-                    ? NetworkImage(u.fotoUrl)
-                    : null,
-                child: Text(u.displayName.isNotEmpty ? u.displayName[0].toUpperCase() : '?',
+                backgroundImage:
+                    u.fotoUrl.isNotEmpty ? NetworkImage(u.fotoUrl) : null,
+                child: Text(
+                    u.displayName.isNotEmpty
+                        ? u.displayName[0].toUpperCase()
+                        : '?',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryBlue)),
@@ -115,8 +117,7 @@ class _UserListTab extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        PublicProfileScreen(userId: u.id),
+                    builder: (_) => PublicProfileScreen(userId: u.id),
                   ),
                 );
               },

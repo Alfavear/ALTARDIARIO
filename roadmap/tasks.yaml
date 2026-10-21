@@ -1,0 +1,394 @@
+# ═══════════════════════════════════════════════════════════════════
+#  Roadmap ejecutable de AltarDiario
+#
+#  Este archivo es la ÚNICA fuente de verdad de "qué hay que hacer".
+#  Lo leen y escriben los agentes a través del MCP `altardiario-roadmap`
+#  (tools/roadmap-mcp). Los humanos pueden editarlo a mano; el MCP valida.
+#
+#  Estados: backlog → ready → in_progress → review → done | blocked | dropped
+#  Prioridad: P0 (producción rota/seguridad) P1 (esta fase) P2 (siguiente) P3 (idea)
+#  Esfuerzo: S (<1 ciclo) M (1-2 ciclos) L (3+ ciclos → dividir antes de empezar)
+#  Tipo: security | bug | refactor | test | feature | docs | infra | audit
+# ═══════════════════════════════════════════════════════════════════
+
+meta:
+  version: 1
+  current_phase: 1
+  cycle_counter: 4
+  phases:
+    "1": Estabilizar (seguridad, observabilidad, CI)
+    "2": Andamiaje IA y tests
+    "3": Arquitectura feature-first y backend
+    "4": Producto
+tasks:
+  - id: T-001
+    title: Ejecutar flutter pub get y resolver conflictos de versiones de la rama de andamiaje
+    type: infra
+    phase: 1
+    priority: P0
+    effort: S
+    status: done
+    acceptance:
+      - flutter pub get termina sin errores
+      - flutter analyze no reporta errores (warnings/infos permitidos y listados en bitácora)
+    files:
+      - pubspec.yaml
+    started_cycle: 1
+    started_at: 2026-10-20T22:58:01.571Z
+    done_at: 2026-10-20T23:06:02.300Z
+    evidence: |-
+      $ flutter --version
+      Flutter 3.44.1 • channel stable • Dart 3.12.1
+
+      $ flutter pub get
+      Got dependencies!
+      (105 packages have newer versions incompatible with dependency constraints)
+      ===EXIT:0===
+      git diff --stat -- pubspec.yaml pubspec.lock  ->  VACIO (sin cambios de versiones)
+
+      $ flutter analyze --no-pub
+      No issues found! (ran in 4.9s)
+      ===EXIT:0===
+      (0 errors, 0 warnings, 0 infos)
+
+      $ bash scripts/check.sh --fast
+      ▶ flutter pub get
+      ▶ dart format
+      ▶ flutter analyze
+      ▶ flutter test
+      00:08 +108: All tests passed!
+      (--fast) saltando tests de reglas de Firestore
+      ✔ Todo en verde.
+      ===EXIT:0===
+
+      git diff feat/andamiaje-internacional...HEAD -> vacio (sin commits de codigo)
+      Reviewer: APROBAR CON CAMBIOS (0 hallazgos bloqueantes; solo bookkeeping y ruido de formato del MCP)
+  - id: T-002
+    title: Ejecutar suite de tests de reglas de Firestore contra el emulador y corregir fallos
+    type: security
+    phase: 1
+    priority: P0
+    effort: S
+    status: done
+    depends_on: []
+    acceptance:
+      - scripts/rules_test.sh pasa todos los tests
+      - ninguna escritura legítima de firestore_service.dart queda bloqueada (verificado con lista de métodos)
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    started_cycle: 2
+    started_at: 2026-10-20T23:27:08.569Z
+    done_at: 2026-10-20T23:43:33.263Z
+    evidence: >-
+      scripts/rules_test.sh (exit 0):
+
+      ℹ tests 28
+
+      ℹ suites 0
+
+      ℹ pass 28
+
+      ℹ fail 0
+
+      ℹ cancelled 0
+
+      ℹ skipped 0
+
+      ℹ todo 0
+
+      duration_ms 4720.0831
+
+      +  Script exited successfully (code 0)
+
+
+      Prueba roja del test de regresion (git stash solo de firestore.rules):
+
+      ✖ REGRESIÓN: el participante que no creó el chat puede responder (mismo conjunto, distinto orden)
+      (50.7849ms)
+
+      ℹ tests 28 / ℹ pass 27 / ℹ fail 1
+
+      !  Script exited unsuccessfully (code 1)
+
+
+      Restaurado el cambio: 28/28 pass, fail 0, exit 0.
+
+
+      scripts/check.sh --fast:
+
+      Formatted 80 files (0 changed) in 0.22 seconds.
+
+      No issues found! (ran in 6.8s)
+
+      00:13 +108: All tests passed!
+
+      (--fast) saltando tests de reglas de Firestore
+
+      ✔ Todo en verde.
+
+
+      Reviewer: APROBAR CON CAMBIOS (0 bloqueantes). Los 2 cambios sugeridos (assert de participantIds
+      duplicados y assert de la rama solo-metadatos) fueron aplicados por el tester y re-verificados: 28/28
+      verde en la corrida final.
+    commit: 6c53c2b
+  - id: T-003
+    title: Arreglar tests existentes que rompan por las nuevas dependencias/lints
+    type: test
+    phase: 1
+    priority: P0
+    effort: M
+    status: done
+    depends_on:
+      - T-001
+    acceptance:
+      - flutter test pasa al 100%
+      - ningún test fue borrado ni marcado skip
+    started_cycle: 3
+    started_at: 2026-10-20T23:49:17.283Z
+    done_at: 2026-10-20T23:56:50.320Z
+    evidence: "Verificacion no-op: 0 tests rotos, 0 cambios de codigo. bash scripts/check.sh --fast -> dart
+      format: 'Formatted 80 files (0 changed)'; flutter analyze: 'No issues found!'; flutter test: '00:12
+      +108: All tests passed!'; '(--fast) saltando tests de reglas de Firestore'; '(check) Todo en verde.'
+      (exit 0). dart format --output=none --set-exit-if-changed lib test -> 'Formatted 80 files (0 changed)',
+      exit 0 (gate de CI de formato, unico no demostrado antes). Criterio 2: git grep -cE
+      '^\\s*(test|testWidgets)\\(' main -> 108; HEAD -> 108. git diff main..HEAD -- test/: 14 lineas
+      test/testWidgets eliminadas, 14 anadidas (solo reflow); 7 expect eliminadas, 7 anadidas. git diff
+      --diff-filter=D main..HEAD -- test/ vacio (0 archivos borrados). git grep
+      'skip:|markTestSkipped|@Skip|skipGroup' -- test/ sin coincidencias (exit 1). HEAD verificado:
+      886fb4e59888fa3bc4d3af39b03d1e37a64bbbb5 (auto/T-003-tests-verdes, sin commits propios; incluye T-002).
+      Reviewer: APROBAR CON CAMBIOS, 0 bloqueantes; las 2 comprobaciones por caso sugeridas fueron ejecutadas
+      y pasan."
+    commit: 886fb4e
+  - id: T-004
+    title: UI de reportar contenido y bloquear usuario (App Store 1.2)
+    type: feature
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on:
+      - T-002
+      - T-003
+    acceptance:
+      - menú ⋯ en reflexión/petición/debate con opción Reportar que escribe en reports/
+      - opción Bloquear usuario en perfil público; feed filtra usuarios bloqueados (lista en
+        usuarios/{uid}.bloqueados)
+      - widget test de ambos flujos
+      - "contenido con hidden: true no se muestra en feed"
+    files:
+      - lib/presentation/screens/feed_screen.dart
+      - lib/presentation/screens/public_profile_screen.dart
+      - lib/data/services/firestore_service.dart
+  - id: T-005
+    title: Tests de FirestoreService con fake_cloud_firestore (likes, reacciones, seguir, amén)
+    type: test
+    phase: 2
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on:
+      - T-003
+    acceptance:
+      - test/services/firestore_service_test.dart cubre toggleLike, toggleReaction, follow/unfollow, amen
+      - cobertura de firestore_service.dart > 50%
+  - id: T-006
+    title: Migrar feature oracion a lib/features/oracion/ (ADR-0001)
+    type: refactor
+    phase: 3
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on:
+      - T-003
+      - T-005
+    acceptance:
+      - lib/features/oracion/{data,providers,presentation} existe con OracionRepository
+      - oracion_screen.dart < 400 líneas
+      - app_providers.dart exporta los providers migrados para compatibilidad
+      - sin cambios de comportamiento (tests existentes pasan sin modificar)
+  - id: T-007
+    title: Paginación real del feed con startAfterDocument e infinite scroll
+    type: feature
+    phase: 3
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on:
+      - T-003
+    acceptance:
+      - feed carga 30 reflexiones y pide más al llegar al final
+      - provider con estado de página testeado
+  - id: T-008
+    title: Partir perfil_screen.dart (1956 líneas) en widgets por sección
+    type: refactor
+    phase: 3
+    priority: P2
+    effort: L
+    status: backlog
+    depends_on:
+      - T-003
+    acceptance:
+      - ningún archivo resultante > 400 líneas
+      - golden/widget tests existentes pasan
+  - id: T-009
+    title: Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1)
+    type: infra
+    phase: 3
+    priority: P2
+    effort: M
+    status: blocked
+    blocked_reason: Requiere plan Blaze y decisión humana de desplegar
+    acceptance:
+      - functions desplegadas; XP de servidor coincide con cliente en 7 días de datos
+  - id: T-010
+    title: Compartir versículo como imagen (WhatsApp/Instagram)
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    acceptance:
+      - botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario
+      - usa share_plus; funciona en Android/iOS/Web
+  - id: T-011
+    title: Planes de lectura flexibles (empezar cualquier día, ponerse al día, planes de 7/21 días)
+    type: feature
+    phase: 4
+    priority: P2
+    effort: L
+    status: backlog
+    acceptance:
+      - modelo PlanLectura con fecha de inicio por usuario
+      - al menos un plan temático corto además del anual
+  - id: T-012
+    title: Evitar que el MCP roadmap reformatee tasks.yaml completo en cada escritura
+    type: infra
+    phase: 1
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - start_task/complete_task/log_cycle producen un diff de tasks.yaml limitado a las claves que cambian
+        (sin reformateo masivo)
+      - tasks.yaml normalizado una vez en la rama base y el MCP lo respeta en escrituras posteriores
+      - roadmap.validate() sigue sin errores tras el cambio
+    files:
+      - tools/roadmap-mcp/roadmap.mjs
+    source: audit
+    created_at: 2026-10-20T23:05:56.523Z
+  - id: T-013
+    title: Corregir 'Últimos ciclos' de STATE.md cuando la bitácora aún no tiene entradas
+    type: bug
+    phase: 1
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "con BITACORA.md sin entradas de ciclo, STATE.md muestra 'Últimos ciclos: —' y no la cabecera de la
+        bitácora"
+      - con 1+ entradas, muestra solo las entradas de ciclo (no la cabecera del documento)
+    files:
+      - tools/roadmap-mcp/roadmap.mjs
+      - roadmap/STATE.md
+    source: audit
+    created_at: 2026-10-20T23:05:56.534Z
+  - id: T-014
+    title: "Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto
+      si falla"
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: done
+    depends_on: []
+    acceptance:
+      - sendMessage solo escribe participantIds/participantNames al crear el chat; en envíos posteriores
+        actualiza solo metadatos (lastMessage, lastUpdate, lastSenderId)
+      - chat_screen.dart hace await con try/catch y, si la escritura falla, conserva el texto en el campo y
+        muestra error reintentable
+      - test unitario de FirestoreService.sendMessage verifica que un chat existente se actualiza sin
+        participantIds
+      - scripts/check.sh --fast en verde
+    files:
+      - lib/data/services/firestore_service.dart
+      - lib/presentation/screens/chat_screen.dart
+      - test/services/firestore_service_test.dart
+    source: T-002 review
+    created_at: 2026-10-20T23:43:23.629Z
+    started_cycle: 4
+    started_at: 2026-10-21T00:00:57.717Z
+    done_at: 2026-10-21T00:43:38.636Z
+    evidence: |-
+      scripts/check.sh --fast (commit 2ea3366):
+      Formatted 80 files (0 changed)
+      No issues found!
+      00:11 +122: All tests passed!
+      (--fast) saltando tests de reglas de Firestore
+      ✔ Todo en verde.
+
+      Tests nuevos (14): 7 de FirestoreService.sendMessage y 7 de ChatScreen.
+      - sendMessage con chat existente y participantIds pasados conserva participantIds/participantNames.
+      - sendMessage sin participantes actualiza solo metadatos y añade el mensaje.
+      - crear chat escribe participantes; participantIds con 1 miembro lanza StateError.
+      - UI: éxito limpia el campo; fallo conserva el texto y muestra REINTENTAR; el reintento reenvía;
+        guard _isSending evita doble envío; no borra lo que el usuario escribió mientras se enviaba.
+    commit: 2ea3366
+  - id: T-015
+    title: "Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados"
+    type: security
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - el update de /chats exige
+        changedKeys().hasOnly(['participantIds','lastMessage','lastSenderId','lastUpdate','participantNames'])
+      - un create con participantIds duplicados ([ALICE, ALICE]) se deniega
+      - tests de reglas nuevos para ambos invariantes y suite completa en verde
+      - ninguna escritura legítima de ChatService/sendMessage queda bloqueada (lista de metodos verificada)
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: T-002 review
+    created_at: 2026-10-20T23:43:23.644Z
+  - id: T-016
+    title: Partir firestore-tests/rules.test.mjs (>400 lineas) por coleccion y lanzar node --test
+    type: test
+    phase: 2
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - rules.test.mjs queda dividido en archivos por area (feed, foro, perfil, chat, notificaciones) de menos
+        de 400 lineas cada uno
+      - scripts/rules_test.sh y firestore-tests/package.json usan node --test (sin fijar un unico archivo)
+      - scripts/rules_test.sh sigue en verde con el mismo numero de tests o mas
+      - ningun test se elimina ni se marca skip
+    files:
+      - firestore-tests/rules.test.mjs
+      - scripts/rules_test.sh
+      - firestore-tests/package.json
+    source: T-002 review
+    created_at: 2026-10-20T23:43:23.657Z
+  - id: T-017
+    title: "markAllNotificationsAsRead: no commitear un batch vacio cuando no hay notificaciones sin leer"
+    type: bug
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - el metodo hace return sin commit si la query de notificaciones no leidas devuelve cero documentos
+      - test unitario cubre el caso 0 notificaciones y el caso N notificaciones
+      - scripts/check.sh --fast en verde
+    files:
+      - lib/data/services/firestore_service.dart
+      - test/services/firestore_service_test.dart
+    source: T-002 planner
+    created_at: 2026-10-20T23:43:23.669Z

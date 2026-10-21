@@ -1,16 +1,18 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'core/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/observability/observability.dart';
 import 'core/services/notification_service.dart';
-import 'data/services/storage_service.dart';
+import 'core/theme/app_theme.dart';
 import 'data/services/auth_service.dart';
+import 'data/services/storage_service.dart';
+import 'firebase_options.dart';
 import 'presentation/providers/app_providers.dart';
 import 'presentation/screens/splash_screen.dart';
-import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,17 +21,20 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await Observability.init();
   } catch (e) {
-    debugPrint("⚠️ Advertencia: Error al inicializar Firebase: $e");
+    debugPrint('⚠️ Advertencia: Error al inicializar Firebase: $e');
   }
 
   // Web: Manejar resultado de signInWithRedirect (Google OAuth)
   if (kIsWeb) {
     try {
       final authService = AuthService();
-      await authService.handleRedirectResult().timeout(const Duration(seconds: 1));
+      await authService
+          .handleRedirectResult()
+          .timeout(const Duration(seconds: 1));
     } catch (e) {
-      debugPrint("Redirect result handling: $e");
+      debugPrint('Redirect result handling: $e');
     }
   }
 
@@ -39,7 +44,7 @@ void main() async {
   try {
     await storageService.loadPlan();
   } catch (e) {
-    debugPrint("Error al cargar el plan de lectura: $e");
+    debugPrint('Error al cargar el plan de lectura: $e');
   }
 
   try {
@@ -50,7 +55,7 @@ void main() async {
       minute: storageService.getNotificationMinute(),
     );
   } catch (e) {
-    debugPrint("Servicio de notificaciones no disponible: $e");
+    debugPrint('Servicio de notificaciones no disponible: $e');
   }
   await initializeDateFormatting('es', null);
 
@@ -73,6 +78,7 @@ class AltarDiarioApp extends ConsumerWidget {
       title: 'altarDiario',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorObservers: Observability.navigatorObservers,
       home: const SplashScreen(),
       builder: (context, child) {
         return MediaQuery(

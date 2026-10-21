@@ -45,8 +45,10 @@ class _ShimmerLoadingWidgetState extends State<ShimmerLoadingWidget>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFEBEBF4);
-    final highlightColor = isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5FA);
+    final baseColor =
+        isDark ? const Color(0xFF2C2C2C) : const Color(0xFFEBEBF4);
+    final highlightColor =
+        isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5FA);
 
     return AnimatedBuilder(
       animation: _animation,
@@ -101,17 +103,21 @@ class ShimmerListLoading extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ShimmerLoadingWidget(width: 130, height: 14, borderRadius: 4),
+                      ShimmerLoadingWidget(
+                          width: 130, height: 14, borderRadius: 4),
                       SizedBox(height: 6),
-                      ShimmerLoadingWidget(width: 80, height: 10, borderRadius: 4),
+                      ShimmerLoadingWidget(
+                          width: 80, height: 10, borderRadius: 4),
                     ],
                   ),
                 ],
               ),
               SizedBox(height: 16),
-              ShimmerLoadingWidget(width: double.infinity, height: 14, borderRadius: 4),
+              ShimmerLoadingWidget(
+                  width: double.infinity, height: 14, borderRadius: 4),
               SizedBox(height: 8),
-              ShimmerLoadingWidget(width: double.infinity, height: 14, borderRadius: 4),
+              ShimmerLoadingWidget(
+                  width: double.infinity, height: 14, borderRadius: 4),
               SizedBox(height: 8),
               ShimmerLoadingWidget(width: 180, height: 14, borderRadius: 4),
               SizedBox(height: 16),

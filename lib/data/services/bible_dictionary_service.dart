@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import '../models/bible_dictionary_term.dart';
 
 class BibleDictionaryService {
-  static final BibleDictionaryService _instance = BibleDictionaryService._internal();
+  static final BibleDictionaryService _instance =
+      BibleDictionaryService._internal();
   factory BibleDictionaryService() => _instance;
   BibleDictionaryService._internal();
 
@@ -13,11 +14,12 @@ class BibleDictionaryService {
   Future<List<BibleDictionaryTerm>> getAllTerms() async {
     if (_cachedTerms != null) return _cachedTerms!;
     try {
-      final jsonString =
-          await rootBundle.loadString('assets/dictionary/biblical_glossary.json');
+      final jsonString = await rootBundle
+          .loadString('assets/dictionary/biblical_glossary.json');
       final List<dynamic> jsonList = json.decode(jsonString);
       _cachedTerms = jsonList
-          .map((item) => BibleDictionaryTerm.fromMap(item as Map<String, dynamic>))
+          .map((item) =>
+              BibleDictionaryTerm.fromMap(item as Map<String, dynamic>))
           .toList();
       return _cachedTerms!;
     } catch (_) {

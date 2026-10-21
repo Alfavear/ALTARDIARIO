@@ -63,8 +63,10 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
         orElse: () => versions.length > 1 ? versions[1] : versions.first,
       );
     } else {
-      _versionA = const BibleVersion(id: 'rv1960', name: 'Reina-Valera 1960', lang: 'es');
-      _versionB = const BibleVersion(id: 'rv1909', name: 'Reina Valera 1909', lang: 'es');
+      _versionA = const BibleVersion(
+          id: 'rv1960', name: 'Reina-Valera 1960', lang: 'es');
+      _versionB = const BibleVersion(
+          id: 'rv1909', name: 'Reina Valera 1909', lang: 'es');
     }
 
     await _loadBoth();
@@ -74,8 +76,10 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
     setState(() => _isLoading = true);
 
     try {
-      final pA = await _bibleService.getPassageText(widget.pasaje, version: _versionA.id);
-      final pB = await _bibleService.getPassageText(widget.pasaje, version: _versionB.id);
+      final pA = await _bibleService.getPassageText(widget.pasaje,
+          version: _versionA.id);
+      final pB = await _bibleService.getPassageText(widget.pasaje,
+          version: _versionB.id);
 
       if (!mounted) return;
       setState(() {
@@ -113,7 +117,10 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
           children: [
             const Text(
               'Comparar Versiones',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             ),
             Text(
               widget.pasaje,
@@ -129,12 +136,15 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
           unselectedLabelColor: Colors.white60,
           tabs: const [
             Tab(icon: Icon(Icons.splitscreen_rounded), text: 'Vista Paralela'),
-            Tab(icon: Icon(Icons.format_list_bulleted_rounded), text: 'Versículo por Versículo'),
+            Tab(
+                icon: Icon(Icons.format_list_bulleted_rounded),
+                text: 'Versículo por Versículo'),
           ],
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryBlue))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryBlue))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -153,20 +163,26 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
           child: Row(
             children: [
               Expanded(
-                child: Container(
+                child: DecoratedBox(
                   decoration: const BoxDecoration(
-                    border: Border(right: BorderSide(color: AppTheme.pendingGrayDark, width: 0.5)),
+                    border: Border(
+                        right: BorderSide(
+                            color: AppTheme.pendingGrayDark, width: 0.5)),
                   ),
                   child: ListView(
                     padding: const EdgeInsets.all(12),
-                    children: _passagesA.map((p) => _buildPassageContent(p, isLeft: true)).toList(),
+                    children: _passagesA
+                        .map((p) => _buildPassageContent(p, isLeft: true))
+                        .toList(),
                   ),
                 ),
               ),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(12),
-                  children: _passagesB.map((p) => _buildPassageContent(p, isLeft: false)).toList(),
+                  children: _passagesB
+                      .map((p) => _buildPassageContent(p, isLeft: false))
+                      .toList(),
                 ),
               ),
             ],
@@ -192,7 +208,8 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Icon(Icons.compare_arrows, color: AppTheme.primaryBlue, size: 20),
+            child: Icon(Icons.compare_arrows,
+                color: AppTheme.primaryBlue, size: 20),
           ),
           Expanded(
             child: _buildVersionDropdown(_versionB, (v) {
@@ -207,25 +224,30 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
     );
   }
 
-  Widget _buildVersionDropdown(BibleVersion current, ValueChanged<BibleVersion?> onChanged) {
+  Widget _buildVersionDropdown(
+      BibleVersion current, ValueChanged<BibleVersion?> onChanged) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
         color: AppTheme.pendingGray,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.3)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<BibleVersion>(
           isExpanded: true,
-          value: _availableVersions.any((v) => v.id == current.id) ? current : null,
+          value: _availableVersions.any((v) => v.id == current.id)
+              ? current
+              : null,
           items: _availableVersions.map((v) {
             return DropdownMenuItem<BibleVersion>(
               value: v,
               child: Text(
                 v.name,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             );
           }).toList(),
@@ -308,7 +330,8 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 1,
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -318,14 +341,18 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryBlue,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         'Versículo $verseNum',
-                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -351,7 +378,10 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
                       const SizedBox(height: 4),
                       Text(
                         textA,
-                        style: const TextStyle(fontSize: 14, height: 1.4, color: AppTheme.textPrimary),
+                        style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: AppTheme.textPrimary),
                       ),
                     ],
                   ),
@@ -377,7 +407,10 @@ class _BibleCompareScreenState extends ConsumerState<BibleCompareScreen>
                       const SizedBox(height: 4),
                       Text(
                         textB,
-                        style: const TextStyle(fontSize: 14, height: 1.4, color: AppTheme.textPrimary),
+                        style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: AppTheme.textPrimary),
                       ),
                     ],
                   ),

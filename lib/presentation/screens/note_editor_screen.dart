@@ -114,8 +114,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                   elevation: 1,
                 ),
                 child: const Text('Guardar',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               ),
             ),
         ],
@@ -149,8 +149,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                         Text(
                           DateFormat('dd MMMM, yyyy').format(DateTime.now()),
                           style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary),
+                              fontSize: 12, color: AppTheme.textSecondary),
                         ),
                       ],
                     ),
@@ -217,8 +216,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 fontWeight: FontWeight.w500,
                 color: AppTheme.textSecondary)),
         ...tags.map((t) => Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppTheme.primaryBlue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
@@ -237,8 +235,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 ],
               ),
             )),
-        const Icon(Icons.add_circle,
-            size: 20, color: AppTheme.primaryBlue),
+        const Icon(Icons.add_circle, size: 20, color: AppTheme.primaryBlue),
       ],
     );
   }
@@ -259,29 +256,27 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       ),
       child: Row(
         children: [
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.tips_and_updates,
+                    Icon(Icons.tips_and_updates,
                         size: 16, color: AppTheme.completedGreen),
-                    const SizedBox(width: 6),
-                    const Text('Sugerencia de escritura',
+                    SizedBox(width: 6),
+                    Text('Sugerencia de escritura',
                         style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                             color: AppTheme.completedGreen)),
                   ],
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   '¿Qué es aquello por lo que te sientes más agradecido en este preciso instante?',
                   style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                      height: 1.4),
+                      fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
                 ),
               ],
             ),
@@ -289,8 +284,10 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           TextButton(
             onPressed: () {
               final text = _contentCtrl.text;
-              final suggestion = '"Jehová es mi pastor; nada me faltará." — Salmos 23:1';
-              _contentCtrl.text = text.isNotEmpty ? '$text\n\n$suggestion' : suggestion;
+              const suggestion =
+                  '"Jehová es mi pastor; nada me faltará." — Salmos 23:1';
+              _contentCtrl.text =
+                  text.isNotEmpty ? '$text\n\n$suggestion' : suggestion;
               _contentCtrl.selection = TextSelection.fromPosition(
                 TextPosition(offset: _contentCtrl.text.length),
               );

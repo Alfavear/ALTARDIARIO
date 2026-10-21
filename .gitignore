@@ -19,6 +19,7 @@ GoogleService-Info.plist
 # Android
 android/local.properties
 android/.gradle/
+android/.kotlin/
 android/key.properties
 *.jks
 *.keystore
@@ -35,6 +36,7 @@ ios/Runner/GeneratedPluginRegistrant.*
 # macOS
 macos/Pods/
 macos/Flutter/GeneratedPluginRegistrant.swift
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # IDE
 .idea/
@@ -64,3 +66,19 @@ lcov.info
 *.apk
 *.aab
 *.ipa
+
+# Firebase emulator / hosting artefacts
+firestore-debug.log
+ui-debug.log
+firebase-debug.log
+.firebase/
+firestore-tests/node_modules/
+functions/node_modules/
+functions/lib/
+*.log
+
+# Generated l10n
+lib/l10n/generated/
+roadmap/audits/.last-cycle.log
+tools/roadmap-mcp/node_modules/
+roadmap/STOP

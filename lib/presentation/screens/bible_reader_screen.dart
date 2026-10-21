@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../../core/services/gamification_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/models/badge.dart' as badge_model;
 import '../../data/models/bible_models.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
+import '../widgets/bible_dictionary_modal.dart';
 import 'bible_compare_screen.dart';
 import 'bible_versions_screen.dart';
 import 'note_editor_screen.dart';
 import 'notes_screen.dart';
-import '../widgets/bible_dictionary_modal.dart';
 
 enum BibleReadingTheme { light, sepia, dark }
 
@@ -138,9 +138,10 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   }
 
   void _showPassageNotes() {
-    final passageNotes = _notes.where((n) =>
-        _passages.any((p) => p.verses.any((v) =>
-            v.bookId == n.bookId && v.chapter == n.chapter))).toList();
+    final passageNotes = _notes
+        .where((n) => _passages.any((p) => p.verses
+            .any((v) => v.bookId == n.bookId && v.chapter == n.chapter)))
+        .toList();
     final refStr = _bibleService.getBookNameFromId(_selectedBookId ?? 19);
     final noteCount = passageNotes.length;
     showModalBottomSheet(
@@ -223,8 +224,11 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
   Widget _buildNoteTile(BibleNote n) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.sticky_note_2_outlined, size: 20, color: AppTheme.accentGold),
-      title: Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis,
+      leading: const Icon(Icons.sticky_note_2_outlined,
+          size: 20, color: AppTheme.accentGold),
+      title: Text(n.body,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 14)),
       subtitle: Text(n.reference,
           style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
@@ -244,8 +248,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             final filtered = query.isEmpty
                 ? sorted
                 : sorted
-                    .where((b) =>
-                        b.toLowerCase().contains(query.toLowerCase()))
+                    .where((b) => b.toLowerCase().contains(query.toLowerCase()))
                     .toList();
 
             return DraggableScrollableSheet(
@@ -262,8 +265,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: TextField(
                       decoration: InputDecoration(
                         hintText: 'Buscar libro (ej. Mateo, Salmos...)',
@@ -451,7 +454,9 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: _themeTextColor),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: _themeTextColor),
                 ),
               ),
               if (widget.readOnly)
@@ -463,7 +468,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
         actions: [
           IconButton(
             tooltip: 'Diccionario bíblico',
-            icon: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryBlue),
+            icon: const Icon(Icons.menu_book_rounded,
+                color: AppTheme.primaryBlue),
             onPressed: () => BibleDictionaryModal.show(context),
           ),
           IconButton(
@@ -662,8 +668,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                           width: 48,
                           height: 3,
                           decoration: BoxDecoration(
-                            color:
-                                AppTheme.primaryBlueLight.withValues(alpha: 0.6),
+                            color: AppTheme.primaryBlueLight
+                                .withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -676,10 +682,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             ),
           ),
         ),
-        if (widget.readOnly && _selectedBookId != null)
-          _buildChapterNav(),
-        if (widget.readOnly && _passages.isNotEmpty)
-          _buildReaderToolbar(),
+        if (widget.readOnly && _selectedBookId != null) _buildChapterNav(),
+        if (widget.readOnly && _passages.isNotEmpty) _buildReaderToolbar(),
       ],
     );
   }
@@ -706,28 +710,39 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                     : AppTheme.textSecondary.withValues(alpha: 0.3),
               ),
               Text(
-                _selectedChapter > 1 ? ' Cap. ${_selectedChapter - 1}' : ' Inicio',
-                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                _selectedChapter > 1
+                    ? ' Cap. ${_selectedChapter - 1}'
+                    : ' Inicio',
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary),
               ),
             ],
           ),
           const Row(
             children: [
-              Icon(Icons.swipe_left_alt, size: 14, color: AppTheme.textSecondary),
+              Icon(Icons.swipe_left_alt,
+                  size: 14, color: AppTheme.textSecondary),
               SizedBox(width: 4),
               Text(
                 'Desliza para cambiar',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary),
               ),
               SizedBox(width: 4),
-              Icon(Icons.swipe_right_alt, size: 14, color: AppTheme.textSecondary),
+              Icon(Icons.swipe_right_alt,
+                  size: 14, color: AppTheme.textSecondary),
             ],
           ),
           Row(
             children: [
               Text(
-                _selectedChapter < _maxChapters ? 'Cap. ${_selectedChapter + 1} ' : ' Fin',
-                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                _selectedChapter < _maxChapters
+                    ? 'Cap. ${_selectedChapter + 1} '
+                    : ' Fin',
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary),
               ),
               Icon(
                 Icons.chevron_right,
@@ -747,7 +762,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
     final bookName = _bibleService.getBookNameFromId(_selectedBookId!);
     final verseRange = _getVerseRange();
 
-    return Container(
+    return DecoratedBox(
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: AppTheme.pendingGray)),
@@ -775,14 +790,14 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                           : bookName,
                       onTap: _showBookSelector,
                     ),
-                    _Chevron(),
+                    const _Chevron(),
                     _CarouselChip(
                       icon: Icons.collections_bookmark,
                       label: '$_selectedChapter',
                       badge: 'Cap.',
                       onTap: _showChapterPicker,
                     ),
-                    _Chevron(),
+                    const _Chevron(),
                     _CarouselChip(
                       icon: Icons.format_list_numbered,
                       label: verseRange,
@@ -817,26 +832,30 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           ),
           ..._versions.map((v) => ListTile(
-            leading: Icon(
-              v.id == _selectedVersion.id ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: AppTheme.primaryBlue,
-            ),
-            title: Text(v.name),
-            onTap: () {
-              Navigator.pop(ctx);
-              setState(() => _selectedVersion = v);
-              _loadText();
-            },
-          )),
+                leading: Icon(
+                  v.id == _selectedVersion.id
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: AppTheme.primaryBlue,
+                ),
+                title: Text(v.name),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() => _selectedVersion = v);
+                  _loadText();
+                },
+              )),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings, color: AppTheme.primaryBlue),
             title: const Text('Gestionar versiones...'),
             onTap: () {
               Navigator.pop(ctx);
-              Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const BibleVersionsScreen(),
-              ));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BibleVersionsScreen(),
+                  ));
             },
           ),
         ],
@@ -883,8 +902,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
               if (_fontSize < 28) setState(() => _fontSize += 2);
             },
           ),
-          Container(
-              width: 1, height: 24, color: AppTheme.pendingGrayDark),
+          Container(width: 1, height: 24, color: AppTheme.pendingGrayDark),
           GestureDetector(
             onTap: _showVersionSelector,
             child: Row(
@@ -903,8 +921,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
               ],
             ),
           ),
-          Container(
-              width: 1, height: 24, color: AppTheme.pendingGrayDark),
+          Container(width: 1, height: 24, color: AppTheme.pendingGrayDark),
           _ToolbarBtn(
             icon: Icons.share,
             onTap: _sharePassage,
@@ -954,8 +971,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text('Seleccionar versículo',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             SizedBox(
               height: 300,
@@ -1036,8 +1052,7 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text('Seleccionar capítulo',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             SizedBox(
               height: 300,
@@ -1053,9 +1068,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                   final ch = rows[i];
                   final isCurrent = ch == _selectedChapter;
                   return Material(
-                    color: isCurrent
-                        ? AppTheme.primaryBlue
-                        : AppTheme.pendingGray,
+                    color:
+                        isCurrent ? AppTheme.primaryBlue : AppTheme.pendingGray,
                     borderRadius: BorderRadius.circular(8),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
@@ -1204,8 +1218,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
               ),
             ),
             if (note != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
                 child: Icon(Icons.sticky_note_2_outlined,
                     size: 16, color: AppTheme.accentGold),
               ),
@@ -1236,14 +1250,12 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
 
             List<badge_model.Badge> newBadges = [];
             try {
-              newBadges =
-                  await GamificationService.evaluarYNotificarBadges(
+              newBadges = await GamificationService.evaluarYNotificarBadges(
                 user: user,
                 firestore: firestore,
                 storage: storageService,
                 extraStats: {
-                  'lecturas_completadas':
-                      storageService.getTotalCompletadas(),
+                  'lecturas_completadas': storageService.getTotalCompletadas(),
                 },
               );
             } catch (_) {
@@ -1361,7 +1373,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.menu_book_rounded, color: AppTheme.accentGold),
+                  leading: const Icon(Icons.menu_book_rounded,
+                      color: AppTheme.accentGold),
                   title: const Text('Buscar en Diccionario Bíblico'),
                   onTap: () {
                     Navigator.pop(context);
@@ -1370,7 +1383,8 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.compare_arrows, color: AppTheme.primaryBlue),
+                  leading: const Icon(Icons.compare_arrows,
+                      color: AppTheme.primaryBlue),
                   title: const Text('Comparar en otras versiones'),
                   onTap: () {
                     Navigator.pop(context);
@@ -1391,9 +1405,11 @@ class _BibleReaderScreenState extends ConsumerState<BibleReaderScreen> {
                   title: const Text('Copiar versículo'),
                   onTap: () {
                     Navigator.pop(context);
-                    Clipboard.setData(ClipboardData(text: '${verse.reference}: ${verse.text}'));
+                    Clipboard.setData(ClipboardData(
+                        text: '${verse.reference}: ${verse.text}'));
                     ScaffoldMessenger.of(this.context).showSnackBar(
-                      const SnackBar(content: Text('Versículo copiado al portapapeles')),
+                      const SnackBar(
+                          content: Text('Versículo copiado al portapapeles')),
                     );
                   },
                 ),
@@ -1556,8 +1572,11 @@ class _SmNavBtn extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Icon(icon, size: 20,
-              color: onTap != null ? AppTheme.primaryBlue : AppTheme.pendingGrayDark),
+          child: Icon(icon,
+              size: 20,
+              color: onTap != null
+                  ? AppTheme.primaryBlue
+                  : AppTheme.pendingGrayDark),
         ),
       ),
     );
@@ -1570,8 +1589,7 @@ class _Chevron extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 3),
-      child: Icon(Icons.chevron_right,
-          size: 14, color: AppTheme.textSecondary),
+      child: Icon(Icons.chevron_right, size: 14, color: AppTheme.textSecondary),
     );
   }
 }

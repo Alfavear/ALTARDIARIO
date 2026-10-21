@@ -1,16 +1,19 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/services/notification_service.dart';
-import '../../core/services/gamification_service.dart';
+
 import '../../core/services/community_policy_service.dart';
-import '../../data/models/usuario.dart';
+import '../../core/services/gamification_service.dart';
+import '../../core/services/notification_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/models/badge.dart';
+import '../../data/models/usuario.dart';
 import '../providers/app_providers.dart';
-import 'login_screen.dart';
 import 'followers_screen.dart';
+import 'login_screen.dart';
 
 class PerfilScreen extends ConsumerWidget {
   const PerfilScreen({super.key});
@@ -34,7 +37,8 @@ class PerfilScreen extends ConsumerWidget {
             expandedHeight: 80,
             pinned: true,
             flexibleSpace: Container(
-              decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
+              decoration:
+                  const BoxDecoration(gradient: AppTheme.headerGradient),
             ),
             title: Row(
               mainAxisSize: MainAxisSize.min,
@@ -55,27 +59,22 @@ class PerfilScreen extends ConsumerWidget {
             child: Column(
               children: [
                 _ProfileHero(
-                    authState: authState,
-                    userProfile: userProfile,
-                    ref: ref),
+                    authState: authState, userProfile: userProfile, ref: ref),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _StatsBentoGrid(
-                          streak: streak,
-                          total: total,
-                          reflexionesCount: null),
+                          streak: streak, total: total, reflexionesCount: null),
                       if (isGuest) ...[
                         const SizedBox(height: 20),
-                        _GuestConversionCard(),
+                        const _GuestConversionCard(),
                       ],
                       const SizedBox(height: 20),
                       _LevelProgressCard(userProfile: userProfile),
                       const SizedBox(height: 20),
-                      _AnnualProgressCard(
-                          progreso: progreso, total: total),
+                      _AnnualProgressCard(progreso: progreso, total: total),
                       const SizedBox(height: 20),
                       _SocialStatsSection(userProfile: userProfile),
                       const SizedBox(height: 20),
@@ -120,8 +119,8 @@ class _ProfileHero extends StatelessWidget {
         ? usuario!.fotoUrl
         : authState.value?.photoURL;
     final nombreCrudo = (usuario?.nombre ?? '').trim();
-    final hasNombreReal = nombreCrudo.isNotEmpty &&
-        nombreCrudo.toLowerCase() != 'anónimo';
+    final hasNombreReal =
+        nombreCrudo.isNotEmpty && nombreCrudo.toLowerCase() != 'anónimo';
     final nombre = hasNombreReal ? nombreCrudo : (usuario?.displayName ?? '');
     final bio = usuario?.bio ?? '';
 
@@ -147,13 +146,16 @@ class _ProfileHero extends StatelessWidget {
                 CircleAvatar(
                   radius: 48,
                   backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  backgroundImage: photoUrl != null && photoUrl.isNotEmpty && !isEmoji
-                      ? NetworkImage(photoUrl)
-                      : null,
+                  backgroundImage:
+                      photoUrl != null && photoUrl.isNotEmpty && !isEmoji
+                          ? NetworkImage(photoUrl)
+                          : null,
                   child: (photoUrl == null || photoUrl.isEmpty || isEmoji)
                       ? (isEmoji
-                          ? Text(emojiChar, style: const TextStyle(fontSize: 44))
-                          : const Icon(Icons.person, size: 48, color: Colors.white))
+                          ? Text(emojiChar,
+                              style: const TextStyle(fontSize: 44))
+                          : const Icon(Icons.person,
+                              size: 48, color: Colors.white))
                       : null,
                 ),
                 Positioned(
@@ -187,7 +189,8 @@ class _ProfileHero extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => _showEditProfileDialog(context, ref, usuario),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
@@ -289,8 +292,8 @@ void _showEditProfileDialog(
                   hintText: 'Tu nombre',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(height: 14),
@@ -304,8 +307,8 @@ void _showEditProfileDialog(
                   hintText: 'Escribe una breve biografía...',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(height: 14),
@@ -318,8 +321,8 @@ void _showEditProfileDialog(
                   hintText: 'https://ejemplo.com/foto.png o emoji:🕊️',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(height: 10),
@@ -352,7 +355,8 @@ void _showEditProfileDialog(
                       child: CircleAvatar(
                         radius: 20,
                         backgroundColor: AppTheme.pendingGray,
-                        child: Text(emojiChar, style: const TextStyle(fontSize: 20)),
+                        child: Text(emojiChar,
+                            style: const TextStyle(fontSize: 20)),
                       ),
                     ),
                   );
@@ -370,9 +374,7 @@ void _showEditProfileDialog(
             onPressed: () async {
               final uid = ref.read(effectiveUserUidProvider);
               if (uid != null) {
-                await ref
-                    .read(firestoreServiceProvider)
-                    .updateUserConfig(uid, {
+                await ref.read(firestoreServiceProvider).updateUserConfig(uid, {
                   'nombre': nombreCtrl.text.trim(),
                   'bio': bioCtrl.text.trim(),
                   'fotoUrl': fotoUrlCtrl.text.trim(),
@@ -413,41 +415,35 @@ class _StatsBentoGrid extends StatelessWidget {
       offset: const Offset(0, -28),
       child: Container(
         padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: Row(
-        children: [
-          _BentoStat(
-            icon: Icons.auto_stories,
-            value: '$total',
-            label: 'Lecturas',
-            color: AppTheme.primaryBlue,
-          ),
-          Container(
-              height: 40,
-              width: 1,
-              color: AppTheme.pendingGrayDark),
-          _BentoStat(
-            icon: Icons.local_fire_department,
-            value: '$streak días',
-            label: 'Racha',
-            color: AppTheme.streakOrange,
-          ),
-          Container(
-              height: 40,
-              width: 1,
-              color: AppTheme.pendingGrayDark),
-          _BentoStat(
-            icon: Icons.description,
-            value: '${reflexionesCount ?? 0}',
-            label: 'Reflexiones',
-            color: AppTheme.completedGreen,
-          ),
-        ],
-      ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: Row(
+          children: [
+            _BentoStat(
+              icon: Icons.auto_stories,
+              value: '$total',
+              label: 'Lecturas',
+              color: AppTheme.primaryBlue,
+            ),
+            Container(height: 40, width: 1, color: AppTheme.pendingGrayDark),
+            _BentoStat(
+              icon: Icons.local_fire_department,
+              value: '$streak días',
+              label: 'Racha',
+              color: AppTheme.streakOrange,
+            ),
+            Container(height: 40, width: 1, color: AppTheme.pendingGrayDark),
+            _BentoStat(
+              icon: Icons.description,
+              value: '${reflexionesCount ?? 0}',
+              label: 'Reflexiones',
+              color: AppTheme.completedGreen,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -472,13 +468,13 @@ class _BentoStat extends StatelessWidget {
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 4),
           Text(value,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.textPrimary)),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: AppTheme.textSecondary)),
+              style:
+                  const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
         ],
       ),
     );
@@ -488,8 +484,7 @@ class _BentoStat extends StatelessWidget {
 class _AnnualProgressCard extends StatelessWidget {
   final double progreso;
   final int total;
-  const _AnnualProgressCard(
-      {required this.progreso, required this.total});
+  const _AnnualProgressCard({required this.progreso, required this.total});
 
   @override
   Widget build(BuildContext context) {
@@ -507,13 +502,11 @@ class _AnnualProgressCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Progreso Anual',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               Text(
                 '${(progreso * 100).toStringAsFixed(1)}%',
                 style: const TextStyle(
-                    color: AppTheme.primaryBlue,
-                    fontWeight: FontWeight.bold),
+                    color: AppTheme.primaryBlue, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -531,8 +524,7 @@ class _AnnualProgressCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '$total de 365 lecturas completadas',
-            style: const TextStyle(
-                fontSize: 12, color: AppTheme.textSecondary),
+            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -574,11 +566,9 @@ class _SocialStatsSection extends ConsumerWidget {
                   );
                 },
                 child: _SocialStat(
-                    value: '${usuario.siguiendo.length}',
-                    label: 'Siguiendo'),
+                    value: '${usuario.siguiendo.length}', label: 'Siguiendo'),
               ),
-              Container(
-                  height: 40, width: 1, color: AppTheme.pendingGrayDark),
+              Container(height: 40, width: 1, color: AppTheme.pendingGrayDark),
               GestureDetector(
                 onTap: () {
                   if (uid == null) return;
@@ -593,8 +583,7 @@ class _SocialStatsSection extends ConsumerWidget {
                   );
                 },
                 child: _SocialStat(
-                    value: '${usuario.seguidores.length}',
-                    label: 'Seguidores'),
+                    value: '${usuario.seguidores.length}', label: 'Seguidores'),
               ),
             ],
           ),
@@ -621,8 +610,8 @@ class _SocialStat extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryBlue)),
         Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: AppTheme.textSecondary)),
+            style:
+                const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
       ],
     );
   }
@@ -656,7 +645,8 @@ class _LevelProgressCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [AppTheme.accentGold, Colors.amber],
@@ -696,7 +686,8 @@ class _LevelProgressCard extends StatelessWidget {
               value: progress,
               minHeight: 10,
               backgroundColor: AppTheme.pendingGray,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
             ),
           ),
           const SizedBox(height: 6),
@@ -705,11 +696,15 @@ class _LevelProgressCard extends StatelessWidget {
             children: [
               Text(
                 '${(progress * 100).toStringAsFixed(0)}% hacia Nivel ${nivel < 10 ? nivel + 1 : 10}',
-                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                style: const TextStyle(
+                    fontSize: 12, color: AppTheme.textSecondary),
               ),
               Text(
                 nivel >= 10 ? '¡Nivel Máximo!' : '$totalPuntos / $nextXp XP',
-                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -748,7 +743,8 @@ class _AchievementsSection extends StatelessWidget {
       if (total >= 365) unlockedIds.add('trescientos65');
     }
 
-    final unlockedCount = allBadges.where((b) => unlockedIds.contains(b.id)).length;
+    final unlockedCount =
+        allBadges.where((b) => unlockedIds.contains(b.id)).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -759,10 +755,12 @@ class _AchievementsSection extends StatelessWidget {
             Row(
               children: [
                 const Text('Mis Insignias',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -779,7 +777,8 @@ class _AchievementsSection extends StatelessWidget {
               ],
             ),
             TextButton(
-              onPressed: () => _showAllBadgesModal(context, allBadges, unlockedIds),
+              onPressed: () =>
+                  _showAllBadgesModal(context, allBadges, unlockedIds),
               child: const Text('Ver todas', style: TextStyle(fontSize: 13)),
             ),
           ],
@@ -809,7 +808,9 @@ class _AchievementsSection extends StatelessWidget {
                             : AppTheme.pendingGray,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isUnlocked ? rarityColor : AppTheme.pendingGrayDark,
+                          color: isUnlocked
+                              ? rarityColor
+                              : AppTheme.pendingGrayDark,
                           width: 2,
                         ),
                         boxShadow: isUnlocked
@@ -842,7 +843,8 @@ class _AchievementsSection extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isUnlocked ? FontWeight.bold : FontWeight.normal,
                           color: isUnlocked
                               ? AppTheme.textPrimary
                               : AppTheme.textSecondary,
@@ -873,7 +875,8 @@ class _AchievementsSection extends StatelessWidget {
   }
 }
 
-void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) {
+void _showBadgeDetailDialog(
+    BuildContext context, Badge badge, bool isUnlocked) {
   final rarityColor = _AchievementsSection._getRarityColor(badge.rarity);
 
   showDialog(
@@ -886,9 +889,13 @@ void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) 
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: isUnlocked ? rarityColor.withValues(alpha: 0.2) : AppTheme.pendingGray,
+              color: isUnlocked
+                  ? rarityColor.withValues(alpha: 0.2)
+                  : AppTheme.pendingGray,
               shape: BoxShape.circle,
-              border: Border.all(color: isUnlocked ? rarityColor : AppTheme.pendingGrayDark, width: 3),
+              border: Border.all(
+                  color: isUnlocked ? rarityColor : AppTheme.pendingGrayDark,
+                  width: 3),
             ),
             child: Center(
               child: Text(
@@ -898,7 +905,10 @@ void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) 
             ),
           ),
           const SizedBox(height: 12),
-          Text(badge.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(badge.name,
+              textAlign: TextAlign.center,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -908,7 +918,10 @@ void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) 
             ),
             child: Text(
               badge.rarity.label.toUpperCase(),
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: rarityColor),
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: rarityColor),
             ),
           ),
         ],
@@ -916,14 +929,18 @@ void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) 
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(badge.description, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
+          Text(badge.description,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.stars, color: AppTheme.accentGold, size: 18),
               const SizedBox(width: 4),
-              Text('+${badge.points} XP', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
+              Text('+${badge.points} XP',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -931,7 +948,8 @@ void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) 
             isUnlocked ? '✅ Insignia Desbloqueada' : '🔒 Bloqueada',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isUnlocked ? AppTheme.completedGreen : AppTheme.textSecondary,
+              color:
+                  isUnlocked ? AppTheme.completedGreen : AppTheme.textSecondary,
             ),
           ),
         ],
@@ -946,7 +964,8 @@ void _showBadgeDetailDialog(BuildContext context, Badge badge, bool isUnlocked) 
   );
 }
 
-void _showAllBadgesModal(BuildContext context, List<Badge> allBadges, Set<String> unlockedIds) {
+void _showAllBadgesModal(
+    BuildContext context, List<Badge> allBadges, Set<String> unlockedIds) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -979,14 +998,18 @@ void _showAllBadgesModal(BuildContext context, List<Badge> allBadges, Set<String
                     const Flexible(
                       child: Text(
                         'Colección de Insignias',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '${unlockedIds.length}/${allBadges.length} Desbloqueadas',
-                      style: const TextStyle(fontSize: 13, color: AppTheme.primaryBlue, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -1002,7 +1025,8 @@ void _showAllBadgesModal(BuildContext context, List<Badge> allBadges, Set<String
               itemBuilder: (ctx, i) {
                 final badge = allBadges[i];
                 final isUnlocked = unlockedIds.contains(badge.id);
-                final rarityColor = _AchievementsSection._getRarityColor(badge.rarity);
+                final rarityColor =
+                    _AchievementsSection._getRarityColor(badge.rarity);
 
                 return Card(
                   elevation: 1,
@@ -1010,7 +1034,9 @@ void _showAllBadgesModal(BuildContext context, List<Badge> allBadges, Set<String
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: isUnlocked ? rarityColor.withValues(alpha: 0.5) : Colors.transparent,
+                      color: isUnlocked
+                          ? rarityColor.withValues(alpha: 0.5)
+                          : Colors.transparent,
                     ),
                   ),
                   child: ListTile(
@@ -1018,21 +1044,27 @@ void _showAllBadgesModal(BuildContext context, List<Badge> allBadges, Set<String
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: isUnlocked ? rarityColor.withValues(alpha: 0.15) : AppTheme.pendingGray,
+                        color: isUnlocked
+                            ? rarityColor.withValues(alpha: 0.15)
+                            : AppTheme.pendingGray,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
-                        child: Text(isUnlocked ? badge.icon : '🔒', style: const TextStyle(fontSize: 22)),
+                        child: Text(isUnlocked ? badge.icon : '🔒',
+                            style: const TextStyle(fontSize: 22)),
                       ),
                     ),
                     title: Text(
                       badge.name,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isUnlocked ? AppTheme.textPrimary : AppTheme.textSecondary,
+                        color: isUnlocked
+                            ? AppTheme.textPrimary
+                            : AppTheme.textSecondary,
                       ),
                     ),
-                    subtitle: Text(badge.description, style: const TextStyle(fontSize: 12)),
+                    subtitle: Text(badge.description,
+                        style: const TextStyle(fontSize: 12)),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -1047,19 +1079,24 @@ void _showAllBadgesModal(BuildContext context, List<Badge> allBadges, Set<String
                         ),
                         const SizedBox(height: 2),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: rarityColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             badge.rarity.label,
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: rarityColor),
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: rarityColor),
                           ),
                         ),
                       ],
                     ),
-                    onTap: () => _showBadgeDetailDialog(context, badge, isUnlocked),
+                    onTap: () =>
+                        _showBadgeDetailDialog(context, badge, isUnlocked),
                   ),
                 );
               },
@@ -1089,68 +1126,72 @@ class _ConfigSection extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          const Text('Configuración',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            secondary: Icon(
-              focusMode ? Icons.lock : Icons.lock_open_rounded,
-              color: focusMode ? AppTheme.streakOrange : AppTheme.textSecondary,
+            const Text('Configuración',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              secondary: Icon(
+                focusMode ? Icons.lock : Icons.lock_open_rounded,
+                color:
+                    focusMode ? AppTheme.streakOrange : AppTheme.textSecondary,
+              ),
+              title: Text(
+                focusMode ? 'Modo Enfoque activo' : 'Modo Enfoque',
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                focusMode
+                    ? 'Notificaciones bloqueadas'
+                    : 'Sin distracciones hasta completar tu lectura',
+                style: const TextStyle(
+                    fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              value: focusMode,
+              activeThumbColor: AppTheme.streakOrange,
+              onChanged: (_) {
+                ref.read(focusModeProvider.notifier).toggle();
+              },
             ),
-            title: Text(
-              focusMode ? 'Modo Enfoque activo' : 'Modo Enfoque',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined,
+                  color: AppTheme.primaryBlue),
+              title: const Text('Recordatorio diario',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              subtitle: Text(
+                '${storage.getNotificationHour().toString().padLeft(2, '0')}:${storage.getNotificationMinute().toString().padLeft(2, '0')}',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 13),
+              ),
+              trailing: TextButton(
+                onPressed: () => _pickNotificationTime(context, ref),
+                child: const Text('CAMBIAR'),
+              ),
             ),
-            subtitle: Text(
-              focusMode
-                  ? 'Notificaciones bloqueadas'
-                  : 'Sin distracciones hasta completar tu lectura',
-              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            const Divider(height: 1, indent: 56),
+            ListTile(
+              leading: const Icon(Icons.shield_outlined,
+                  color: AppTheme.primaryBlue),
+              title: const Text('Normas de la Comunidad',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              subtitle: const Text(
+                  'Uso edificado, prohibido pedir dinero o vulgaridad',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              trailing: const Icon(Icons.chevron_right,
+                  color: AppTheme.textSecondary),
+              onTap: () =>
+                  CommunityPolicyService.showCommunityRulesDialog(context),
             ),
-            value: focusMode,
-            activeThumbColor: AppTheme.streakOrange,
-            onChanged: (_) {
-              ref.read(focusModeProvider.notifier).toggle();
-            },
-          ),
-          const Divider(height: 1, indent: 56),
-          ListTile(
-            leading: const Icon(Icons.notifications_outlined,
-                color: AppTheme.primaryBlue),
-            title: const Text('Recordatorio diario',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-            subtitle: Text(
-              '${storage.getNotificationHour().toString().padLeft(2, '0')}:${storage.getNotificationMinute().toString().padLeft(2, '0')}',
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-            ),
-            trailing: TextButton(
-              onPressed: () => _pickNotificationTime(context, ref),
-              child: const Text('CAMBIAR'),
-            ),
-          ),
-          const Divider(height: 1, indent: 56),
-          ListTile(
-            leading: const Icon(Icons.shield_outlined,
-                color: AppTheme.primaryBlue),
-            title: const Text('Normas de la Comunidad',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-            subtitle: const Text(
-                'Uso edificado, prohibido pedir dinero o vulgaridad',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-            trailing: const Icon(Icons.chevron_right,
-                color: AppTheme.textSecondary),
-            onTap: () =>
-                CommunityPolicyService.showCommunityRulesDialog(context),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
- }
+    );
+  }
 }
 
-Future<void> _pickNotificationTime(
-    BuildContext context, WidgetRef ref) async {
+Future<void> _pickNotificationTime(BuildContext context, WidgetRef ref) async {
   final storage = ref.read(storageProvider);
   final firestore = ref.read(firestoreServiceProvider);
   final uid = ref.read(effectiveUserUidProvider);
@@ -1184,7 +1225,7 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
       maxChildSize: 0.95,
       minChildSize: 0.5,
       expand: false,
-      builder: (_, controller) => Container(
+      builder: (_, controller) => DecoratedBox(
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1235,8 +1276,12 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
                 builder: (context, ref, _) {
                   final focusMode = ref.watch(focusModeProvider);
                   final storage = ref.watch(storageProvider);
-                  final hour = storage.getNotificationHour().toString().padLeft(2, '0');
-                  final min = storage.getNotificationMinute().toString().padLeft(2, '0');
+                  final hour =
+                      storage.getNotificationHour().toString().padLeft(2, '0');
+                  final min = storage
+                      .getNotificationMinute()
+                      .toString()
+                      .padLeft(2, '0');
 
                   return ListView(
                     controller: controller,
@@ -1262,18 +1307,25 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
                           children: [
                             SwitchListTile(
                               secondary: Icon(
-                                focusMode ? Icons.lock : Icons.lock_open_rounded,
-                                color: focusMode ? AppTheme.streakOrange : AppTheme.textSecondary,
+                                focusMode
+                                    ? Icons.lock
+                                    : Icons.lock_open_rounded,
+                                color: focusMode
+                                    ? AppTheme.streakOrange
+                                    : AppTheme.textSecondary,
                               ),
                               title: const Text(
                                 'Modo Enfoque',
-                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14),
                               ),
                               subtitle: Text(
                                 focusMode
                                     ? 'Bloquea distracciones durante la lectura'
                                     : 'Desactivado',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary),
                               ),
                               value: focusMode,
                               activeThumbColor: AppTheme.streakOrange,
@@ -1283,14 +1335,17 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
                             ),
                             const Divider(height: 1, indent: 56),
                             ListTile(
-                              leading: const Icon(Icons.alarm, color: AppTheme.primaryBlue),
+                              leading: const Icon(Icons.alarm,
+                                  color: AppTheme.primaryBlue),
                               title: const Text(
                                 'Recordatorio Diario',
-                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14),
                               ),
                               subtitle: Text('Programado a las $hour:$min h'),
                               trailing: TextButton(
-                                onPressed: () => _pickNotificationTime(context, ref),
+                                onPressed: () =>
+                                    _pickNotificationTime(context, ref),
                                 child: const Text('CAMBIAR'),
                               ),
                             ),
@@ -1315,15 +1370,19 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ListTile(
-                          leading: const Icon(Icons.gavel, color: AppTheme.primaryBlue),
+                          leading: const Icon(Icons.gavel,
+                              color: AppTheme.primaryBlue),
                           title: const Text(
                             'Normas y Políticas de la Comunidad',
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 14),
                           ),
-                          subtitle: const Text('Uso respetuoso, prohibido spam o vulgaridad'),
+                          subtitle: const Text(
+                              'Uso respetuoso, prohibido spam o vulgaridad'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () {
-                            CommunityPolicyService.showCommunityRulesDialog(context);
+                            CommunityPolicyService.showCommunityRulesDialog(
+                                context);
                           },
                         ),
                       ),
@@ -1345,26 +1404,33 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ListTile(
-                          leading: const Icon(Icons.delete_outline, color: Colors.red),
+                          leading: const Icon(Icons.delete_outline,
+                              color: Colors.red),
                           title: const Text(
                             'Reiniciar progreso local',
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.red),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: Colors.red),
                           ),
-                          subtitle: const Text('Elimina las lecturas guardadas en este dispositivo'),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.red),
+                          subtitle: const Text(
+                              'Elimina las lecturas guardadas en este dispositivo'),
+                          trailing: const Icon(Icons.chevron_right,
+                              color: Colors.red),
                           onTap: () {
                             _showClearDataDialog(context, ref);
                           },
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Center(
+                      const Center(
                         child: Column(
                           children: [
-                            const Row(
+                            Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.local_fire_department, color: AppTheme.primaryBlue, size: 18),
+                                Icon(Icons.local_fire_department,
+                                    color: AppTheme.primaryBlue, size: 18),
                                 SizedBox(width: 6),
                                 Text(
                                   'AltarDiario v1.0.0 Pro',
@@ -1376,10 +1442,11 @@ void _showSettingsModalSheet(BuildContext context, WidgetRef ref) {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
+                            SizedBox(height: 4),
+                            Text(
                               'Tu hábito diario con Dios • 2026',
-                              style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                              style: TextStyle(
+                                  fontSize: 11, color: AppTheme.textSecondary),
                             ),
                           ],
                         ),
@@ -1430,7 +1497,8 @@ void _showClearDataDialog(BuildContext context, WidgetRef ref) {
               ),
             );
           },
-          child: const Text('Reiniciar', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          child: const Text('Reiniciar',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
         ),
       ],
     ),
@@ -1470,9 +1538,7 @@ void _showFeedbackDialog(BuildContext context, WidgetRef ref) {
                   final star = i + 1;
                   return IconButton(
                     icon: Icon(
-                      star <= calificacion
-                          ? Icons.star
-                          : Icons.star_border,
+                      star <= calificacion ? Icons.star : Icons.star_border,
                       color: AppTheme.accentGold,
                       size: 36,
                     ),
@@ -1507,11 +1573,11 @@ void _showFeedbackDialog(BuildContext context, WidgetRef ref) {
               final uid = ref.read(effectiveUserUidProvider);
               final userProfile = ref.read(userProfileProvider).asData?.value;
               await ref.read(firestoreServiceProvider).sendFeedback(
-                userId: uid ?? 'anonimo',
-                userName: userProfile?.displayName ?? '',
-                mensaje: mensajeCtrl.text.trim(),
-                calificacion: calificacion,
-              );
+                    userId: uid ?? 'anonimo',
+                    userName: userProfile?.displayName ?? '',
+                    mensaje: mensajeCtrl.text.trim(),
+                    calificacion: calificacion,
+                  );
               if (!ctx.mounted) return;
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1649,11 +1715,13 @@ class _MenuOptions extends ConsumerWidget {
               ref.read(localUidProvider.notifier).setUid(null);
               storage.setSwitchingAccount(false);
               if (!context.mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) => const LoginScreen(),
+              unawaited(
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => const LoginScreen(),
+                  ),
+                  (route) => false,
                 ),
-                (route) => false,
               );
             },
           ),
@@ -1686,8 +1754,7 @@ class _MenuTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
-            Icon(icon,
-                color: color ?? AppTheme.textSecondary, size: 22),
+            Icon(icon, color: color ?? AppTheme.textSecondary, size: 22),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -1730,88 +1797,86 @@ class _UserReflexionesSection extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         ref.watch(userReflexionesProvider(uid)).when(
-          data: (reflexiones) {
-            if (reflexiones.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                  child: Text(
-                    'Aún no has compartido reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                ),
-              );
-            }
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: reflexiones.length,
-              itemBuilder: (context, i) {
-                final r = reflexiones[i];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          r.pasajeDia,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.primaryBlue,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(r.texto,
-                            style: const TextStyle(
-                                fontSize: 14, height: 1.4)),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
+              data: (reflexiones) {
+                if (reflexiones.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'Aún no has compartido reflexiones.\n¡Marca una lectura y comparte tu pensamiento!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppTheme.textSecondary),
+                      ),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: reflexiones.length,
+                  itemBuilder: (context, i) {
+                    final r = reflexiones[i];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              DateFormat('dd MMM yyyy').format(r.fecha),
+                              r.pasajeDia,
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary),
+                                fontSize: 12,
+                                color: AppTheme.primaryBlue,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
+                            const SizedBox(height: 6),
+                            Text(r.texto,
+                                style:
+                                    const TextStyle(fontSize: 14, height: 1.4)),
+                            const SizedBox(height: 8),
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(Icons.favorite,
-                                    size: 14, color: Colors.red),
-                                const SizedBox(width: 4),
-                                Text('${r.likes}',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.textSecondary)),
+                                Text(
+                                  DateFormat('dd MMM yyyy').format(r.fecha),
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary),
+                                ),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.favorite,
+                                        size: 14, color: Colors.red),
+                                    const SizedBox(width: 4),
+                                    Text('${r.likes}',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.textSecondary)),
+                                  ],
+                                ),
                               ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
-          loading: () =>
-              const Center(child: CircularProgressIndicator()),
-          error: (e, _) => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                'No se pudieron cargar tus reflexiones.\nVerifica que Firebase Console tenga los índices necesarios.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.textSecondary),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'No se pudieron cargar tus reflexiones.\nVerifica que Firebase Console tenga los índices necesarios.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
       ],
     );
   }
@@ -1858,8 +1923,7 @@ class _GuestConversionCard extends ConsumerWidget {
                             fontSize: 15)),
                     SizedBox(height: 2),
                     Text('Inicia sesión con Google y no pierdas tu avance',
-                        style: TextStyle(
-                            color: Colors.white70, fontSize: 12)),
+                        style: TextStyle(color: Colors.white70, fontSize: 12)),
                   ],
                 ),
               ),
@@ -1904,7 +1968,8 @@ Future<void> _signInWithGoogleFromProfile(
     if (existing == null) {
       String name = user.displayName ?? '';
       if (name.trim().isEmpty) {
-        name = user.email?.split('@').first ?? 'Usuario-${user.uid.substring(0, 6)}';
+        name = user.email?.split('@').first ??
+            'Usuario-${user.uid.substring(0, 6)}';
       }
       await firestore.crearOActualizarUsuario(
         Usuario(
@@ -1935,7 +2000,8 @@ Future<void> _signInWithGoogleFromProfile(
     ref.invalidate(isGuestUserProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Sesión iniciada con Google. ¡Tu progreso está guardado!'),
+        content:
+            Text('Sesión iniciada con Google. ¡Tu progreso está guardado!'),
         backgroundColor: AppTheme.completedGreen,
       ),
     );

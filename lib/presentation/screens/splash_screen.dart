@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
-import 'main_navigation_view.dart';
 import 'login_screen.dart';
+import 'main_navigation_view.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -57,7 +58,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void _navigateAfterSplash() async {
     // Intentar esperar a que el stream emita, con un timeout de 2 segundos para no bloquearnos
     try {
-      await ref.read(authStateProvider.future).timeout(const Duration(seconds: 2));
+      await ref
+          .read(authStateProvider.future)
+          .timeout(const Duration(seconds: 2));
     } catch (_) {}
 
     if (!mounted) return;
@@ -67,12 +70,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (hasFirebaseUser) {
       // Persistir el UID de Firebase para poder entrar sin internet
       // cuando Firebase Auth no pueda restaurar la sesión.
-      unawaited(ref
-          .read(authServiceProvider)
-          .persistLocalUid(authAsync.value!.uid));
+      unawaited(
+          ref.read(authServiceProvider).persistLocalUid(authAsync.value!.uid));
     }
     final localUid = await ref.read(authServiceProvider).getLocalUid();
-    
+
     if (!mounted) return;
     final hasLocalUser = localUid != null;
 
@@ -82,13 +84,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       }
       if (!mounted) return;
       unawaited(pushPendingProgress(ref));
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainNavigationView()),
+      unawaited(
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationView()),
+        ),
       );
     } else {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      unawaited(
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        ),
       );
     }
   }
@@ -102,7 +108,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

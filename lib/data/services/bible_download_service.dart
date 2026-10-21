@@ -57,7 +57,8 @@ class BibleDownloadService {
   Future<Set<String>> _getWebDownloadedSlugs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909'];
+      final list =
+          prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909'];
       return list.toSet();
     } catch (_) {
       return {'rv1960', 'rv1909'};
@@ -67,7 +68,9 @@ class BibleDownloadService {
   Future<void> _addWebDownloadedSlug(String slug) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final current = (prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909']).toSet();
+      final current =
+          (prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909'])
+              .toSet();
       current.add(slug);
       current.add(slug.toLowerCase());
       await prefs.setStringList(_webDownloadedKey, current.toList());
@@ -77,7 +80,9 @@ class BibleDownloadService {
   Future<void> _removeWebDownloadedSlug(String slug) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final current = (prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909']).toSet();
+      final current =
+          (prefs.getStringList(_webDownloadedKey) ?? ['rv1960', 'rv1909'])
+              .toSet();
       current.remove(slug);
       current.remove(slug.toLowerCase());
       await prefs.setStringList(_webDownloadedKey, current.toList());
@@ -97,9 +102,10 @@ class BibleDownloadService {
 
     final data = jsonDecode(response.body) as List<dynamic>;
     final translations = <AvailableTranslation>[];
-    for (final langGroup in data) {
+    for (final langGroup in data.cast<Map<String, dynamic>>()) {
       final language = langGroup['language'] as String;
-      for (final t in langGroup['translations'] as List<dynamic>) {
+      for (final t
+          in (langGroup['translations'] as List).cast<Map<String, dynamic>>()) {
         final slug = t['short_name'] as String;
         translations.add(AvailableTranslation(
           slug: slug,
@@ -161,7 +167,7 @@ class BibleDownloadService {
 
     final books = jsonDecode(response.body) as List<dynamic>;
     return {
-      for (final b in books)
+      for (final b in books.cast<Map<String, dynamic>>())
         b['bookid'] as int: b['name'] as String,
     };
   }

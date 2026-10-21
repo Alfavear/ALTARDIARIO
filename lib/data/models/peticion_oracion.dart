@@ -18,7 +18,7 @@ class PeticionOracion {
   });
 
   factory PeticionOracion.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map<String, dynamic>;
+    final Map data = doc.data() as Map<String, dynamic>;
     return PeticionOracion(
       id: doc.id,
       userId: data['userId'] ?? '',
@@ -35,7 +35,9 @@ class PeticionOracion {
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? 'Anónimo',
       motivo: data['motivo'] ?? '',
-      fecha: data['fecha'] != null ? (data['fecha'] as Timestamp).toDate() : DateTime.now(),
+      fecha: data['fecha'] != null
+          ? (data['fecha'] as Timestamp).toDate()
+          : DateTime.now(),
       oracionesCount: data['oracionesCount'] ?? 0,
     );
   }

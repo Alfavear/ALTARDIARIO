@@ -1,12 +1,13 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../core/theme/app_theme.dart';
+import '../../data/models/usuario.dart';
 import '../providers/app_providers.dart';
 import 'main_navigation_view.dart';
-
-import '../../data/models/usuario.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -50,10 +51,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 hintText: 'Ej. Juan Carlos',
                 prefixIcon: const Icon(Icons.badge_outlined,
                     color: AppTheme.primaryBlue),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
             ),
           ],
@@ -86,7 +87,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final user = await ref.read(authServiceProvider).signInAnon();
-      final uid = user?.uid ?? (await ref.read(authServiceProvider).getLocalUid());
+      final uid =
+          user?.uid ?? (await ref.read(authServiceProvider).getLocalUid());
 
       if (uid != null) {
         if (user == null) {
@@ -211,7 +213,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // signInWithRedirect iniciado - la navegación ocurre tras recarga
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Redirigiendo a Google... Completa el inicio de sesión.'),
+            content:
+                Text('Redirigiendo a Google... Completa el inicio de sesión.'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -310,8 +313,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const Text(
                         'Tu hábito diario con Dios,\nahora en comunidad',
                         textAlign: TextAlign.center,
-                        style:
-                            TextStyle(color: Colors.white70, fontSize: 15),
+                        style: TextStyle(color: Colors.white70, fontSize: 15),
                       ),
                       const SizedBox(height: 48),
                       if (_isLoading)
@@ -331,8 +333,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const Text(
                         'Al continuar, aceptas nuestros Términos de\nServicio y Política de Privacidad.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white38, fontSize: 11),
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -401,15 +402,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           elevation: 4,
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.g_mobiledata,
-                size: 24, color: AppTheme.textPrimary),
-            const SizedBox(width: 10),
-            const Text('Continuar con Google',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 15)),
+            Icon(Icons.g_mobiledata, size: 24, color: AppTheme.textPrimary),
+            SizedBox(width: 10),
+            Text('Continuar con Google',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           ],
         ),
       ),
@@ -430,14 +429,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           elevation: 4,
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.apple, size: 24),
-            const SizedBox(width: 10),
-            const Text('Continuar con Apple',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 15)),
+            Icon(Icons.apple, size: 24),
+            SizedBox(width: 10),
+            Text('Continuar con Apple',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           ],
         ),
       ),

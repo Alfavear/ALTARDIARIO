@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../data/models/notification.dart';
 import '../providers/app_providers.dart';
-import 'public_profile_screen.dart';
 import 'debate_detail_screen.dart';
+import 'public_profile_screen.dart';
 
 class NotificacionesScreen extends ConsumerWidget {
   const NotificacionesScreen({super.key});
@@ -44,7 +45,9 @@ class NotificacionesScreen extends ConsumerWidget {
             tooltip: 'Marcar todas como leídas',
             onPressed: () {
               if (uid != null) {
-                ref.read(firestoreServiceProvider).markAllNotificationsAsRead(uid);
+                ref
+                    .read(firestoreServiceProvider)
+                    .markAllNotificationsAsRead(uid);
               }
             },
           ),
@@ -162,15 +165,18 @@ class _NotificationTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      color: notif.read ? Colors.transparent : AppTheme.primaryBlue.withValues(alpha: 0.05),
+    return ColoredBox(
+      color: notif.read
+          ? Colors.transparent
+          : AppTheme.primaryBlue.withValues(alpha: 0.05),
       child: ListTile(
         onTap: () => _handleTap(context, ref),
         leading: CircleAvatar(
           backgroundColor: _getIconColor().withValues(alpha: 0.1),
-          backgroundImage: notif.actorFotoUrl != null && notif.actorFotoUrl!.isNotEmpty
-              ? NetworkImage(notif.actorFotoUrl!)
-              : null,
+          backgroundImage:
+              notif.actorFotoUrl != null && notif.actorFotoUrl!.isNotEmpty
+                  ? NetworkImage(notif.actorFotoUrl!)
+                  : null,
           child: Icon(_getIcon(), color: _getIconColor(), size: 20),
         ),
         title: Text(
@@ -196,7 +202,7 @@ class _NotificationTile extends ConsumerWidget {
             : Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.primaryBlue,
                   shape: BoxShape.circle,
                 ),

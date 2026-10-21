@@ -132,7 +132,8 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                 onChanged: (_) => _loadTerms(),
                 decoration: InputDecoration(
                   hintText: 'Buscar término, palabra o concepto...',
-                  prefixIcon: const Icon(Icons.search, color: AppTheme.primaryBlue),
+                  prefixIcon:
+                      const Icon(Icons.search, color: AppTheme.primaryBlue),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 20),
@@ -144,7 +145,8 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                       : null,
                   filled: true,
                   fillColor: theme.cardColor,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -169,8 +171,10 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                         cat,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          color:
+                              isSelected ? Colors.white : AppTheme.textPrimary,
                         ),
                       ),
                       selectedColor: AppTheme.primaryBlue,
@@ -199,7 +203,8 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                                 Text(
                                   'No se encontraron términos para "${_searchController.text}"',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(color: AppTheme.textSecondary),
+                                  style: const TextStyle(
+                                      color: AppTheme.textSecondary),
                                 ),
                               ],
                             ),
@@ -207,7 +212,8 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                         : ListView.separated(
                             controller: scrollController,
                             itemCount: _filteredTerms.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final term = _filteredTerms[index];
                               return _buildTermCard(term, theme);
@@ -247,7 +253,8 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.accentGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -320,7 +327,8 @@ class _BibleDictionaryModalState extends State<BibleDictionaryModal> {
                         size: 14, color: AppTheme.primaryBlue),
                     label: Text(
                       pasaje,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                     backgroundColor: theme.scaffoldBackgroundColor,
                   );

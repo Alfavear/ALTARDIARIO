@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:altar_diario/core/services/community_policy_service.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CommunityPolicyService', () {
@@ -26,8 +26,8 @@ void main() {
     });
 
     test('Rechaza palabras obscenas o vulgares', () {
-      final res1 = CommunityPolicyService.validarContenido(
-          'Esta persona es un pendejo');
+      final res1 =
+          CommunityPolicyService.validarContenido('Esta persona es un pendejo');
       expect(res1.isApproved, isFalse);
       expect(res1.reason, contains('lenguaje no permitido'));
     });

@@ -1,127 +1,276 @@
 rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════════════
+//  AltarDiario — Reglas de seguridad de Firestore
+//
+//  Principios:
+//   1. Nadie edita contenido ajeno. Un no-dueño solo puede tocar
+//      contadores sociales (likes, reacciones, votos) y únicamente
+//      añadiendo/quitando SU PROPIO uid.
+//   2. Los chats privados son privados: solo los participantes leen.
+//   3. Nadie escribe notificaciones en nombre de otro.
+//   4. Todo cambio aquí DEBE ir acompañado de un test en
+//      firestore-tests/rules.test.mjs (ver scripts/rules_test.sh).
+// ═══════════════════════════════════════════════════════════════════
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Reflexiones ──────────────────────────────────────────────
-    // Lectura pública (feed comunitario)
-    match /reflexiones/{docId} {
-      allow read: if true;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId
-        && request.resource.data.keys().hasAll(['userId', 'userName', 'texto', 'fecha', 'pasajeDia']);
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-        
-      match /comentarios/{comentarioId} {
-        allow read: if true;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.userId;
-        allow update: if request.auth != null;
-        allow delete: if request.auth != null
-          && request.auth.uid == resource.data.userId;
-      }
+    // ───────────── Helpers ─────────────
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // ── Peticiones de Oración ────────────────────────────────────
-    match /peticiones_oracion/{docId} {
-      allow read: if true;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-        
-      match /comentarios/{comentarioId} {
-        allow read: if true;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.userId;
-        allow update: if request.auth != null;
-        allow delete: if request.auth != null
-          && request.auth.uid == resource.data.userId;
-      }
+    function uid() {
+      return request.auth.uid;
     }
 
-    // ── Usuarios ─────────────────────────────────────────────────
-    match /usuarios/{userId} {
+    function isOwner(data) {
+      return signedIn() && data.userId == uid();
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // La lista `field` solo cambió añadiendo o quitando MI uid.
+    function listOnlyTouchesSelf(field) {
+      let before = resource.data.get(field, []).toSet();
+      let after = request.resource.data.get(field, []).toSet();
+      return before.difference(after).union(after.difference(before)).hasOnly([uid()]);
+    }
+
+    // El mapa `field` (ej. reactions {uid: emoji}) solo cambió en MI clave.
+    function mapOnlyTouchesSelf(field) {
+      let before = resource.data.get(field, {});
+      let after = request.resource.data.get(field, {});
+      return after.diff(before).affectedKeys().hasOnly([uid()]);
+    }
+
+    // Contador entero que varía como mucho ±1 (o no cambia).
+    function counterDeltaOk(field) {
+      let before = resource.data.get(field, 0);
+      let after = request.resource.data.get(field, 0);
+      return after is int && (after - before) >= -1 && (after - before) <= 1;
+    }
+
+    // El set de `field` es el mismo, sin importar el orden (el cliente reenvía
+    // participantIds con el uid propio primero al enviar un mensaje).
+    function sameMembers(field) {
+      let before = resource.data.get(field, []).toSet();
+      let after = request.resource.data.get(field, []).toSet();
+      return before.hasAll(after) && after.hasAll(before) && before.size() == after.size();
+    }
+
+    // Un no-dueño solo puede hacer like/unlike.
+    function likeOnly() {
+      return changedKeys().hasOnly(['likes', 'likedBy'])
+        && listOnlyTouchesSelf('likedBy')
+        && counterDeltaOk('likes');
+    }
+
+    // Un no-dueño solo puede votar/desvotar.
+    function voteOnly() {
+      return changedKeys().hasOnly(['upvotes', 'votedBy'])
+        && listOnlyTouchesSelf('votedBy')
+        && counterDeltaOk('upvotes');
+    }
+
+    // El dueño puede editar su contenido, pero nunca reasignar autoría
+    // ni manipular contadores sociales.
+    function ownerEditOk() {
+      return isOwner(resource.data)
+        && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount']);
+    }
+
+    // ───────────── Reflexiones (feed) ─────────────
+    match /reflexiones/{reflexionId} {
       allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && (
-        request.auth.uid == userId
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seguidores'])
+
+      allow create: if signedIn()
+        && request.resource.data.userId == uid()
+        && request.resource.data.keys().hasAll(['userId', 'userName', 'texto', 'fecha', 'pasajeDia'])
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 5000;
+
+      allow update: if signedIn() && (
+        // Dueño: edita texto/tags, no contadores.
+        (ownerEditOk() && !changedKeys().hasAny(['reactions', 'commentCount']))
+        // Cualquiera: like / unlike
+        || likeOnly()
+        // Cualquiera: reacción propia
+        || (changedKeys().hasOnly(['reactions']) && mapOnlyTouchesSelf('reactions'))
+        // Cualquiera: commentCount ±1 (acompaña a crear/borrar comentario)
+        || (changedKeys().hasOnly(['commentCount']) && counterDeltaOk('commentCount'))
       );
-      allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Subrayados de la Biblia (solo el usuario)
-      match /bible_highlights/{highlightId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+      allow delete: if isOwner(resource.data);
 
-      // Notas de la Biblia (solo el usuario)
-      match /bible_notes/{noteId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Notas generales (solo el usuario)
-      match /notes/{noteId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Notificaciones
-      match /notifications/{notificationId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if request.auth != null; // Para poder enviar notificaciones entre usuarios (como seguir)
+      match /comentarios/{comentarioId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.userId == uid()
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0
+          && request.resource.data.texto.size() <= 2000;
+        allow update: if signedIn() && (ownerEditOk() || likeOnly());
+        allow delete: if isOwner(resource.data);
       }
     }
 
-    // ── Feedback ─────────────────────────────────────────────────
-    match /feedback/{docId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+    // ───────────── Peticiones de oración ─────────────
+    match /peticiones_oracion/{peticionId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.userId == uid()
+        && request.resource.data.motivo is string
+        && request.resource.data.motivo.size() > 0
+        && request.resource.data.motivo.size() <= 3000;
+      allow update: if signedIn() && (
+        ownerEditOk()
+        // "Amén": cualquiera incrementa oracionesCount en +1
+        || (changedKeys().hasOnly(['oracionesCount']) && counterDeltaOk('oracionesCount'))
+        || likeOnly()
+      );
+      allow delete: if isOwner(resource.data);
+
+      match /comentarios/{comentarioId} {
+        allow read: if true;
+        allow create: if signedIn() && request.resource.data.userId == uid();
+        allow update: if signedIn() && (ownerEditOk() || likeOnly());
+        allow delete: if isOwner(resource.data);
+      }
     }
 
-    // ── Debates (Foro Bíblico) ───────────────────────────────────
+    // ───────────── Foro: debates y respuestas ─────────────
     match /debates/{debateId} {
       allow read: if true;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-        
+      allow create: if signedIn()
+        && request.resource.data.userId == uid()
+        && request.resource.data.titulo is string
+        && request.resource.data.titulo.size() > 0;
+      allow update: if signedIn() && (
+        (ownerEditOk() && !changedKeys().hasAny(['replyCount']))
+        || voteOnly()
+        || (changedKeys().hasOnly(['replyCount']) && counterDeltaOk('replyCount'))
+      );
+      allow delete: if isOwner(resource.data);
+
       match /respuestas/{respuestaId} {
         allow read: if true;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.userId;
-        allow update: if request.auth != null;
-        allow delete: if request.auth != null
-          && request.auth.uid == resource.data.userId;
+        allow create: if signedIn() && request.resource.data.userId == uid();
+        allow update: if signedIn() && (ownerEditOk() || voteOnly());
+        allow delete: if isOwner(resource.data);
       }
     }
 
-    // ── Configuración (Global) ───────────────────────────────────
+    // ───────────── Usuarios ─────────────
+    match /usuarios/{userId} {
+      allow read: if true;
+      allow create: if signedIn() && uid() == userId;
+
+      // El dueño gestiona su perfil. Otro usuario solo puede añadirse o
+      // quitarse a sí mismo de `seguidores`.
+      // NOTA (docs/adr/0002): totalPuntos, badges y rachaActual seguirán
+      // siendo escribibles por el dueño HASTA que la gamificación se mueva a
+      // Cloud Functions (functions/). Cuando eso ocurra, añadir
+      //   && !changedKeys().hasAny(['totalPuntos','badges','nivel','rachaActual'])
+      // a la rama del dueño.
+      allow update: if signedIn() && (
+        uid() == userId
+        || (changedKeys().hasOnly(['seguidores']) && listOnlyTouchesSelf('seguidores'))
+      );
+      allow delete: if signedIn() && uid() == userId;
+
+      match /bible_highlights/{highlightId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
+      match /bible_notes/{noteId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
+      match /notes/{noteId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
+
+      // Notificaciones: el receptor las lee/marca/borra; cualquier usuario
+      // puede CREAR una, pero solo firmada con su propio uid como actor.
+      match /notifications/{notificationId} {
+        allow read: if signedIn() && uid() == userId;
+        allow create: if signedIn()
+          && uid() != userId
+          && request.resource.data.actorId == uid()
+          && request.resource.data.keys().hasAll(['type', 'title', 'body', 'createdAt'])
+          && request.resource.data.read == false;
+        allow update: if signedIn() && uid() == userId
+          && changedKeys().hasOnly(['read']);
+        allow delete: if signedIn() && uid() == userId;
+      }
+    }
+
+    // ───────────── Feedback ─────────────
+    match /feedback/{docId} {
+      allow create: if signedIn() && request.resource.data.userId == uid();
+      allow read: if isOwner(resource.data);
+    }
+
+    // ───────────── Reportes de contenido (moderación) ─────────────
+    // Cualquier usuario puede reportar; nadie lee reportes desde el cliente.
+    // Los procesa functions/src/moderation.ts.
+    match /reports/{reportId} {
+      allow read: if false;
+      allow create: if signedIn()
+        && request.resource.data.reporterId == uid()
+        && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario']
+        && request.resource.data.targetId is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() <= 500;
+      allow update, delete: if false;
+    }
+
+    // ───────────── Configuración global (solo lectura) ─────────────
     match /config/{configId} {
       allow read: if true;
-      allow write: if false; // Solo se edita desde la consola de Firebase
+      allow write: if false;
     }
 
-    // ── Chats ────────────────────────────────────────────────────
-    match /chats/{chatId} {
-      allow read: if request.auth != null
-        && request.auth.uid in resource.data.participantIds;
-      allow create: if request.auth != null;
-      allow write: if request.auth != null
-        && request.auth.uid in resource.data.participantIds;
+    // ───────────── Chats privados ─────────────
+    function isParticipant(data) {
+      return signedIn() && uid() in data.participantIds;
+    }
 
-      // Mensajes del chat
+    function chatParticipants(chatId) {
+      return get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+    }
+
+    match /chats/{chatId} {
+      allow read: if isParticipant(resource.data);
+      allow create: if isParticipant(request.resource.data)
+        && request.resource.data.participantIds.size() == 2;
+      // Se pueden actualizar metadatos (lastMessage, lastUpdate) y reordenar
+      // `participantIds` (el emisor reenvía la lista con su uid primero), pero
+      // nunca cambiar quiénes participan.
+      allow update: if isParticipant(resource.data)
+        && (!changedKeys().hasAny(['participantIds'])
+            || (sameMembers('participantIds')
+                && request.resource.data.participantIds.size() == 2));
+      allow delete: if false;
+
       match /messages/{messageId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.senderId;
-        allow delete: if request.auth != null
-          && request.auth.uid == request.resource.data.senderId;
+        allow read: if signedIn() && uid() in chatParticipants(chatId);
+        allow create: if signedIn()
+          && uid() in chatParticipants(chatId)
+          && request.resource.data.senderId == uid()
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 4000;
+        allow update: if false;
+        allow delete: if signedIn() && resource.data.senderId == uid();
       }
+    }
+
+    // ───────────── Todo lo demás: denegado ─────────────
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

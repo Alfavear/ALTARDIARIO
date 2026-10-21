@@ -78,7 +78,8 @@ class _LeaderboardCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isMe ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
+        color:
+            isMe ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: isMe
             ? Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.3))
@@ -114,12 +115,14 @@ class _LeaderboardCard extends StatelessWidget {
             CircleAvatar(
               radius: 22,
               backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
-              backgroundImage: entry.fotoUrl.isNotEmpty
-                  ? NetworkImage(entry.fotoUrl)
-                  : null,
+              backgroundImage:
+                  entry.fotoUrl.isNotEmpty ? NetworkImage(entry.fotoUrl) : null,
               child: isMe
                   ? null
-                  : Text(entry.nombre.isNotEmpty ? entry.nombre[0].toUpperCase() : '?',
+                  : Text(
+                      entry.nombre.isNotEmpty
+                          ? entry.nombre[0].toUpperCase()
+                          : '?',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryBlue)),

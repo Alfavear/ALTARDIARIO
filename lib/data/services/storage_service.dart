@@ -1,8 +1,10 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/lectura_dia.dart';
 import '../models/note.dart';
 
@@ -84,7 +86,7 @@ class StorageService {
   Future<void> syncFromFirestoreData(
       List<String> firestoreDates, int firestoreMaxStreak) async {
     if (_isSwitchingAccount) return;
-    
+
     final localDates = _prefs.getStringList(_keyCompletedDates) ?? [];
     final merged = {...localDates, ...firestoreDates}.toList();
     await _prefs.setStringList(_keyCompletedDates, merged);
@@ -93,7 +95,8 @@ class StorageService {
     }
   }
 
-  Future<void> loadFromFirestoreData(List<String> firestoreDates, int firestoreMaxStreak) async {
+  Future<void> loadFromFirestoreData(
+      List<String> firestoreDates, int firestoreMaxStreak) async {
     await _prefs.setStringList(_keyCompletedDates, firestoreDates);
     await _prefs.setInt(_keyMaxStreak, firestoreMaxStreak);
   }

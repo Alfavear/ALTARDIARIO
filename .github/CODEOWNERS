@@ -1,0 +1,6 @@
+# Cambios sensibles requieren revisión humana explícita.
+firestore.rules        @Alfavear
+firestore-tests/       @Alfavear
+.github/workflows/     @Alfavear
+lib/firebase_options.dart @Alfavear
+pubspec.yaml           @Alfavear

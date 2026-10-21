@@ -34,17 +34,17 @@ class _ForoScreenState extends ConsumerState<ForoScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
-appBar: AppBar(
-  backgroundColor: Colors.white,
-  foregroundColor: AppTheme.textPrimary,
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => Navigator.pop(context),
-  ),
-  title: const Text('Foro Bíblico',
-      style: TextStyle(fontWeight: FontWeight.bold)),
-),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Foro Bíblico',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: Column(
         children: [
           _buildFilters(),
@@ -64,7 +64,8 @@ appBar: AppBar(
                   return _buildEmptyState();
                 }
                 return RefreshIndicator(
-                  onRefresh: () => ref.refresh(debatesStreamProvider(_selectedLibro).future),
+                  onRefresh: () =>
+                      ref.refresh(debatesStreamProvider(_selectedLibro).future),
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     itemCount: filtered.length,
@@ -72,8 +73,7 @@ appBar: AppBar(
                   ),
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
             ),
           ),
@@ -82,13 +82,11 @@ appBar: AppBar(
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         backgroundColor: AppTheme.primaryBlue,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-                builder: (_) => const CrearDebateScreen()),
+            MaterialPageRoute(builder: (_) => const CrearDebateScreen()),
           );
         },
         child: const Icon(Icons.add_comment_rounded,
@@ -103,8 +101,7 @@ appBar: AppBar(
       child: Column(
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(30),
@@ -123,8 +120,7 @@ appBar: AppBar(
                       hintText: 'Buscar debates...',
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -158,8 +154,7 @@ appBar: AppBar(
                       child: _FilterChip(
                         label: libro,
                         selected: _selectedLibro == libro,
-                        onTap: () =>
-                            setState(() => _selectedLibro = libro),
+                        onTap: () => setState(() => _selectedLibro = libro),
                       ),
                     )),
               ],
@@ -189,8 +184,7 @@ appBar: AppBar(
             const SizedBox(height: 20),
             const Text(
               'Aún no hay debates',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -209,24 +203,19 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   const _FilterChip(
-      {required this.label,
-      required this.selected,
-      required this.onTap});
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? AppTheme.primaryBlue : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? AppTheme.primaryBlue
-                : AppTheme.pendingGrayDark,
+            color: selected ? AppTheme.primaryBlue : AppTheme.pendingGrayDark,
           ),
         ),
         child: Text(
@@ -264,8 +253,7 @@ class _DebateCard extends ConsumerWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  DebateDetailScreen(debateId: debate.id),
+              builder: (_) => DebateDetailScreen(debateId: debate.id),
             ),
           );
         },
@@ -279,25 +267,21 @@ class _DebateCard extends ConsumerWidget {
                   onTap: () {
                     ref
                         .read(firestoreServiceProvider)
-                        .toggleDebateVote(
-                            debate.id, uid ?? '', hasVoted);
+                        .toggleDebateVote(debate.id, uid ?? '', hasVoted);
                   },
                   child: Container(
                     width: 40,
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
                       color: hasVoted
-                          ? AppTheme.primaryBlue
-                              .withValues(alpha: 0.1)
+                          ? AppTheme.primaryBlue.withValues(alpha: 0.1)
                           : Colors.grey.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       children: [
                         Icon(
-                          hasVoted
-                              ? Icons.arrow_drop_up
-                              : Icons.arrow_drop_up,
+                          hasVoted ? Icons.arrow_drop_up : Icons.arrow_drop_up,
                           color: hasVoted
                               ? AppTheme.primaryBlue
                               : AppTheme.textSecondary,
@@ -326,8 +310,7 @@ class _DebateCard extends ConsumerWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700)),
+                              fontSize: 16, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       if (debate.contenido.isNotEmpty)
                         Text(debate.contenido,
@@ -347,31 +330,26 @@ class _DebateCard extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: AppTheme.primaryBlueLight
                                     .withValues(alpha: 0.1),
-                                borderRadius:
-                                    BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(debate.libroNombre,
                                   style: const TextStyle(
                                       fontSize: 10,
-                                      color:
-                                          AppTheme.primaryBlue)),
+                                      color: AppTheme.primaryBlue)),
                             ),
                             const SizedBox(width: 8),
                           ],
                           const Icon(Icons.chat_bubble_outline,
-                              size: 13,
-                              color: AppTheme.textSecondary),
+                              size: 13, color: AppTheme.textSecondary),
                           const SizedBox(width: 3),
                           Text('${debate.replyCount}',
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary)),
+                                  fontSize: 11, color: AppTheme.textSecondary)),
                           const SizedBox(width: 12),
                           Text(
                             DateFormat('d MMM').format(debate.fecha),
                             style: const TextStyle(
-                                fontSize: 11,
-                                color: AppTheme.textSecondary),
+                                fontSize: 11, color: AppTheme.textSecondary),
                           ),
                         ],
                       ),

@@ -1,15 +1,15 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:altar_diario/presentation/screens/perfil_screen.dart';
-import 'package:altar_diario/presentation/providers/app_providers.dart';
-import 'package:altar_diario/data/models/usuario.dart';
-import 'package:altar_diario/data/models/reflexion.dart';
 import 'package:altar_diario/data/models/comment.dart';
 import 'package:altar_diario/data/models/peticion_oracion.dart';
-import 'package:altar_diario/data/services/storage_service.dart';
+import 'package:altar_diario/data/models/reflexion.dart';
+import 'package:altar_diario/data/models/usuario.dart';
 import 'package:altar_diario/data/services/firestore_service.dart';
+import 'package:altar_diario/data/services/storage_service.dart';
+import 'package:altar_diario/presentation/providers/app_providers.dart';
+import 'package:altar_diario/presentation/screens/perfil_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +47,8 @@ void main() {
       notifMin: 0,
     );
 
-    testWidgets('renderiza PerfilScreen con Nivel, XP y sección Mis Insignias', (tester) async {
+    testWidgets('renderiza PerfilScreen con Nivel, XP y sección Mis Insignias',
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -61,7 +62,8 @@ void main() {
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('u1')),
             effectiveUserUidProvider.overrideWithValue('u1'),
             userProfileProvider.overrideWithValue(AsyncValue.data(mockUsuario)),
-            userReflexionesProvider('u1').overrideWithValue(const AsyncValue.data([])),
+            userReflexionesProvider('u1')
+                .overrideWithValue(const AsyncValue.data([])),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
@@ -79,7 +81,8 @@ void main() {
       expect(find.text('Primer Paso'), findsOneWidget);
     });
 
-    testWidgets('al pulsar Ver todas abre modal con la colección de insignias', (tester) async {
+    testWidgets('al pulsar Ver todas abre modal con la colección de insignias',
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -93,7 +96,8 @@ void main() {
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('u1')),
             effectiveUserUidProvider.overrideWithValue('u1'),
             userProfileProvider.overrideWithValue(AsyncValue.data(mockUsuario)),
-            userReflexionesProvider('u1').overrideWithValue(const AsyncValue.data([])),
+            userReflexionesProvider('u1')
+                .overrideWithValue(const AsyncValue.data([])),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
@@ -112,7 +116,8 @@ void main() {
       expect(find.text('Colección de Insignias'), findsOneWidget);
     });
 
-    testWidgets('al pulsar el avatar abre dialogo de edicion de perfil', (tester) async {
+    testWidgets('al pulsar el avatar abre dialogo de edicion de perfil',
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -126,7 +131,8 @@ void main() {
             localUidProvider.overrideWith(() => _MockLocalUidNotifier('u1')),
             effectiveUserUidProvider.overrideWithValue('u1'),
             userProfileProvider.overrideWithValue(AsyncValue.data(mockUsuario)),
-            userReflexionesProvider('u1').overrideWithValue(const AsyncValue.data([])),
+            userReflexionesProvider('u1')
+                .overrideWithValue(const AsyncValue.data([])),
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
@@ -171,34 +177,42 @@ class MockFirestoreService extends FirestoreService {
   Stream<List<Reflexion>> getUserReflexiones(String userId) => Stream.value([]);
 
   @override
-  Stream<List<Comment>> comentariosStream(String reflexionId) => Stream.value([]);
+  Stream<List<Comment>> comentariosStream(String reflexionId) =>
+      Stream.value([]);
 
   @override
   Stream<List<PeticionOracion>> peticionesStream() => Stream.value([]);
 
   @override
-  Future<void> toggleLike(String reflexionId, String userId, bool isLiked) async {}
+  Future<void> toggleLike(
+      String reflexionId, String userId, bool isLiked) async {}
 
   @override
-  Future<void> toggleReaction(String reflexionId, String userId, String? emoji, String? currentEmoji) async {}
+  Future<void> toggleReaction(String reflexionId, String userId, String? emoji,
+      String? currentEmoji) async {}
 
   @override
   Future<void> publicarComentario(Comment comment) async {}
 
   @override
-  Future<void> toggleCommentLike(String reflexionId, String commentId, String userId, bool isLiked) async {}
+  Future<void> toggleCommentLike(String reflexionId, String commentId,
+      String userId, bool isLiked) async {}
 
   @override
-  Future<void> toggleFollow(String currentUserId, String targetUserId, bool isFollowing) async {}
+  Future<void> toggleFollow(
+      String currentUserId, String targetUserId, bool isFollowing) async {}
 
   @override
   Future<Usuario?> getUsuarioOnce(String uid) async => null;
 
   @override
-  Future<void> updateUserConfig(String uid, Map<String, dynamic> config) async {}
+  Future<void> updateUserConfig(
+      String uid, Map<String, dynamic> config) async {}
 
   @override
-  Future<Map<String, Map<String, dynamic>>> getStreaksData(List<String> uids) async => {};
+  Future<Map<String, Map<String, dynamic>>> getStreaksData(
+          List<String> uids) async =>
+      {};
 
   @override
   Future<List<Usuario>> getAllUsuarios() async => [];

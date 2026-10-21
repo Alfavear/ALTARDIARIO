@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/services/gamification_service.dart';
+
 import '../../core/services/community_policy_service.dart';
+import '../../core/services/gamification_service.dart';
+import '../../core/theme/app_theme.dart';
+import '../../data/models/peticion_oracion.dart';
+import '../providers/app_providers.dart';
 import '../widgets/guest_access_restricted_widget.dart';
 import '../widgets/shimmer_loading_widget.dart';
-import '../providers/app_providers.dart';
-import '../../data/models/peticion_oracion.dart';
 
 class OracionScreen extends ConsumerWidget {
   const OracionScreen({super.key});
@@ -18,12 +19,11 @@ class OracionScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.auto_awesome,
-                size: 20, color: AppTheme.primaryBlue),
-            const SizedBox(width: 8),
-            const Text('Pedir Oración',
+            Icon(Icons.auto_awesome, size: 20, color: AppTheme.primaryBlue),
+            SizedBox(width: 8),
+            Text('Pedir Oración',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
@@ -36,16 +36,15 @@ class OracionScreen extends ConsumerWidget {
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: '¿Por qué podemos orar por ti?',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
                 fillColor: AppTheme.pendingGray,
               ),
             ),
           ],
         ),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -63,7 +62,8 @@ class OracionScreen extends ConsumerWidget {
               final motivo = controller.text.trim();
               if (motivo.isEmpty) return;
 
-              final policyCheck = CommunityPolicyService.validarContenido(motivo);
+              final policyCheck =
+                  CommunityPolicyService.validarContenido(motivo);
               if (!policyCheck.isApproved) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -83,7 +83,9 @@ class OracionScreen extends ConsumerWidget {
 
               final userName = (user?.nombre.isNotEmpty == true)
                   ? user!.nombre
-                  : (storage.getUserName() ?? firebaseUser?.displayName ?? 'Invitado');
+                  : (storage.getUserName() ??
+                      firebaseUser?.displayName ??
+                      'Invitado');
 
               final nuevaPeticion = PeticionOracion(
                 id: '',
@@ -95,7 +97,8 @@ class OracionScreen extends ConsumerWidget {
 
               await firestore.crearPeticionOracion(nuevaPeticion);
 
-              final newBadges = await GamificationService.evaluarYNotificarBadges(
+              final newBadges =
+                  await GamificationService.evaluarYNotificarBadges(
                 user: user,
                 firestore: firestore,
                 storage: storage,
@@ -180,13 +183,13 @@ class OracionScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
             child: Row(
               children: [
-                const Icon(Icons.front_hand,
+                Icon(Icons.front_hand,
                     size: 18, color: AppTheme.primaryBlueLight),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   'COMPAÑEROS DE ORACIÓN',
                   style: TextStyle(
@@ -204,7 +207,8 @@ class OracionScreen extends ConsumerWidget {
               data: (peticiones) => peticiones.isEmpty
                   ? _buildEmptyState()
                   : RefreshIndicator(
-                      onRefresh: () => ref.refresh(peticionesStreamProvider.future),
+                      onRefresh: () =>
+                          ref.refresh(peticionesStreamProvider.future),
                       child: ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                         itemCount: peticiones.length,
@@ -213,8 +217,7 @@ class OracionScreen extends ConsumerWidget {
                       ),
                     ),
               loading: () => const ShimmerListLoading(itemCount: 4),
-              error: (err, stack) =>
-                  Center(child: Text('Error: $err')),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
         ],
@@ -226,8 +229,7 @@ class OracionScreen extends ConsumerWidget {
         icon: const Icon(Icons.add),
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
@@ -252,7 +254,8 @@ class OracionScreen extends ConsumerWidget {
             const Text(
               'No hay peticiones activas.',
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary),
             ),
             const SizedBox(height: 8),
@@ -286,8 +289,8 @@ class _PeticionCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: AppTheme.softShadow,
-        border: Border.all(
-            color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: AppTheme.pendingGrayDark.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,13 +299,11 @@ class _PeticionCard extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor:
-                    AppTheme.accentGold.withValues(alpha: 0.15),
+                backgroundColor: AppTheme.accentGold.withValues(alpha: 0.15),
                 child: Text(
                   authorName.isNotEmpty ? authorName[0].toUpperCase() : '?',
                   style: const TextStyle(
-                      color: AppTheme.accentGold,
-                      fontWeight: FontWeight.w700),
+                      color: AppTheme.accentGold, fontWeight: FontWeight.w700),
                 ),
               ),
               const SizedBox(width: 10),
@@ -350,8 +351,7 @@ class _PeticionCard extends ConsumerWidget {
                   Text(
                     '${peticion.oracionesCount} orando',
                     style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary),
+                        fontSize: 12, color: AppTheme.textSecondary),
                   ),
                 ],
               ),
@@ -363,14 +363,13 @@ class _PeticionCard extends ConsumerWidget {
                       .apoyarPeticion(peticion.id);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text(
-                          'Has dicho: ¡Amén! 🙏'),
+                      content: Text('Has dicho: ¡Amén! 🙏'),
                       duration: Duration(seconds: 2),
                     ),
                   );
                 },
-                icon: const Icon(Icons.front_hand,
-                    size: 16, color: Colors.white),
+                icon:
+                    const Icon(Icons.front_hand, size: 16, color: Colors.white),
                 label: const Text('AMÉN',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,

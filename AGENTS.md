@@ -1,176 +1,197 @@
-# AltarDiario — Project Guide for opencode
+# AltarDiario — Guía para agentes de IA (y humanos)
 
-## Stack
-- **Framework**: Flutter (SDK ^3.5.0)
-- **State Management**: Riverpod 3.x (`flutter_riverpod`)
-- **Backend**: Firebase (Auth, Firestore, Storage, Messaging)
-- **Local Storage**: `shared_preferences` + SQLite (bible verses)
-- **Navigation**: Manual `Navigator.push` + `IndexedStack` bottom nav
-- **No code generation**: no freezed, no json_serializable, no build_runner
+Este archivo es el contrato de trabajo. OpenCode lo carga automáticamente.
+Léelo entero antes de tocar código. Si algo aquí contradice el código, el
+código está mal o este archivo está desactualizado: dilo, no lo ignores.
 
-## Project Structure
+## 0. Qué es esto
+
+Red social devocional en Flutter + Firebase, **en producción** (Play Store,
+web). Hay usuarios reales con datos reales. Cada cambio debe asumir que puede
+romper algo que alguien usa hoy.
+
+## 1. El ciclo de trabajo (obligatorio)
+
+1. **Entiende** el issue. Si no tiene criterios de aceptación verificables,
+   pide que se concreten antes de escribir código.
+2. **Planifica** en 3-8 pasos. Lista los archivos que vas a tocar. Si vas a
+   tocar más de 6 archivos, probablemente el issue es demasiado grande:
+   propón dividirlo.
+3. **Escribe el test primero** cuando el comportamiento sea testeable
+   (modelos, servicios, providers, reglas de Firestore). Para UI, un widget
+   test mínimo del estado principal.
+4. **Implementa** con el cambio más pequeño que satisfaga el test.
+5. **Verifica**: `scripts/check.sh --fast` (o `/check`). Nada está "hecho"
+   si esto no está en verde. No reportes éxito sin haberlo corrido.
+6. **Documenta** en `CHANGELOG.md` → `[Unreleased]` con una línea.
+7. **Commit** con Conventional Commits en español:
+   `feat(feed): paginación con startAfterDocument`.
+   Un commit por unidad lógica. Nunca `git push`, `firebase deploy` ni
+   `flutter build appbundle` sin confirmación explícita del humano.
+
+### Definición de hecho
+- [ ] `dart format` limpio, `flutter analyze` sin warnings, `flutter test` verde
+- [ ] Tests nuevos para comportamiento nuevo
+- [ ] Si tocaste `firestore.rules` → test en `firestore-tests/rules.test.mjs`
+- [ ] Si tocaste un modelo → `toMap`/`fromMap` + test en `test/models/`
+- [ ] CHANGELOG actualizado
+- [ ] Ningún archivo nuevo supera 400 líneas; ningún widget privado supera 150
+
+## 2. Stack
+
+| Capa | Tecnología | Notas |
+|---|---|---|
+| UI | Flutter 3.x, Material 3 | Sin code-gen (no freezed/build_runner) |
+| Estado | Riverpod 3.x | `NotifierProvider`, nunca `StateNotifierProvider` |
+| Backend | Firebase Auth, Firestore, Storage, FCM | Project `altardiario-ec25f` |
+| Backend lógica | Cloud Functions (`functions/`, TypeScript) | En adopción — ver ADR-0002 |
+| Local | `shared_preferences`, SQLite (`sqflite`) | Biblias descargadas |
+| Observabilidad | Crashlytics, Analytics, App Check | `lib/core/observability/` |
+| i18n | `flutter_localizations` + ARB en `lib/l10n/` | En adopción — ver skill `i18n` |
+
+## 3. Mapa del código
+
 ```
 lib/
-  main.dart
-  firebase_options.dart
+  main.dart                      Bootstrap. No añadir lógica aquí.
   core/
-    theme/app_theme.dart
-    services/
-      notification_service.dart        # Notificaciones locales + FCM push
-      community_policy_service.dart    # Normas de la Comunidad (5 reglas)
-      gamification_service.dart        # Badges, XP, niveles (16 insignias)
+    theme/                       Tokens visuales (colores, tipografía)
+    constants/                   Constantes de app
+    observability/               Crashlytics / Analytics / App Check
+    services/                    Servicios transversales (notificaciones, gamificación)
   data/
-    models/
-      badge.dart                       # Badge: id, name, icon, rarity, criteria, points
-      bible_models.dart
-      comment.dart
-      debate.dart / debate_reply.dart
-      lectura_dia.dart
-      message.dart
-      note.dart
-      peticion_oracion.dart
-      reflexion.dart
-      usuario.dart                     # incluye badges[], totalPuntos, nivel
-    services/
-      auth_service.dart                # Auth: anónimo, Google, Apple
-      bible_service.dart
-      bible_download_service.dart
-      firestore_service.dart
-      storage_service.dart
+    models/                      Modelos inmutables con toMap/fromMap
+    services/                    Acceso a Firestore / Auth / Storage / SQLite
   presentation/
-    providers/
-      app_providers.dart               # ÚNICO archivo de providers
-    widgets/
-      guest_access_restricted_widget.dart  # Pantalla bloqueo para invitados
-    screens/                           # Ver SYSTEM.md para lista completa
-test/
-  models/            # Model unit tests
-  services/          # Service unit tests (gamification_flow, community_policy)
-  screens/           # Widget tests (feed, home, perfil, bible_compare)
+    providers/app_providers.dart Providers globales (en migración → por feature)
+    screens/                     Pantallas (en migración → lib/features/)
+    widgets/                     Widgets compartidos
+  features/                      ← DESTINO. Una carpeta por feature:
+    <feature>/
+      data/        repositorio + modelos específicos
+      providers/   providers de la feature
+      presentation/ screens/ y widgets/ de la feature
+      <feature>_test.dart (en test/features/<feature>/)
 ```
 
-## File & Naming Conventions
-| What | Convention | Example |
-|------|-----------|---------|
-| Files | snake_case | `firestore_service.dart` |
-| Classes | PascalCase | `FirestoreService` |
-| Methods/Vars | camelCase | `getUsuario()`, `_isLoading` |
-| Providers | camelCase + `Provider` suffix | `authStateProvider` |
-| Imports | Relative paths only | `import '../models/reflexion.dart'` |
-| Private | underscore prefix | `_ReflexionCard` |
-| Domain models | Spanish | `usuario`, `peticion_oracion` |
-| Technical models | English | `BibleVerse`, `StorageService` |
+**Regla de migración (ADR-0001):** código nuevo va en `lib/features/<feature>/`.
+Código existente se migra feature a feature, una por PR, sin mezclar refactor
+con funcionalidad nueva. No crear providers nuevos en `app_providers.dart`;
+crearlos en `lib/features/<feature>/providers/`.
 
-## Model Patterns
-- All fields `final`, prefer `const` constructors
-- Methods: `toMap()`, `factory fromMap(Map)` for local storage
-- For Firestore: `factory fromFirestore(DocumentSnapshot)`, `toMap()` returns `Map<String, dynamic>`
-- Null safety: use `??` with defaults in factory methods, never cast with `as`
-- No `copyWith` unless explicitly needed
+## 4. Convenciones
 
-## Service Patterns
-- **Graceful Firebase init**: Constructor catches exceptions, sets `_available = false`
-- **Guard all methods**: `if (!_available) return Stream.value([])` or early return
-- **Stream methods**: return `.snapshots().map(...)` for real-time data
-- **Write methods**: return `Future<void>`, use `FieldValue` for increments/arrays
-- **Upserts**: use `SetOptions(merge: true)`
-
-## Riverpod Provider Patterns
-- All providers in `lib/presentation/providers/app_providers.dart`
-- Use `Provider<T>` for singletons, `StreamProvider<T>` for streams
-- Use `Provider.family` / `StreamProvider.family` for parameterized providers
-- Use `NotifierProvider` for mutable local state (not StateNotifierProvider)
-- Use `ref.watch` for reactivity, `ref.read` for one-shot access
-- Provider naming: `{feature}Provider`, `{feature}StreamProvider`, `local{Feature}Provider`
-
-### Providers clave de referencia
-| Provider | Tipo | Descripción |
+| Qué | Convención | Ejemplo |
 |---|---|---|
-| `effectiveUserUidProvider` | `Provider<String?>` | UID activo (Firebase > local) |
-| `isGuestUserProvider` | `Provider<bool>` | `true` si el usuario es anónimo |
-| `userProfileProvider` | `StreamProvider<Usuario?>` | Perfil del usuario actual |
-| `userProfileByIdProvider` | `StreamProvider.family<Usuario?, String>` | Perfil de cualquier usuario por UID |
-| `isFollowingProvider` | `FutureProvider.family<bool, String>` | ¿Sigo a este usuario? |
-| `focusModeProvider` | `NotifierProvider<FocusModeNotifier, bool>` | Modo Enfoque |
-| `reflexionesStreamProvider` | `StreamProvider<List<Reflexion>>` | Feed completo |
-| `peticionesStreamProvider` | `StreamProvider<List<PeticionOracion>>` | Peticiones de oración |
+| Archivos | snake_case | `firestore_service.dart` |
+| Clases | PascalCase | `FirestoreService` |
+| Providers | camelCase + `Provider` | `feedPageProvider` |
+| Imports | relativos dentro de `lib/` | `import '../models/reflexion.dart'` |
+| Dominio | español | `Reflexion`, `PeticionOracion` |
+| Técnico | inglés | `BibleVerse`, `StorageService` |
+| Tests | descripción en español | `test('calcula racha de 7 días', …)` |
+| Commits | Conventional Commits, español | `fix(oracion): contador de amén` |
 
-## Widget Patterns
-- Default: `ConsumerWidget` (stateless, Riverpod-aware)
-- For mutable state: `ConsumerStatefulWidget` + `ConsumerState`
-- **Never** use plain `StatefulWidget` except for MainNavigationView (tab index)
-- Private widgets: declare as `const _WidgetName({super.key, required ...})` at bottom of same file
-- Async rendering: use `.when(data:, loading:, error:)` on `AsyncValue`
-- No GoRouter, no named routes — use `Navigator.of(context).push(MaterialPageRoute(...))`
+### Modelos
+- Campos `final`, constructor `const` si es posible.
+- `toMap()` y `factory fromMap(Map)`. Para Firestore, `fromFirestore(DocumentSnapshot)`.
+- Defaults con `??`; nunca `as` sin comprobación.
+- Ninguna lógica de negocio en modelos; va en servicios o notifiers.
 
-### Seguridad de Invitados
-- Verificar `ref.watch(isGuestUserProvider)` al inicio del `build()` de pantallas sociales
-- Si `isGuest == true`: retornar `GuestAccessRestrictedWidget` (widget dedicado en `lib/presentation/widgets/`)
-- FABs y botones de acción social: envolver con `if (!isGuest)` antes de renderizar
-- **FeedScreen**: invitados no ven FAB publicar, ni pueden seguir/reaccionar/comentar
-- **OracionScreen**: pantalla completa reemplazada por `GuestAccessRestrictedWidget`
+### Servicios
+- Constructor atrapa fallos de Firebase y pone `_available = false`.
+- Todo método público empieza con guard: `if (!_available) return …`.
+- Streams: `.snapshots().map(...)`. Escrituras: `Future<void>`, `FieldValue` para contadores.
+- **Toda consulta de colección lleva `.limit()`.** Sin excepción.
+- Nunca `getAll*()` sin paginación.
 
-## Testing Conventions
-- `flutter_test` only (no mockito/mocktail)
-- Mock SharedPreferences: `SharedPreferences.setMockInitialValues({})` in `setUp()`
-- Wrap widgets: `ProviderScope(overrides: [provider.overrideWithValue(...)], child: MaterialApp(...))`
-- Model tests: `group('ModelName')` with `test('descripción en español', ...)`
-- Use `testWidgets` for widget tests, `test` for unit tests
-- **Mock Notifier providers** in tests: override `build()` (NOT constructor `state = value`) — Riverpod 3.x Notifiers throw "Tried to use a notifier in an uninitialized state" if `state` is set in constructor before `build()` runs
-- **SIEMPRE** incluir `isGuestUserProvider.overrideWithValue(false)` en `ProviderScope` overrides de pantallas sociales (FeedScreen, OracionScreen, PerfilScreen)
-- **SIEMPRE** incluir `userProfileProvider.overrideWith(...)` en tests de pantallas que muestran perfil
+### Riverpod
+- `Provider` para singletons, `StreamProvider` para tiempo real,
+  `FutureProvider` para one-shot, `NotifierProvider` para estado mutable.
+- `ref.watch` en `build`, `ref.read` en callbacks. Nunca `ref.read` en `build`.
+- En tests, los `Notifier` mock sobreescriben `build()`, no asignan `state` en el constructor.
 
-## Common Commands
+### Widgets
+- `ConsumerWidget` por defecto; `ConsumerStatefulWidget` solo con estado local real.
+- Widgets privados `_Nombre` al final del archivo; si pasa de 150 líneas, archivo propio en `widgets/`.
+- `AsyncValue` siempre con `.when(data:, loading:, error:)`. Nunca `.value!`.
+- Nada de `print`; usa `debugPrint` o el logger de observabilidad.
+- Pantallas sociales: comprobar `isGuestUserProvider` al inicio de `build()` y
+  renderizar `GuestAccessRestrictedWidget` o esconder acciones.
+
+### Seguridad (no negociable)
+- Nunca commitear `.env`, `google-services.json`, `GoogleService-Info.plist`, keystores.
+- Toda regla de Firestore nueva lleva test. Lee `.opencode/skills/firestore-rules/SKILL.md`.
+- Un usuario **nunca** puede leer o escribir datos privados de otro.
+- Contadores sociales: ±1 y solo con el uid propio (ver `firestore.rules`).
+- No subir el límite de tamaño de textos sin justificar (spam / coste).
+
+## 5. Testing
+
+- `flutter_test` + `mocktail` + `fake_cloud_firestore` + `firebase_auth_mocks`.
+- `SharedPreferences.setMockInitialValues({})` en `setUp()`.
+- Widget tests envueltos en `ProviderScope(overrides: [...], child: MaterialApp(...))`.
+- Pantallas sociales en tests: **siempre** `isGuestUserProvider.overrideWithValue(false)`
+  y `userProfileProvider.overrideWith(...)`.
+- Reglas: `scripts/rules_test.sh` (necesita Java para el emulador).
+- Integración (flujos críticos): `integration_test/` — login → lectura del día → publicar.
+
+## 6. Comandos
+
 ```bash
-flutter test                                          # Run all tests
-flutter test test/path/to/file.dart                   # Single test file
-flutter analyze                                       # Static analysis
-flutter build apk --release                           # Android release build
-flutter build appbundle --release                     # Play Store App Bundle (.aab)
-flutter build web --release                           # Web production build
-flutter build ios --release                           # iOS release build
-flutter pub run flutter_launcher_icons                # Regenerar íconos de app
-flutterfire configure --project=altardiario-ec25f     # Re-configure Firebase
-firebase deploy --only firestore:rules                # Deploy Firestore rules
-firebase deploy --only firestore:indexes              # Deploy Firestore indexes
+scripts/bootstrap.sh          # entorno desde cero + hook pre-commit
+scripts/check.sh              # format + analyze + test + reglas  (= CI)
+scripts/check.sh --fast       # sin reglas (sin Java)
+scripts/check.sh --fix        # formatea
+scripts/rules_test.sh         # solo reglas de Firestore
+flutter test test/ruta.dart   # un archivo
+flutter run -d chrome|android|ios
 ```
 
-## Firebase Project
-- Project ID: `altardiario-ec25f`
-- Auth: Anonymous, Google, Apple enabled
-- Firestore: test mode, indexes in `firestore.indexes.json`
-- Rules in `firestore.rules`
+Slash commands en OpenCode: `/cycle`, `/audit`, `/roadmap`, `/check`,
+`/rules-test`, `/feature`, `/review`, `/release`, `/migrate-feature`,
+`/audit-security`. Ver `.opencode/commands/`.
 
-## Critical Rules
-- NEVER commit `.env` (contains API keys)
-- NEVER rename files without updating all imports
-- ALWAYS guard Firebase-dependent code with `kIsWeb` or availability checks
-- ALWAYS add both `toMap()` and `factory fromMap()` to new models
-- ALWAYS add tests for new models (unit) and screens (widget test)
-- ALWAYS check `isGuestUserProvider` in social screens before rendering action buttons
-- NEVER add new providers outside of `app_providers.dart`
-- NEVER use `StatefulWidget` — use `ConsumerStatefulWidget` instead
+```bash
+scripts/loop.sh 3                        # 3 ciclos autónomos
+node tools/roadmap-mcp/cli.mjs state     # estado del roadmap
+```
 
-## Modo Enfoque
-- **Provider**: `FocusModeNotifier` en `app_providers.dart` — persiste en SharedPreferences, al activar cancela notificaciones, al desactivar reprograma recordatorio.
-- **Provider name**: `focusModeProvider` (`NotifierProvider<FocusModeNotifier, bool>`).
-- **HomeScreen**: PopScope intercepta back button si focusMode activo y devocional no completado. AppBar muestra 🔒. Tarjeta SwitchListTile en el cuerpo con toggle.
-- **Navegación**: `_handleNavigate(tab, isCompleted)` en HomeScreen bloquea tabs si focusMode on y !isCompleted.
-- **Storage**: `storage_service.dart` — `getFocusMode()`, `setFocusMode(bool)` via `_keyFocusMode`.
+## 6b. Ciclo autónomo y roadmap
 
-## Gamificación
-- **Servicio**: `lib/core/services/gamification_service.dart` — 16 insignias en 5 categorías (Rachas, Lectura, Comunidad, Oración, Especiales).
-- **XP y Niveles**: 10 niveles (Semilla → Maestro Espiritual). `addPoints(userId, points, firestore)` usa transacción atómica.
-- **Evaluación automática**: llamar `evaluarYNotificarBadges(usuario, stats, firestore, storage, context)` al publicar reflexiones o peticiones.
-- **UI**: `PerfilScreen` muestra `_LevelProgressCard` (barra XP), `_AchievementsSection` (badges con rareza y estado) y modal completo `_showAllBadgesModal`.
-- **Modelo**: `lib/data/models/badge.dart` — campos: `id, name, description, icon, category, rarity, criteria, points, createdAt`.
+El trabajo se organiza en `roadmap/tasks.yaml` (fuente de verdad) y se registra
+en `roadmap/BITACORA.md`. **Nunca edites esos archivos a mano desde un agente**:
+usa el MCP `roadmap` (`get_state`, `next_task`, `start_task`, `complete_task`,
+`add_task`, `split_task`, `block_task`, `log_cycle`, `save_audit`).
 
-## Política de Comunidad
-- **Servicio**: `lib/core/services/community_policy_service.dart` — lista de 5 normas de uso.
-- **Integración**: mostrar `CommunityPolicyService.showPolicyModal(context)` desde PerfilScreen (Configuración) y antes de publicar.
-- **Tests**: `test/services/community_policy_service_test.dart`.
+- `/cycle` ejecuta un ciclo (agente `orchestrator`): una tarea, verificada,
+  revisada, registrada. `scripts/loop.sh N` encadena N ciclos.
+- `/audit` genera tareas nuevas a partir de una auditoría en 6 dimensiones.
+- `/roadmap` muestra dónde va el proyecto.
+- Protocolo completo: skill `autonomous-loop`.
+- Si descubres trabajo necesario fuera de tu tarea, no lo hagas: `add_task`.
+- Si algo requiere decisión humana (deploy, pago, producto, secretos): `block_task`.
 
-## Ícono de la App
-- Configurado en `pubspec.yaml` bajo `flutter_launcher_icons` con `assets/logo_app.png`.
-- Regenerar con: `flutter pub run flutter_launcher_icons`
-- Genera automáticamente todos los tamaños Android (`mipmap-*`) e iOS.
+## 7. Qué NO hacer
+
+- No "arreglar" tests borrándolos o marcándolos `skip`.
+- No bajar el nivel de las reglas de Firestore para que algo funcione.
+- No añadir dependencias sin justificar en el PR (coste de mantenimiento).
+- No cambiar `firebase_options.dart` a mano: `flutterfire configure`.
+- No reformatear archivos que no tocas (ruido en el diff).
+- No inventar APIs de paquetes: si dudas, abre el paquete en `.pub-cache` o pregunta.
+- No asumir que algo compila: córrelo.
+
+## 8. Documentación viva
+
+| Archivo | Para qué |
+|---|---|
+| `roadmap/tasks.yaml` · `roadmap/STATE.md` | Backlog ejecutable y panel de progreso (vía MCP) |
+| `roadmap/BITACORA.md` | Qué hizo cada ciclo autónomo |
+| `docs/ROADMAP.md` | Visión por fases (narrativa; las tareas concretas están en roadmap/tasks.yaml) |
+| `docs/adr/` | Decisiones de arquitectura (una por archivo) |
+| `docs/AI_WORKFLOW.md` | Cómo trabajar día a día con OpenCode en este repo |
+| `docs/SECURITY.md` | Modelo de amenazas, secrets, App Check |
+| `docs/RELEASE.md` | Cómo publicar una versión |
+| `SYSTEM.md`, `ARQUITECTURA_SOCIAL.md` | Referencia técnica heredada (se irá absorbiendo en ADRs) |
+| `BITACORA.md` | Historial de sesiones (opcional, no reemplaza CHANGELOG) |

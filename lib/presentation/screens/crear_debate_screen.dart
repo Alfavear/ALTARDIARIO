@@ -46,7 +46,8 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
         contenido: contenido,
         userId: uid,
         userName: user?.displayName ?? '',
-        libroId: _bibleService.getBookIdFromName(_selectedLibro ?? '').toString(),
+        libroId:
+            _bibleService.getBookIdFromName(_selectedLibro ?? '').toString(),
         libroNombre: _selectedLibro ?? '',
         fecha: DateTime.now(),
       );
@@ -67,15 +68,15 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-    appBar: AppBar(
-      backgroundColor: Colors.white,
-      foregroundColor: AppTheme.textPrimary,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: const Text('Nuevo Debate',
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Nuevo Debate',
             style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
@@ -98,8 +99,7 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Título del debate',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 14)),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 8),
             TextField(
               controller: _tituloCtrl,
@@ -107,8 +107,7 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
                 hintText: 'Ej: ¿Qué significa la fe en Hebreos 11?',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: AppTheme.pendingGrayDark),
+                  borderSide: const BorderSide(color: AppTheme.pendingGrayDark),
                 ),
                 contentPadding: const EdgeInsets.all(14),
               ),
@@ -116,8 +115,7 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
             ),
             const SizedBox(height: 20),
             const Text('Libro bíblico relacionado (opcional)',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 14)),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -132,28 +130,23 @@ class _CrearDebateScreenState extends ConsumerState<CrearDebateScreen> {
                   value: _selectedLibro,
                   items: _bibleService
                       .getBookNames()
-                      .map((l) => DropdownMenuItem(
-                          value: l, child: Text(l)))
+                      .map((l) => DropdownMenuItem(value: l, child: Text(l)))
                       .toList(),
-                  onChanged: (v) =>
-                      setState(() => _selectedLibro = v),
+                  onChanged: (v) => setState(() => _selectedLibro = v),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             const Text('Contenido (opcional)',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 14)),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 8),
             TextField(
               controller: _contenidoCtrl,
               decoration: InputDecoration(
-                hintText:
-                    'Desarrolla tu idea, pregunta o reflexión...',
+                hintText: 'Desarrolla tu idea, pregunta o reflexión...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: AppTheme.pendingGrayDark),
+                  borderSide: const BorderSide(color: AppTheme.pendingGrayDark),
                 ),
                 contentPadding: const EdgeInsets.all(14),
               ),

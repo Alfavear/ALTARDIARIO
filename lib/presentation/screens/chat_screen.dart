@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/app_providers.dart';
+
+import '../../core/observability/observability.dart';
 import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -24,27 +28,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  bool _isSending = false;
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _isSending) return;
 
     final currentUid = ref.read(effectiveUserUidProvider);
     if (currentUid == null) return;
 
-    final currentProfile = ref.read(userProfileProvider).value;
-    final currentName = currentProfile?.displayName ?? '';
-
-    ref.read(firestoreServiceProvider).sendMessage(
-      widget.chatId,
-      currentUid,
-      _messageController.text.trim(),
-      participantIds: [currentUid, widget.otherUserId],
-      participantNames: {
-        currentUid: currentName,
-        widget.otherUserId: widget.otherUserName,
-      },
-    );
-
-    _messageController.clear();
+    setState(() => _isSending = true);
+    try {
+      await ref.read(firestoreServiceProvider).sendMessage(
+            widget.chatId,
+            currentUid,
+            text,
+          );
+      if (!mounted) return;
+      if (_messageController.text.trim() == text) _messageController.clear();
+    } catch (e, st) {
+      if (!mounted) return;
+      unawaited(Observability.recordError(e, st, reason: 'send_message'));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              const Text('No se pudo enviar el mensaje. Inténtalo de nuevo.'),
+          action: SnackBarAction(label: 'REINTENTAR', onPressed: _sendMessage),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   @override
@@ -100,8 +114,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         fontWeight: FontWeight.w700,
                         fontSize: 15)),
                 const Text('En línea',
-                    style: TextStyle(
-                        color: Colors.white70, fontSize: 11)),
+                    style: TextStyle(color: Colors.white70, fontSize: 11)),
               ],
             ),
           ],
@@ -145,10 +158,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       children: [
                         if (showDateHeader)
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                            child: _DateChip(
-                                date: msg.timestamp),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: _DateChip(date: msg.timestamp),
                           ),
                         _MessageBubble(
                           text: msg.text,
@@ -160,10 +171,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   },
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (err, stack) =>
-                  Center(child: Text('Error: $err')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
           _buildInputBar(),
@@ -191,14 +200,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const SizedBox(height: 20),
             const Text(
               'Envía un mensaje para empezar',
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             const Text(
               'Comparte tus reflexiones y oraciones',
-              style: TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary),
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -235,8 +242,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.pendingGray,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: AppTheme.pendingGrayDark),
+                border: Border.all(color: AppTheme.pendingGrayDark),
               ),
               child: Row(
                 children: [
@@ -247,8 +253,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         hintText: 'Escribe un mensaje...',
                         border: InputBorder.none,
                         isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
                       style: const TextStyle(fontSize: 14),
                       onSubmitted: (_) => _sendMessage(),
@@ -262,7 +267,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: _sendMessage,
+            onTap: _isSending ? null : _sendMessage,
             child: Container(
               width: 44,
               height: 44,
@@ -270,8 +275,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: AppTheme.primaryBlue,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send,
-                  color: Colors.white, size: 20),
+              child: _isSending
+                  ? const Center(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : const Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -339,14 +354,10 @@ class _MessageBubble extends StatelessWidget {
           if (!isMe) const SizedBox(width: 0),
           Container(
             constraints: BoxConstraints(
-                maxWidth:
-                    MediaQuery.of(context).size.width * 0.75),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                maxWidth: MediaQuery.of(context).size.width * 0.75),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isMe
-                  ? AppTheme.primaryBlue
-                  : AppTheme.pendingGray,
+              color: isMe ? AppTheme.primaryBlue : AppTheme.pendingGray,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -355,9 +366,8 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
             child: Column(
-              crossAxisAlignment: isMe
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Text(
                   text,
@@ -375,9 +385,7 @@ class _MessageBubble extends StatelessWidget {
                       DateFormat('HH:mm').format(time),
                       style: TextStyle(
                         fontSize: 10,
-                        color: isMe
-                            ? Colors.white70
-                            : AppTheme.textSecondary,
+                        color: isMe ? Colors.white70 : AppTheme.textSecondary,
                       ),
                     ),
                     if (isMe) ...[

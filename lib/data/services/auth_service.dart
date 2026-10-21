@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:convert' show base64UrlEncode, utf8;
 import 'dart:math' show Random;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart' show sha256;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthService {
   final FirebaseAuth? _auth;
@@ -101,11 +101,12 @@ class AuthService {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
         provider.addScope('profile');
-        
-        final UserCredential userCredential = 
+
+        final UserCredential userCredential =
             await _auth!.signInWithPopup(provider);
-        debugPrint('✅ [AuthService] signInWithPopup exitoso: ${userCredential.user?.uid}');
-        
+        debugPrint(
+            '✅ [AuthService] signInWithPopup exitoso: ${userCredential.user?.uid}');
+
         // Verificación defensiva
         if (userCredential.user == null) {
           debugPrint('⚠️ [AuthService] userCredential.user es null');
@@ -114,9 +115,11 @@ class AuthService {
         await persistLocalUid(userCredential.user!.uid);
         return userCredential.user;
       } on FirebaseAuthException catch (e) {
-        debugPrint('❌ [AuthService] FirebaseAuthException signInWithPopup: ${e.code} - ${e.message}');
+        debugPrint(
+            '❌ [AuthService] FirebaseAuthException signInWithPopup: ${e.code} - ${e.message}');
         // Si falla popup (bloqueado), intentar redirect
-        if (e.code == 'auth/popup-blocked' || e.code == 'auth/cancelled-popup-request') {
+        if (e.code == 'auth/popup-blocked' ||
+            e.code == 'auth/cancelled-popup-request') {
           try {
             debugPrint('🔄 [AuthService] Intentando signInWithRedirect...');
             final provider = GoogleAuthProvider();
@@ -156,26 +159,28 @@ class AuthService {
           debugPrint('⚠️ [AuthService] Usuario canceló Google Sign-In');
           return null;
         }
-        
-        final GoogleSignInAuthentication googleAuth = 
+
+        final GoogleSignInAuthentication googleAuth =
             await googleUser.authentication;
-        
+
         final String? accessToken = googleAuth.accessToken;
         final String? idToken = googleAuth.idToken;
-        
+
         if (accessToken == null || idToken == null) {
-          debugPrint('⚠️ [AuthService] Tokens null: accessToken=$accessToken, idToken=$idToken');
+          debugPrint(
+              '⚠️ [AuthService] Tokens null: accessToken=$accessToken, idToken=$idToken');
           return null;
         }
-        
+
         final credential = GoogleAuthProvider.credential(
           accessToken: accessToken,
           idToken: idToken,
         );
-        
-        final UserCredential userCredential = 
+
+        final UserCredential userCredential =
             await _auth!.signInWithCredential(credential);
-        debugPrint('✅ [AuthService] Google Sign-In mobile exitoso: ${userCredential.user?.uid}');
+        debugPrint(
+            '✅ [AuthService] Google Sign-In mobile exitoso: ${userCredential.user?.uid}');
         if (userCredential.user != null) {
           await persistLocalUid(userCredential.user!.uid);
         }
@@ -192,10 +197,10 @@ class AuthService {
     if (!_firebaseAvailable || !kIsWeb) return null;
     try {
       debugPrint('🔄 [AuthService] Verificando redirect result...');
-      final UserCredential result = 
-          await _auth!.getRedirectResult();
-      debugPrint('✅ [AuthService] Redirect result: ${result.user?.uid ?? "null"}');
-      
+      final UserCredential result = await _auth!.getRedirectResult();
+      debugPrint(
+          '✅ [AuthService] Redirect result: ${result.user?.uid ?? "null"}');
+
       if (result.user != null) {
         await persistLocalUid(result.user!.uid);
         return result.user;
@@ -209,8 +214,10 @@ class AuthService {
 
   Future<User?> signInWithApple() async {
     if (!_firebaseAvailable) return null;
-    if (kIsWeb) return null; // Apple Sign-In no soportado en web por este package
-    
+    if (kIsWeb) {
+      return null; // Apple Sign-In no soportado en web por este package
+    }
+
     final rawNonce = _generateNonce();
     final nonce = _sha256OfString(rawNonce);
 
