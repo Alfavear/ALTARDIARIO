@@ -78,6 +78,7 @@ class FirestoreService {
         .limit(feedPageSize)
         .snapshots()
         .map((s) => s.docs
+            .where((d) => d.data()['hidden'] != true)
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -90,6 +91,7 @@ class FirestoreService {
         .limit(userReflectionsPageSize)
         .snapshots()
         .map((s) => s.docs
+            .where((d) => d.data()['hidden'] != true)
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -135,6 +137,7 @@ class FirestoreService {
         .limit(50)
         .get();
     return snapshot.docs
+        .where((d) => d.data()['hidden'] != true)
         .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
         .toList();
   }
@@ -217,6 +220,7 @@ class FirestoreService {
     }
     query = query.limit(debatePageSize);
     return query.snapshots().map((s) => s.docs
+        .where((d) => (d.data() as Map<String, dynamic>)['hidden'] != true)
         .map((d) =>
             Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
         .toList());
@@ -628,6 +632,7 @@ class FirestoreService {
         .limit(prayerPageSize)
         .snapshots()
         .map((s) => s.docs
+            .where((d) => d.data()['hidden'] != true)
             .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }

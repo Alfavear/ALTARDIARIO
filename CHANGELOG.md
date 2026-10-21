@@ -4,6 +4,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 
 ## [Unreleased]
 
+### Corregido
+- El feed deja de mostrar reflexiones, debates y peticiones marcados como ocultos por moderación; los documentos antiguos sin el campo `hidden` siguen visibles.
+
 ### Seguridad
 - Reglas de Firestore reescritas: nadie edita contenido ajeno; chats privados solo para participantes; notificaciones no suplantables; contadores sociales acotados a ±1 con uid propio; colección `reports` para moderación.
 - App Check activado en cliente (monitor; pasar a enforce en consola).

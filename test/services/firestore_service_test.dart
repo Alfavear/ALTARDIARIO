@@ -36,6 +36,90 @@ void main() {
     );
   });
 
+
+  group('FirestoreService moderación de contenido oculto', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('oculta contenido marcado sin excluir documentos heredados', () async {
+      await fake.collection('reflexiones').doc('visible').set({
+        'userId': 'u1',
+        'userName': 'Ana',
+        'texto': 'Visible',
+        'pasajeDia': 'Salmo 23',
+        'fecha': '2026-10-20T10:00:00.000',
+      });
+      await fake.collection('reflexiones').doc('oculta').set({
+        'userId': 'u2',
+        'userName': 'Luis',
+        'texto': 'Reportada',
+        'pasajeDia': 'Salmo 1',
+        'fecha': '2026-10-20T11:00:00.000',
+        'hidden': true,
+      });
+
+      await fake.collection('debates').doc('visible').set({
+        'titulo': 'Visible',
+        'contenido': 'Debate visible',
+        'userId': 'u1',
+        'userName': 'Ana',
+        'fecha': '2026-10-20T10:00:00.000',
+      });
+      await fake.collection('debates').doc('oculto').set({
+        'titulo': 'Reportado',
+        'contenido': 'Debate reportado',
+        'userId': 'u2',
+        'userName': 'Luis',
+        'fecha': '2026-10-20T11:00:00.000',
+        'hidden': true,
+      });
+
+      await fake.collection('peticiones_oracion').doc('visible').set({
+        'userId': 'u1',
+        'userName': 'Ana',
+        'motivo': 'Visible',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 10, 20, 10)),
+      });
+      await fake.collection('peticiones_oracion').doc('oculta').set({
+        'userId': 'u2',
+        'userName': 'Luis',
+        'motivo': 'Reportada',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 10, 20, 11)),
+        'hidden': true,
+      });
+
+      expect(
+        (await service.reflexionesStream().first).map((item) => item.id),
+        contains('visible'),
+      );
+      expect(
+        (await service.reflexionesStream().first).map((item) => item.id),
+        isNot(contains('oculta')),
+      );
+      expect(
+        (await service.debatesStream().first).map((item) => item.id),
+        contains('visible'),
+      );
+      expect(
+        (await service.debatesStream().first).map((item) => item.id),
+        isNot(contains('oculto')),
+      );
+      expect(
+        (await service.peticionesStream().first).map((item) => item.id),
+        contains('visible'),
+      );
+      expect(
+        (await service.peticionesStream().first).map((item) => item.id),
+        isNot(contains('oculta')),
+      );
+    });
+  });
+
   group('FirestoreService perfiles privados', () {
     late FakeFirebaseFirestore fake;
     late FirestoreService service;
