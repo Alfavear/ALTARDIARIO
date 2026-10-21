@@ -409,6 +409,40 @@ test('REGRESIÓN: el participante que no creó el chat puede responder (mismo co
   }));
 });
 
+test('T-015: el update de /chats solo admite campos de la allowlist', async () => {
+  await admin((db) => setDoc(doc(db, 'chats', 'ab'), {
+    participantIds: [ALICE, BOB], lastMessage: 'hola', lastUpdate: new Date(),
+  }));
+
+  // Metadatos del chat: permitidos (es lo que escribe sendMessage).
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'chats', 'ab'), {
+    lastMessage: 'hola de nuevo', lastSenderId: ALICE, lastUpdate: serverTimestamp(),
+  }));
+  // participantNames está en la allowlist.
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'chats', 'ab'), {
+    participantNames: { [ALICE]: 'Alice', [BOB]: 'Bob' },
+  }));
+
+  // Cualquier campo fuera de la allowlist: denegado.
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { lastMessage: 'x', likes: 10 }));
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { creadoPor: 'yo' }));
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), {
+    participantNames: { [BOB]: 'Bob' }, moderator: 'yo',
+  }));
+
+  // Duplicar participantes tampoco vale, ni al reordenar.
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { participantIds: [ALICE, ALICE] }));
+});
+
+test('T-015: no se puede crear un chat con participantes duplicados', async () => {
+  // Mismo participantIds dos veces: el set tiene un solo elemento.
+  await assertFails(setDoc(doc(as(ALICE), 'chats', 'dup'), { participantIds: [ALICE, ALICE] }));
+  // Chat legítimo: sigue permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'chats', 'ok'), {
+    participantIds: [ALICE, BOB], lastUpdate: serverTimestamp(),
+  }));
+});
+
 // ───────────────────────── Reportes ─────────────────────────
 
 test('reportes: se crean con el uid propio y nadie los lee desde el cliente', async () => {

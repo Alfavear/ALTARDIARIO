@@ -245,15 +245,22 @@ service cloud.firestore {
 
     match /chats/{chatId} {
       allow read: if isParticipant(resource.data);
+      // Crear el chat: exactamente 2 participantes, distintos entre sí, y el
+      // autor tiene que estar en la lista.
       allow create: if isParticipant(request.resource.data)
-        && request.resource.data.participantIds.size() == 2;
-      // Se pueden actualizar metadatos (lastMessage, lastUpdate) y reordenar
-      // `participantIds` (el emisor reenvía la lista con su uid primero), pero
-      // nunca cambiar quiénes participan.
+        && request.resource.data.participantIds.size() == 2
+        && request.resource.data.participantIds.toSet().size() == 2;
+      // Allowlist de campos: en /chats solo se tocan los metadatos del chat y
+      // la lista de participantes. Cualquier otro campo (contadores, flags,
+      // moderación) queda fuera y la escritura se rechaza.
+      // Reordenar `participantIds` es válido (el emisor reenvía la lista con
+      // su uid primero), pero nunca cambiar quiénes participan.
       allow update: if isParticipant(resource.data)
+        && changedKeys().hasOnly(['participantIds', 'lastMessage', 'lastSenderId', 'lastUpdate', 'participantNames'])
         && (!changedKeys().hasAny(['participantIds'])
             || (sameMembers('participantIds')
-                && request.resource.data.participantIds.size() == 2));
+                && request.resource.data.participantIds.size() == 2
+                && request.resource.data.participantIds.toSet().size() == 2));
       allow delete: if false;
 
       match /messages/{messageId} {
