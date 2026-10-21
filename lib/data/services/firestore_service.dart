@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 
 import '../models/bible_models.dart';
 import '../models/comment.dart';
@@ -394,11 +394,31 @@ class FirestoreService {
     final userRef = _usuarios.doc(usuario.id);
     await userRef.set(usuario.toMap(), SetOptions(merge: true));
     if (usuario.privateAccountMap.isNotEmpty) {
-      await userRef
-          .collection('private')
-          .doc('account')
-          .set(usuario.privateAccountMap, SetOptions(merge: true));
+      // La cuenta privada no debe romper el login si falla: el correo sigue
+      // disponible en Auth y se reintenta en el próximo guardado.
+      try {
+        await userRef
+            .collection('private')
+            .doc('account')
+            .set(usuario.privateAccountMap, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('No se pudo guardar la cuenta privada de ${usuario.id}: $e');
+      }
     }
+  }
+
+  /// Migra el email del perfil público a `private/account` y lo purga del
+  /// público. Se usa en el backfill de usuarios legacy al iniciar sesión.
+  /// Primero se escribe en privado y luego se borra del público para no
+  /// perder el dato si falla el segundo paso.
+  Future<void> migrarEmailAlPrivado(String uid, String email) async {
+    if (!_available || email.isEmpty) return;
+    final userRef = _usuarios.doc(uid);
+    await userRef
+        .collection('private')
+        .doc('account')
+        .set({'email': email}, SetOptions(merge: true));
+    await userRef.set({'email': FieldValue.delete()}, SetOptions(merge: true));
   }
 
   Future<void> toggleFollow(

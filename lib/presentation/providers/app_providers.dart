@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -492,9 +491,7 @@ class FcmTokenNotifier extends Notifier<String?> {
     state = token;
     final uid = ref.read(effectiveUserUidProvider);
     if (uid != null) {
-      await ref
-          .read(firestoreServiceProvider)
-          .updateUserConfig(uid, {'fcmToken': token});
+      await ref.read(firestoreServiceProvider).saveFCMToken(uid, token);
     }
   }
 
@@ -502,9 +499,7 @@ class FcmTokenNotifier extends Notifier<String?> {
     state = null;
     final uid = ref.read(effectiveUserUidProvider);
     if (uid != null) {
-      await ref
-          .read(firestoreServiceProvider)
-          .updateUserConfig(uid, {'fcmToken': FieldValue.delete()});
+      await ref.read(firestoreServiceProvider).clearFCMToken(uid);
     }
   }
 }

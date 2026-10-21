@@ -158,6 +158,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     } else {
       await _fixExistingUserName(user, existingUser);
+      // Backfill (B4): migrar email del perfil público a private/account y
+      // purgarlo del público para usuarios legacy.
+      if (existingUser.email.isNotEmpty &&
+          existingUser.email != 'invitado@altardiario.app') {
+        await firestoreService.migrarEmailAlPrivado(
+            user.uid, existingUser.email);
+      }
     }
   }
 
