@@ -35,7 +35,8 @@ void main() {
     expect(service.reason, 'Lenguaje ofensivo');
   });
 }
-  testWidgets('muestra un error si falla el envío del reporte', (tester) async {
+
+testWidgets('muestra un error si falla el envío del reporte', (tester) async {
     final service = _RecordingFirestoreService(shouldFail: true);
 
     await tester.pumpWidget(
