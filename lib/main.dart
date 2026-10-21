@@ -80,13 +80,6 @@ class AltarDiarioApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       navigatorObservers: Observability.navigatorObservers,
       home: const SplashScreen(),
-      builder: (context, child) {
-        return MediaQuery(
-          data:
-              MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
-          child: child!,
-        );
-      },
     );
   }
 }

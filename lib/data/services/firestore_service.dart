@@ -63,6 +63,13 @@ class FirestoreService {
   /// la colección (coste y latencia lineales con el número de reflexiones).
   /// TODO(roadmap-fase-1): paginación real con startAfterDocument.
   static const int feedPageSize = 100;
+  static const int userReflectionsPageSize = 50;
+  static const int commentsPageSize = 100;
+  static const int debatePageSize = 50;
+  static const int debateRepliesPageSize = 100;
+  static const int messagesPageSize = 100;
+  static const int chatsPageSize = 50;
+  static const int prayerPageSize = 100;
 
   Stream<List<Reflexion>> reflexionesStream() {
     if (!_available) return Stream.value([]);
@@ -80,6 +87,7 @@ class FirestoreService {
     return _reflexiones
         .where('userId', isEqualTo: userId)
         .orderBy('fecha', descending: true)
+        .limit(userReflectionsPageSize)
         .snapshots()
         .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
@@ -112,6 +120,7 @@ class FirestoreService {
     return _reflexiones
         .where('userId', isEqualTo: userId)
         .orderBy('fecha', descending: true)
+        .limit(userReflectionsPageSize)
         .snapshots()
         .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
@@ -138,6 +147,7 @@ class FirestoreService {
         .doc(reflexionId)
         .collection('comentarios')
         .orderBy('fecha', descending: false)
+        .limit(commentsPageSize)
         .snapshots()
         .map((s) => s.docs
             .map((d) => Comment.fromMap({'id': d.id, ...d.data()}))
@@ -205,6 +215,7 @@ class FirestoreService {
     if (libroId != null && libroId.isNotEmpty) {
       query = query.where('libroId', isEqualTo: libroId);
     }
+    query = query.limit(debatePageSize);
     return query.snapshots().map((s) => s.docs
         .map((d) =>
             Debate.fromMap({'id': d.id, ...d.data() as Map<String, dynamic>}))
@@ -238,6 +249,7 @@ class FirestoreService {
     if (!_available) return Stream.value([]);
     return _debateReplies(debateId)
         .orderBy('fecha', descending: false)
+        .limit(debateRepliesPageSize)
         .snapshots()
         .map((s) => s.docs
             .map((d) => DebateReply.fromMap({'id': d.id, ...d.data()}))
@@ -601,8 +613,11 @@ class FirestoreService {
 
   Stream<List<PeticionOracion>> peticionesStream() {
     if (!_available) return Stream.value([]);
-    return _peticiones.orderBy('fecha', descending: true).snapshots().map((s) =>
-        s.docs
+    return _peticiones
+        .orderBy('fecha', descending: true)
+        .limit(prayerPageSize)
+        .snapshots()
+        .map((s) => s.docs
             .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
             .toList());
   }
@@ -662,6 +677,7 @@ class FirestoreService {
         .doc(chatId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
+        .limit(messagesPageSize)
         .snapshots()
         .map((s) => s.docs
             .map((d) => Message.fromMap({'id': d.id, ...d.data()}))
@@ -739,6 +755,7 @@ class FirestoreService {
     return _chats
         .where('participantIds', arrayContains: userId)
         .orderBy('lastUpdate', descending: true)
+        .limit(chatsPageSize)
         .snapshots()
         .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
   }
