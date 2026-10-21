@@ -152,8 +152,15 @@ service cloud.firestore {
 
       match /comentarios/{comentarioId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.userId == uid();
-        allow update: if signedIn() && (ownerEditOk() || likeOnly());
+        allow create: if signedIn() && request.resource.data.userId == uid()
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0
+          && request.resource.data.texto.size() <= 2000;
+        allow update: if signedIn() && (
+          (ownerEditOk()
+            && (!changedKeys().hasAny(['texto'])
+                || request.resource.data.texto.size() <= 2000))
+          || likeOnly());
         allow delete: if isOwner(resource.data);
       }
     }
@@ -164,9 +171,18 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.userId == uid()
         && request.resource.data.titulo is string
-        && request.resource.data.titulo.size() > 0;
+        && request.resource.data.titulo.size() > 0
+        && request.resource.data.titulo.size() <= 200
+        && request.resource.data.contenido is string
+        && request.resource.data.contenido.size() > 0
+        && request.resource.data.contenido.size() <= 5000;
       allow update: if signedIn() && (
-        (ownerEditOk() && !changedKeys().hasAny(['replyCount']))
+        // Dueño: edita título/contenido con límites, no replyCount.
+        (ownerEditOk() && !changedKeys().hasAny(['replyCount'])
+          && (!changedKeys().hasAny(['titulo'])
+              || request.resource.data.titulo.size() <= 200)
+          && (!changedKeys().hasAny(['contenido'])
+              || request.resource.data.contenido.size() <= 5000))
         || voteOnly()
         || (changedKeys().hasOnly(['replyCount']) && counterDeltaOk('replyCount'))
       );
@@ -174,8 +190,17 @@ service cloud.firestore {
 
       match /respuestas/{respuestaId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.userId == uid();
-        allow update: if signedIn() && (ownerEditOk() || voteOnly());
+        allow create: if signedIn()
+          && request.resource.data.userId == uid()
+          && request.resource.data.contenido is string
+          && request.resource.data.contenido.size() > 0
+          && request.resource.data.contenido.size() <= 2000;
+        allow update: if signedIn() && (
+          (ownerEditOk()
+            && (!changedKeys().hasAny(['contenido'])
+                || request.resource.data.contenido.size() <= 2000))
+          || voteOnly()
+        );
         allow delete: if isOwner(resource.data);
       }
     }
@@ -216,7 +241,13 @@ service cloud.firestore {
           && uid() != userId
           && request.resource.data.actorId == uid()
           && request.resource.data.keys().hasAll(['type', 'title', 'body', 'createdAt'])
-          && request.resource.data.read == false;
+          && request.resource.data.read == false
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 200
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 1000;
         allow update: if signedIn() && uid() == userId
           && changedKeys().hasOnly(['read']);
         allow delete: if signedIn() && uid() == userId;
