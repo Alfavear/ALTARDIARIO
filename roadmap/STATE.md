@@ -19,24 +19,31 @@
 
 
 ## Últimos ciclos
+## Ciclo 3 — 2026-10-20T23:57:23.037Z
+- **Tarea:** T-003 · Arreglar tests existentes que rompan por las nuevas dependencias/lints
+- **Resultado:** done
+- **Rama/commit:** auto/T-003-tests-verdes @ 886fb4e
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR CON CAMBIOS (0 bloqueantes; las 2 comprobaciones por caso sugeridas se ejecutaron y pasan)
+
+Verificacion no-op de T-003: la premisa era obsoleta y NO habia ningun test roto. flutter test 108/108 en verde, flutter analyze limpio y el gate de formato de CI que faltaba por demostrar tambien pasa ('Formatted 80 files (0 changed)'). Criterio 2 demostrado a nivel de caso y de archivo contra main: 108 declaraciones test/testWidgets en main y 108 en HEAD, 14 eliminadas y 14 anadidas (solo reflow de formato), 7 expect eliminadas y 7 anadidas, 0 archivos de test borrados y 0 coincidencias de skip/markTestSkipped/@Skip en test/. scripts/check.sh --fast: format 0 changed, analyze 'No issues found!', '00:12 +108: All tests passed!', 'Todo en verde' (exit 0). Sin cambios de codigo ni CHANGELOG: no hay cambio funcional. Reviewer: APROBAR CON CAMBIOS, 0 bloqueantes. Se cierra T-003 con evidencia y se desbloquean T-004, T-005, T-006, T-007 y T-008.
+
+**Problemas:**
+…
+
+## Ciclo 4 — 2026-10-21T00:43:38.664Z
+- **Tarea:** T-014 · Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla
+- **Resultado:** done
+- **Rama/commit:** auto/T-014-chat-sendmessage @ 2ea3366
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR (revisión manual del diff tras timeout del ciclo; 0 bloqueantes)
 
 sendMessage ahora distingue creación de chat (participantIds + participantNames, exactamente 2) de envío a chat existente (solo lastUpdate/lastMessage/lastSenderId). La UI dejó de pasar participantes, hace await con try/catch, conserva el texto si falla y ofrece REINTENTAR; el guard _isSending evita dobles envíos. Se añadió un constructor opcional FirestoreService({firestore}) para inyectar FakeFirebaseFirestore en tests. check.sh --fast: 122/122 tests, analyze limpio.
 
 **Problemas:**
-- El ciclo 4 se interrumpió por el timeout de 40 min del runner durante la fase de revisión; el trabajo quedó sin commitear. Se verificó y cerró manualmente vía MCP.
-- Los subagentes planner/implementer/tester/reviewer no tienen shell; el orquestador ejecutó check.sh y las verificaciones.
-- scripts/loop.sh sigue terminando con exit 1 por SIGPIPE del `state | head` final; no afecta al ciclo pero confunde.
+…
 
-**Decisiones:**
-- No se reescriben participantIds/participantNames en chats existentes: se ignoran aunque el llamador los pase.
-- El camino caliente de la UI no hace get() extra: llama sendMessage sin participantes y usa update().
-- Se inyecta FirebaseFirestore opcional para tests con fake_cloud_firestore.
-- No se tocó firestore.rules en este ciclo; T-015 queda para la allowlist de campos en /chats.
-
-**Siguiente:** Siguiente elegible: T-015 (allowlist de campos en /chats y create sin duplicados) o T-017; revisar/mergear la pila auto/*. Pendiente humano: mergear T-002 a main para desplegar firestore.rules.
-
----
-## ## Ciclo 5 — 2026-10-21T02:36:45.758Z
+## Ciclo 5 — 2026-10-21T02:36:45.758Z
 - **Tarea:** T-015 · Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados
 - **Resultado:** done
 - **Rama/commit:** auto/T-015-rules-chats-allowlist @ 1469b62
@@ -46,16 +53,4 @@ sendMessage ahora distingue creación de chat (participantIds + participantNames
 El update de /chats ahora exige changedKeys().hasOnly(['participantIds','lastMessage','lastSenderId','lastUpdate','participantNames']) y el create rechaza participantIds duplicados con participantIds.toSet().size() == 2. Verificado contra el codigo de la app: sendMessage escribe solo lastUpdate/lastMessage/lastSenderId en el update y participantIds/participantNames en el create, asi que ninguna escritura legitima queda bloqueada. Suite de reglas 30/30 (2 tests nuevos) y 123/123 tests de Dart. Se registro ademas en el backlog el trabajo que la auditoria dejo fuera: migracion de privacidad (bloquea el PR #21), bloqueo de usuarios, paginacion por cursor y flujo de eliminacion de cuenta.
 
 **Problemas:**
-- En un worktree nuevo `flutter pub get` falla: Windows sin symlinks (Developer Mode desactivado) y "Building with plugins requires symlink support". Se resolvio copiando .dart_tool/package_config.json del workspace principal y parcheando el rootUri al worktree; con eso `scripts/check.sh` corre entero. Sin ese apano, ningun worktree limpio puede pasar la puerta.
-- El workspace principal lo tiene Codex ocupado con cambios sin commitear, por eso este ciclo corre en un worktree aislado sobre origin/main.
-
-**Decisiones:**
-- La allowlist de /chats incluye participantNames porque asi lo fija el criterio de aceptacion, aunque la app solo lo escribe en el create.
-- No se restringe el create con hasOnly: T-015 pedia allowlist de update y rechazo de duplicados. Ampliarlo se deja como tarea aparte para no crecer el alcance.
-- No se tocan /usuarios ni /reports: el stack de auditoria (#21 privacidad, #22 moderacion) modifica el mismo archivo; T-015 se limita a /chats para minimizar conflictos.
-- El plan de auditoria no estaba en el backlog: sus secciones 2 a 5 se registran ahora como tareas con source=audit, sin duplicar T-004, T-006, T-007 ni T-008.
-
-**Siguiente:** Siguiente elegible: T-017 (markAllNotificationsAsRead: no commitear un batch vacio) y T-018 (migracion de privacidad, P0) que desbloquea el PR #21. T-004 esta en curso en el PR #22 de la auditoria. Pendiente humano: mergear el stack de auditoria (#21/#22) cuando la migracion este lista, y revisar el resto de trabajo de Codex (restos sin commitear que debilitaban la allowlist de /reports ya restaurados en el commit de relevo 0ebf7cb).
-
----
-
+…

@@ -31,3 +31,34 @@ test('split_task encadena partes y dropea la original', () => {
   assert.equal(d.tasks[3].status, 'dropped');
   assert.deepEqual(parts[1].depends_on, [parts[0].id]);
 });
+
+test('ultimos_ciclos: normaliza el encabezado y no duplica "## ##"', () => {
+  const bitacora = [
+    '# Bitacora', '',
+    '## Ciclo 4 - 2026-10-21T00:43:38.664Z',
+    '- **Tarea:** T-014', '---', '',
+    '## ## Ciclo 5 - 2026-10-21T02:36:45.758Z',
+    '- **Tarea:** T-015', '---',
+  ].join('\n');
+  const out = R.ultimosCiclos(bitacora);
+  assert.ok(out.includes('## Ciclo 5'));
+  assert.ok(!out.includes('## ##'));
+  assert.ok(!out.includes('# Bitacora'));
+  assert.ok(!out.includes('---'));
+});
+
+test('ultimos_ciclos: cada ciclo conserva su encabezado y su cuerpo', () => {
+  const bitacora = ['## Ciclo 1 - d', 'cuerpo 1', '---', '', '## Ciclo 2 - d', 'cuerpo 2', '---'].join('\n');
+  const out = R.ultimosCiclos(bitacora);
+  assert.match(out, /## Ciclo 1/);
+  assert.match(out, /## Ciclo 2/);
+  assert.match(out, /cuerpo 1/);
+  assert.match(out, /cuerpo 2/);
+});
+
+test('ultimos_ciclos: recorta los ciclos largos y marca el corte', () => {
+  const largo = Array.from({ length: 30 }, (_, i) => `linea ${i}`).join('\n');
+  const out = R.ultimosCiclos(`## Ciclo 1 - d\n${largo}`, 3, 5);
+  assert.ok(out.includes('…'));
+  assert.ok(!out.includes('linea 29'));
+});
