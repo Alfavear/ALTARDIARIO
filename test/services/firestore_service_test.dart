@@ -6,6 +6,35 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  group('FirestoreService límites de colecciones', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test(
+      'el stream de peticiones queda acotado a su tamaño de página',
+      () async {
+        final batch = fake.batch();
+        for (var i = 0; i < 120; i++) {
+          batch.set(fake.collection('peticiones_oracion').doc('p$i'), {
+            'userId': 'u1',
+            'motivo': 'Petición $i',
+            'fecha': DateTime.utc(2026, 1, i + 1),
+          });
+        }
+        await batch.commit();
+
+        final results = await service.peticionesStream().first;
+
+        expect(results, hasLength(FirestoreService.prayerPageSize));
+      },
+    );
+  });
+
   group('FirestoreService.sendMessage', () {
     late FakeFirebaseFirestore fake;
     late FirestoreService service;

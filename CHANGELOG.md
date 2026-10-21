@@ -20,6 +20,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 
 ### Cambiado
 - Feed de reflexiones limitado a 100 documentos por lectura (antes: colección completa).
+- Streams de colecciones sociales y chats limitados para controlar lecturas; se conserva el escalado de texto configurado por el sistema.
 - `sendMessage` crea el documento del chat antes del mensaje (requerido por las reglas).
 - `analysis_options.yaml` con lints adicionales.
 - Mocks permitidos en tests (`mocktail`, `fake_cloud_firestore`, `firebase_auth_mocks`).
