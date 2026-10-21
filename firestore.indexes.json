@@ -15,13 +15,6 @@
         { "fieldPath": "libroId", "order": "ASCENDING" },
         { "fieldPath": "fecha", "order": "DESCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "respuestas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "fecha", "order": "ASCENDING" }
-      ]
     }
   ],
   "fieldOverrides": []
