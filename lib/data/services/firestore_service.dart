@@ -14,7 +14,8 @@ import '../models/usuario.dart';
 class FirestoreService {
   final FirebaseFirestore? _firestore;
 
-  FirestoreService() : _firestore = _initFirestore();
+  FirestoreService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? _initFirestore();
 
   static FirebaseFirestore? _initFirestore() {
     try {
@@ -667,6 +668,11 @@ class FirestoreService {
             .toList());
   }
 
+  /// Envía un mensaje al chat [chatId].
+  ///
+  /// `participantIds`/`participantNames` son SOLO para crear el chat; en un
+  /// chat existente se ignoran (solo se actualizan los metadatos). Si no se
+  /// pasan, se asume que el chat ya existe y no se hace ninguna lectura extra.
   Future<void> sendMessage(
     String chatId,
     String senderId,
@@ -674,18 +680,54 @@ class FirestoreService {
     List<String>? participantIds,
     Map<String, String>? participantNames,
   }) async {
-    if (!_available) return;
-    // IMPORTANTE: el documento del chat debe existir ANTES del mensaje.
-    // Las reglas de seguridad verifican `participantIds` del chat padre
-    // para autorizar la escritura del mensaje (firestore.rules → /chats).
-    await _chats.doc(chatId).set({
+    if (!_available) {
+      throw StateError('sendMessage: Firestore no está disponible');
+    }
+    final chatRef = _chats.doc(chatId);
+    final metadata = <String, dynamic>{
       'lastUpdate': FieldValue.serverTimestamp(),
       'lastMessage': text,
       'lastSenderId': senderId,
-      if (participantIds != null) 'participantIds': participantIds,
-      if (participantNames != null) 'participantNames': participantNames,
-    }, SetOptions(merge: true));
-    await _chats.doc(chatId).collection('messages').add({
+    };
+
+    if (participantIds == null && participantNames == null) {
+      // Camino caliente: chat existente (la UI solo abre chats ya creados).
+      // Sin `get()`: 0 lecturas y ninguna posibilidad de reescribir quiénes
+      // participan.
+      await chatRef.update(metadata);
+    } else {
+      if (participantIds == null || participantIds.length != 2) {
+        throw StateError(
+            'sendMessage: participantIds con exactamente 2 miembros es obligatorio para crear el chat $chatId');
+      }
+      // El documento del chat debe existir ANTES del mensaje (las reglas leen
+      // participantIds del padre para autorizar la escritura en /messages).
+      var exists = false;
+      try {
+        exists = (await chatRef.get()).exists;
+      } on FirebaseException catch (e) {
+        // Las reglas actuales (`allow read: if isParticipant(resource.data)`)
+        // devuelven permission-denied cuando el documento aún no existe
+        // (resource == null). Se interpreta como "no existe": si el chat
+        // existiera y el llamador no fuera participante, el `set` de abajo
+        // también sería denegado por la regla de create.
+        if (e.code != 'permission-denied') rethrow;
+        exists = false;
+      }
+      if (exists) {
+        // Chat existente: solo metadatos. participantIds/participantNames se
+        // ignoran a propósito (era el bug de T-014: se reescribían).
+        await chatRef.update(metadata);
+      } else {
+        await chatRef.set({
+          ...metadata,
+          'participantIds': participantIds,
+          if (participantNames != null) 'participantNames': participantNames,
+        });
+      }
+    }
+
+    await chatRef.collection('messages').add({
       'senderId': senderId,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),

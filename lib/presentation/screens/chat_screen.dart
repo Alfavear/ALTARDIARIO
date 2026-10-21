@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/observability/observability.dart';
 import '../../core/theme/app_theme.dart';
 import '../providers/app_providers.dart';
 
@@ -25,27 +28,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  bool _isSending = false;
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _isSending) return;
 
     final currentUid = ref.read(effectiveUserUidProvider);
     if (currentUid == null) return;
 
-    final currentProfile = ref.read(userProfileProvider).value;
-    final currentName = currentProfile?.displayName ?? '';
-
-    ref.read(firestoreServiceProvider).sendMessage(
-      widget.chatId,
-      currentUid,
-      _messageController.text.trim(),
-      participantIds: [currentUid, widget.otherUserId],
-      participantNames: {
-        currentUid: currentName,
-        widget.otherUserId: widget.otherUserName,
-      },
-    );
-
-    _messageController.clear();
+    setState(() => _isSending = true);
+    try {
+      await ref.read(firestoreServiceProvider).sendMessage(
+            widget.chatId,
+            currentUid,
+            text,
+          );
+      if (!mounted) return;
+      if (_messageController.text.trim() == text) _messageController.clear();
+    } catch (e, st) {
+      if (!mounted) return;
+      unawaited(Observability.recordError(e, st, reason: 'send_message'));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              const Text('No se pudo enviar el mensaje. Inténtalo de nuevo.'),
+          action: SnackBarAction(label: 'REINTENTAR', onPressed: _sendMessage),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   @override
@@ -254,7 +267,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: _sendMessage,
+            onTap: _isSending ? null : _sendMessage,
             child: Container(
               width: 44,
               height: 44,
@@ -262,7 +275,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: AppTheme.primaryBlue,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, color: Colors.white, size: 20),
+              child: _isSending
+                  ? const Center(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : const Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
