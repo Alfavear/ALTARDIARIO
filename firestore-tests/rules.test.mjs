@@ -434,6 +434,8 @@ test('reportes: se crean con el uid propio y nadie los lee desde el cliente', as
   await assertSucceeds(setDoc(doc(as(BOB), 'reports', 'rep1'), r));
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep2'), { ...r, reporterId: ALICE }));
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep3'), { ...r, targetType: 'otro' }));
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep4'), { ...r, reason: '' }));
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep5'), { ...r, payload: 'no permitido' }));
   await assertFails(getDoc(doc(as(BOB), 'reports', 'rep1')));
 });
 

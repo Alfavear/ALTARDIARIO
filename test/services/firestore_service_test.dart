@@ -76,6 +76,35 @@ void main() {
     });
   });
 
+  group('FirestoreService reportes', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('guarda un reporte con autor, objetivo y motivo', () async {
+      await service.reportarContenido(
+        reporterId: 'u1',
+        targetType: 'usuario',
+        targetId: 'u2',
+        reason: 'Lenguaje ofensivo',
+      );
+
+      final reports = await fake.collection('reports').get();
+      expect(reports.docs, hasLength(1));
+      expect(reports.docs.single.data(), containsPair('reporterId', 'u1'));
+      expect(reports.docs.single.data(), containsPair('targetType', 'usuario'));
+      expect(reports.docs.single.data(), containsPair('targetId', 'u2'));
+      expect(
+        reports.docs.single.data(),
+        containsPair('reason', 'Lenguaje ofensivo'),
+      );
+    });
+  });
+
   group('FirestoreService.sendMessage', () {
     late FakeFirebaseFirestore fake;
     late FirestoreService service;

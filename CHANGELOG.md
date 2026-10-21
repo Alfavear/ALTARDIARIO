@@ -8,6 +8,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Reglas de Firestore reescritas: nadie edita contenido ajeno; chats privados solo para participantes; notificaciones no suplantables; contadores sociales acotados a ±1 con uid propio; colección `reports` para moderación.
 - App Check activado en cliente (monitor; pasar a enforce en consola).
 - Perfiles nuevos guardan correo y token FCM en `usuarios/{uid}/private/account`; las reglas impiden añadirlos al perfil público.
+- El perfil público permite reportar usuarios con un motivo validado por Firestore.
 
 ### Añadido
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).

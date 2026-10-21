@@ -663,6 +663,23 @@ class FirestoreService {
     });
   }
 
+  /// Envía un reporte para revisión por la función de moderación.
+  Future<void> reportarContenido({
+    required String reporterId,
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {
+    if (!_available) return;
+    await _firestore!.collection('reports').add({
+      'reporterId': reporterId,
+      'targetType': targetType,
+      'targetId': targetId,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ── Notas generales ──────────────────────────────────────────────────────
 
   Future<void> syncNote(String userId, Note note) async {

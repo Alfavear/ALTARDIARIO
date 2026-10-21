@@ -23,10 +23,10 @@ Estado: en curso.
 
 ## 3. Moderación y controles sociales
 
-Estado: pendiente.
+Estado: en curso.
 
-- Añadir acciones de reportar y bloquear desde perfiles, feed, peticiones y
-  debates.
+- Añadida la acción de reportar perfiles; faltan las acciones para feed,
+  peticiones y debates, además del bloqueo.
 - Ocultar contenido y contactos bloqueados en consultas y pantallas.
 - Probar reglas y función de moderación para cada tipo de reporte.
 
