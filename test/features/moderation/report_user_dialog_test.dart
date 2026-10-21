@@ -35,30 +35,6 @@ void main() {
     expect(service.reason, 'Lenguaje ofensivo');
   });
 }
-
-class _RecordingFirestoreService extends FirestoreService {
-  _RecordingFirestoreService({this.shouldFail = false});
-
-  final bool shouldFail;
-
-  String? reporterId;
-  String? targetType;
-  String? targetId;
-  String? reason;
-
-  @override
-  Future<void> reportarContenido({
-    required String reporterId,
-    required String targetType,
-    required String targetId,
-    required String reason,
-  }) async {
-    if (shouldFail) throw StateError('Fallo simulado de Firestore');
-    this.reporterId = reporterId;
-    this.targetType = targetType;
-    this.targetId = targetId;
-    this.reason = reason;
-  }
   testWidgets('muestra un error si falla el envío del reporte', (tester) async {
     final service = _RecordingFirestoreService(shouldFail: true);
 
@@ -86,5 +62,29 @@ class _RecordingFirestoreService extends FirestoreService {
       findsOneWidget,
     );
   });
+}
 
+class _RecordingFirestoreService extends FirestoreService {
+  _RecordingFirestoreService({this.shouldFail = false});
+
+  final bool shouldFail;
+
+  String? reporterId;
+  String? targetType;
+  String? targetId;
+  String? reason;
+
+  @override
+  Future<void> reportarContenido({
+    required String reporterId,
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {
+    if (shouldFail) throw StateError('Fallo simulado de Firestore');
+    this.reporterId = reporterId;
+    this.targetType = targetType;
+    this.targetId = targetId;
+    this.reason = reason;
+  }
 }
