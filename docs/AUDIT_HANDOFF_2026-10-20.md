@@ -153,6 +153,8 @@ No ejecutar esa migración desde el cliente ni desplegarla sin autorización.
 ## Referencias locales
 
 - Plan mantenido: `docs/AUDIT_REMEDIATION_PLAN.md`.
+- Roadmap funcional para el siguiente agente:
+  `docs/PRODUCT_EVOLUTION_ROADMAP.md`.
 - Reglas: `firestore.rules` y `firestore-tests/rules.test.mjs`.
 - Moderación en servidor: `functions/src/moderation.ts`.
 - Servicio principal: `lib/data/services/firestore_service.dart`.
