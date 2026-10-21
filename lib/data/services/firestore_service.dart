@@ -759,4 +759,14 @@ class FirestoreService {
         .snapshots()
         .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
   }
+
+  /// Stream de uids bloqueados por [uid].
+  Stream<List<String>> getUsuariosBloqueados(String uid) {
+    if (!_available) return Stream.value([]);
+    return _usuarios
+        .doc(uid)
+        .collection('blocked')
+        .snapshots()
+        .map((s) => s.docs.map((d) => d.id).toList());
+  }
 }
