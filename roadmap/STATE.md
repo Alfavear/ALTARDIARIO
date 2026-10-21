@@ -1,46 +1,24 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 4 · **Fase actual:** 1 · **Progreso global:** █████░░░░░░░░░░░░░░░ 4/17 (24%)
+**Ciclo:** 5 · **Fase actual:** 1 · **Progreso global:** █████░░░░░░░░░░░░░░░ 5/21 (24%)
 
 | Fase | Progreso |
 |---|---|
-| 1. Estabilizar (seguridad, observabilidad, CI) | █████████░░░░░░░░░░░ 4/9 |
+| 1. Estabilizar (seguridad, observabilidad, CI) | █████████░░░░░░░░░░░ 5/11 |
 | 2. Andamiaje IA y tests | ░░░░░░░░░░░░░░░░░░░░ 0/2 |
-| 3. Arquitectura feature-first y backend | ░░░░░░░░░░░░░░░░░░░░ 0/4 |
-| 4. Producto | ░░░░░░░░░░░░░░░░░░░░ 0/2 |
+| 3. Arquitectura feature-first y backend | ░░░░░░░░░░░░░░░░░░░░ 0/5 |
+| 4. Producto | ░░░░░░░░░░░░░░░░░░░░ 0/3 |
 
 **En curso:** —
-**Siguiente:** T-015 · Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados (P1, S)
+**Siguiente:** T-018 · Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos (P0, M)
 
-**Conteo:** backlog=12 · ready=0 · in_progress=0 · review=0 · done=4 · blocked=1 · dropped=0
+**Conteo:** backlog=15 · ready=0 · in_progress=0 · review=0 · done=5 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
 
 
 ## Últimos ciclos
-- El criterio 2 ('ningun test borrado ni skip') solo estaba demostrado a nivel de archivo; el reviewer pidio prueba por caso. Se ejecuto: 108 == 108 declaraciones test/testWidgets y 14 eliminadas == 14 anadidas por reflow, sin 'D' en git diff. Queda cubierto.
-- Los tests de reglas de Firestore no se ejecutaron en este ciclo (--fast). El arbol de firestore.rules/rules.test.mjs es identico al de 6c53c2b, donde dieron 28/28, porque los unicos commits posteriores tocan roadmap/. No hay corrida unica que demuestre ambos verdes en el mismo proceso.
-- integration_test/app_test.dart no lo ejecuta nadie: ni flutter test (solo recorre test/) ni la CI. El '100%' es de test/, no del arranque real con Firebase. Ademas dart format solo cubre lib y test, no integration_test/.
-- Fijar la version de Flutter en los 4 workflows (hoy channel: stable sin version) y anadir un job de integration_test requieren editar .github/workflows, que el ciclo autonomo tiene prohibido tocar. Queda como decision humana, no como tarea auto.
-- Al arrancar el ciclo, el MCP start_task habia dejado roadmap/STATE.md y roadmap/tasks.yaml modificados en el arbol; no eran cambios de codigo y se commitean con el cierre del ciclo.
-
-**Decisiones:**
-- Cerrar T-003 como verificacion no-op con evidencia real en vez de bloquearla: los dos criterios literales se cumplen y la tarea desbloquea cinco tareas de fase 1-3. Se deja escrito en la evidencia '0 tests rotos, 0 cambios de codigo' para que el historial no sugiera un arreglo inexistente.
-- No se toco CHANGELOG: no hay cambio funcional, de API ni de versiones; el registro correcto es la evidencia de la tarea y esta bitacora.
-- No se delego al implementer ni al tester: no hay comportamiento nuevo que implementar ni tests que anadir; el plan del planner concluyo 'cero archivos modificados' y el unico gate sin evidencia (formato) se ejecuto en el orquestador.
-- No se crearon tareas para fijar Flutter en CI ni para integration_test porque ambas exigen editar workflows de CI, prohibido para el ciclo autonomo; se dejan como pendientes humanos en esta entrada.
-- El commit asociado a la tarea es 886fb4e (tip de la rama base sobre el que se verifico). La rama auto/T-003-tests-verdes no aporta commits de codigo propios.
-
-**Siguiente:** Siguiente elegible: T-014 (P1, S, bug) - sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla. Despues T-015 (P1, S, rules allowlist en /chats). Pendiente humano: (1) mergear auto/T-002-rules-tests-emulador para que firestore.rules llegue a produccion; (2) decidir si se fija la version de Flutter en los workflows; (3) decidir si integration_test/app_test.dart se ejecuta en CI o se documenta como manual; (4) valorar reescribir T-003-like tasks como auditorias.
-
----
-## ## Ciclo 4 — 2026-10-21T00:43:38.664Z
-- **Tarea:** T-014 · Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto si falla
-- **Resultado:** done
-- **Rama/commit:** auto/T-014-chat-sendmessage @ 2ea3366
-- **check.sh:** ✅ verde
-- **Reviewer:** APROBAR (revisión manual del diff tras timeout del ciclo; 0 bloqueantes)
 
 sendMessage ahora distingue creación de chat (participantIds + participantNames, exactamente 2) de envío a chat existente (solo lastUpdate/lastMessage/lastSenderId). La UI dejó de pasar participantes, hace await con try/catch, conserva el texto si falla y ofrece REINTENTAR; el guard _isSending evita dobles envíos. Se añadió un constructor opcional FirestoreService({firestore}) para inyectar FakeFirebaseFirestore en tests. check.sh --fast: 122/122 tests, analyze limpio.
 
@@ -56,6 +34,28 @@ sendMessage ahora distingue creación de chat (participantIds + participantNames
 - No se tocó firestore.rules en este ciclo; T-015 queda para la allowlist de campos en /chats.
 
 **Siguiente:** Siguiente elegible: T-015 (allowlist de campos en /chats y create sin duplicados) o T-017; revisar/mergear la pila auto/*. Pendiente humano: mergear T-002 a main para desplegar firestore.rules.
+
+---
+## ## Ciclo 5 — 2026-10-21T02:36:45.758Z
+- **Tarea:** T-015 · Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados
+- **Resultado:** done
+- **Rama/commit:** auto/T-015-rules-chats-allowlist @ 1469b62
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR (diff revisado a mano: allowlist exacta, duplicados denegados y ningun write legitimo de sendMessage bloqueado)
+
+El update de /chats ahora exige changedKeys().hasOnly(['participantIds','lastMessage','lastSenderId','lastUpdate','participantNames']) y el create rechaza participantIds duplicados con participantIds.toSet().size() == 2. Verificado contra el codigo de la app: sendMessage escribe solo lastUpdate/lastMessage/lastSenderId en el update y participantIds/participantNames en el create, asi que ninguna escritura legitima queda bloqueada. Suite de reglas 30/30 (2 tests nuevos) y 123/123 tests de Dart. Se registro ademas en el backlog el trabajo que la auditoria dejo fuera: migracion de privacidad (bloquea el PR #21), bloqueo de usuarios, paginacion por cursor y flujo de eliminacion de cuenta.
+
+**Problemas:**
+- En un worktree nuevo `flutter pub get` falla: Windows sin symlinks (Developer Mode desactivado) y "Building with plugins requires symlink support". Se resolvio copiando .dart_tool/package_config.json del workspace principal y parcheando el rootUri al worktree; con eso `scripts/check.sh` corre entero. Sin ese apano, ningun worktree limpio puede pasar la puerta.
+- El workspace principal lo tiene Codex ocupado con cambios sin commitear, por eso este ciclo corre en un worktree aislado sobre origin/main.
+
+**Decisiones:**
+- La allowlist de /chats incluye participantNames porque asi lo fija el criterio de aceptacion, aunque la app solo lo escribe en el create.
+- No se restringe el create con hasOnly: T-015 pedia allowlist de update y rechazo de duplicados. Ampliarlo se deja como tarea aparte para no crecer el alcance.
+- No se tocan /usuarios ni /reports: el stack de auditoria (#21 privacidad, #22 moderacion) modifica el mismo archivo; T-015 se limita a /chats para minimizar conflictos.
+- El plan de auditoria no estaba en el backlog: sus secciones 2 a 5 se registran ahora como tareas con source=audit, sin duplicar T-004, T-006, T-007 ni T-008.
+
+**Siguiente:** Siguiente elegible: T-017 (markAllNotificationsAsRead: no commitear un batch vacio) y T-018 (migracion de privacidad, P0) que desbloquea el PR #21. T-004 esta en curso en el PR #22 de la auditoria. Pendiente humano: mergear el stack de auditoria (#21/#22) cuando la migracion este lista, y revisar el resto de trabajo de Codex (restos sin commitear que debilitaban la allowlist de /reports ya restaurados en el commit de relevo 0ebf7cb).
 
 ---
 

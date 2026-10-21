@@ -69,6 +69,21 @@ service cloud.firestore {
         && counterDeltaOk('likes');
     }
 
+    // Integridad de los metadatos de un chat: el último mensaje es texto
+    // acotado, el autor del último mensaje es quien escribe (nadie suplanta a
+    // otro en la lista de chats) y los nombres corresponden a participantes.
+    // Se lee con `get(campo, porDefecto)`: las reglas no evaluan en corto
+    // circuito y acceder a un campo ausente da "Null value error".
+    function chatMetadataOk(data) {
+      let lastMessage = data.get('lastMessage', '');
+      let lastSenderId = data.get('lastSenderId', '');
+      let participantNames = data.get('participantNames', {});
+      return (lastMessage == '' || (lastMessage is string && lastMessage.size() <= 4000))
+        && (lastSenderId == '' || !changedKeys().hasAny(['lastSenderId']) || lastSenderId == uid())
+        && (participantNames.keys().size() == 0
+            || participantNames.keys().hasOnly(data.get('participantIds', [])));
+    }
+
     // Un no-dueño solo puede votar/desvotar.
     function voteOnly() {
       return changedKeys().hasOnly(['upvotes', 'votedBy'])
@@ -245,15 +260,25 @@ service cloud.firestore {
 
     match /chats/{chatId} {
       allow read: if isParticipant(resource.data);
+      // Crear el chat: exactamente 2 participantes, distintos entre sí, y el
+      // autor tiene que estar en la lista. Solo los campos del chat.
       allow create: if isParticipant(request.resource.data)
-        && request.resource.data.participantIds.size() == 2;
-      // Se pueden actualizar metadatos (lastMessage, lastUpdate) y reordenar
-      // `participantIds` (el emisor reenvía la lista con su uid primero), pero
-      // nunca cambiar quiénes participan.
+        && request.resource.data.participantIds.size() == 2
+        && request.resource.data.participantIds.toSet().size() == 2
+        && request.resource.data.keys().hasOnly(['participantIds', 'participantNames', 'lastMessage', 'lastSenderId', 'lastUpdate'])
+        && chatMetadataOk(request.resource.data);
+      // Allowlist de campos: en /chats solo se tocan los metadatos del chat y
+      // la lista de participantes. Cualquier otro campo (contadores, flags,
+      // moderación) queda fuera y la escritura se rechaza.
+      // Reordenar `participantIds` es válido (el emisor reenvía la lista con
+      // su uid primero), pero nunca cambiar quiénes participan.
       allow update: if isParticipant(resource.data)
+        && changedKeys().hasOnly(['participantIds', 'lastMessage', 'lastSenderId', 'lastUpdate', 'participantNames'])
         && (!changedKeys().hasAny(['participantIds'])
             || (sameMembers('participantIds')
-                && request.resource.data.participantIds.size() == 2));
+                && request.resource.data.participantIds.size() == 2
+                && request.resource.data.participantIds.toSet().size() == 2))
+        && chatMetadataOk(request.resource.data);
       allow delete: if false;
 
       match /messages/{messageId} {
