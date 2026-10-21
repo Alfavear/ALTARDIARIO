@@ -443,6 +443,46 @@ test('T-015: no se puede crear un chat con participantes duplicados', async () =
   }));
 });
 
+test('T-015: un no participante no puede actualizar el chat', async () => {
+  await admin((db) => setDoc(doc(db, 'chats', 'ab'), {
+    participantIds: [ALICE, BOB], lastMessage: 'hola', lastUpdate: new Date(),
+  }));
+  await assertFails(updateDoc(doc(as(EVE), 'chats', 'ab'), { lastMessage: 'me meto' }));
+});
+
+test('T-015: el create de /chats solo admite los campos del chat', async () => {
+  // Campos fuera de la allowlist (contadores, flags): denegado.
+  await assertFails(setDoc(doc(as(ALICE), 'chats', 'extra'), {
+    participantIds: [ALICE, BOB], lastUpdate: serverTimestamp(), likes: 10,
+  }));
+  // Create legítimo: permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'chats', 'ok2'), {
+    participantIds: [ALICE, BOB], lastMessage: 'hola', lastSenderId: ALICE,
+    lastUpdate: serverTimestamp(),
+  }));
+});
+
+test('T-015: el update de /chats valida los valores de los metadatos', async () => {
+  await admin((db) => setDoc(doc(db, 'chats', 'ab'), {
+    participantIds: [ALICE, BOB], lastMessage: 'hola', lastSenderId: ALICE, lastUpdate: new Date(),
+  }));
+
+  // El último mensaje es texto acotado: un valor que no sea string rompe la
+  // lista de chats del otro participante (hace cast a String?).
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { lastMessage: 42 }));
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { lastMessage: 'x'.repeat(4001) }));
+  // Nadie suplanta a otro como autor del último mensaje.
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), { lastSenderId: EVE }));
+  // Los nombres tienen que corresponder a los participantes.
+  await assertFails(updateDoc(doc(as(ALICE), 'chats', 'ab'), {
+    participantNames: { [ALICE]: 'Alice', [EVE]: 'Eve' },
+  }));
+
+  // Metadata coherente y el último mensaje de otro no se toca: permitido.
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'chats', 'ab'), { lastMessage: 'hola de nuevo' }));
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'chats', 'ab'), { lastSenderId: ALICE }));
+});
+
 // ───────────────────────── Reportes ─────────────────────────
 
 test('reportes: se crean con el uid propio y nadie los lee desde el cliente', async () => {
