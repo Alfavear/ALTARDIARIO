@@ -37,6 +37,10 @@ void main() {
 }
 
 class _RecordingFirestoreService extends FirestoreService {
+  _RecordingFirestoreService({this.shouldFail = false});
+
+  final bool shouldFail;
+
   String? reporterId;
   String? targetType;
   String? targetId;
@@ -49,9 +53,38 @@ class _RecordingFirestoreService extends FirestoreService {
     required String targetId,
     required String reason,
   }) async {
+    if (shouldFail) throw StateError('Fallo simulado de Firestore');
     this.reporterId = reporterId;
     this.targetType = targetType;
     this.targetId = targetId;
     this.reason = reason;
   }
+  testWidgets('muestra un error si falla el envío del reporte', (tester) async {
+    final service = _RecordingFirestoreService(shouldFail: true);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          effectiveUserUidProvider.overrideWithValue('reporter'),
+          firestoreServiceProvider.overrideWithValue(service),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ReportUserDialog(userId: 'target', userName: 'María'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(RadioListTile<String>).first);
+    await tester.pump();
+    await tester.tap(find.text('Enviar reporte'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('No se pudo enviar el reporte. Inténtalo de nuevo.'),
+      findsOneWidget,
+    );
+  });
+
 }

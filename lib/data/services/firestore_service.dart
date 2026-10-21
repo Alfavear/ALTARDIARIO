@@ -670,7 +670,9 @@ class FirestoreService {
     required String targetId,
     required String reason,
   }) async {
-    if (!_available) return;
+    if (!_available) {
+      throw StateError('Firestore no está disponible para enviar el reporte.');
+    }
     await _firestore!.collection('reports').add({
       'reporterId': reporterId,
       'targetType': targetType,

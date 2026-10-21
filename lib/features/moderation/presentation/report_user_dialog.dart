@@ -26,6 +26,7 @@ class _ReportUserDialogState extends ConsumerState<ReportUserDialog> {
   ];
 
   String? _selectedReason;
+  String? _errorMessage;
   bool _sending = false;
 
   Future<void> _submit() async {
@@ -33,7 +34,10 @@ class _ReportUserDialogState extends ConsumerState<ReportUserDialog> {
     final reason = _selectedReason;
     if (uid == null || reason == null) return;
 
-    setState(() => _sending = true);
+    setState(() {
+      _sending = true;
+      _errorMessage = null;
+    });
     try {
       await ref.read(firestoreServiceProvider).reportarContenido(
             reporterId: uid,
@@ -47,6 +51,11 @@ class _ReportUserDialogState extends ConsumerState<ReportUserDialog> {
       messenger.showSnackBar(
         const SnackBar(content: Text('Gracias. Revisaremos tu reporte.')),
       );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'No se pudo enviar el reporte. Inténtalo de nuevo.';
+      });
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -61,6 +70,13 @@ class _ReportUserDialogState extends ConsumerState<ReportUserDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('¿Qué ocurre con ${widget.userName}?'),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
           const SizedBox(height: 12),
           RadioGroup<String>(
             groupValue: _selectedReason,
