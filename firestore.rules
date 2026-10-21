@@ -98,6 +98,21 @@ service cloud.firestore {
         && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount']);
     }
 
+    // El documento resultante no trae campos privados (email, fcmToken). Se
+    // aplica en create y en el update del propio contenido para que el perfil
+    // público y el contenido de feed nunca contengan datos privados.
+    function noPrivateFields(data) {
+      return !data.keys().hasAny(['email', 'fcmToken']);
+    }
+
+    // Permite escribir un campo privado solo si se borra (ya no está en el
+    // resultado) o si no se toca. Así un perfil legacy con email/fcmToken
+    // puede purgarlos del documento público sin que el bloqueo de "no se
+    // escriben privados en público" impida el borrado.
+    function privateOnlyRemoved(campo) {
+      return !request.resource.data.keys().hasAny([campo]) || !changedKeys().hasAny([campo]);
+    }
+
     // ───────────── Reflexiones (feed) ─────────────
     match /reflexiones/{reflexionId} {
       allow read: if true;
@@ -105,13 +120,14 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.userId == uid()
         && request.resource.data.keys().hasAll(['userId', 'userName', 'texto', 'fecha', 'pasajeDia'])
+        && noPrivateFields(request.resource.data)
         && request.resource.data.texto is string
         && request.resource.data.texto.size() > 0
         && request.resource.data.texto.size() <= 5000;
 
       allow update: if signedIn() && (
-        // Dueño: edita texto/tags, no contadores.
-        (ownerEditOk() && !changedKeys().hasAny(['reactions', 'commentCount']))
+        // Dueño: edita texto/tags, no contadores, sin campos privados.
+        (ownerEditOk() && noPrivateFields(request.resource.data) && !changedKeys().hasAny(['reactions', 'commentCount']))
         // Cualquiera: like / unlike
         || likeOnly()
         // Cualquiera: reacción propia
@@ -126,10 +142,12 @@ service cloud.firestore {
         allow read: if true;
         allow create: if signedIn()
           && request.resource.data.userId == uid()
+          && noPrivateFields(request.resource.data)
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 2000;
-        allow update: if signedIn() && (ownerEditOk() || likeOnly());
+        allow update: if signedIn() && (
+          (ownerEditOk() && noPrivateFields(request.resource.data)) || likeOnly());
         allow delete: if isOwner(resource.data);
       }
     }
@@ -139,11 +157,12 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.motivo is string
         && request.resource.data.motivo.size() > 0
         && request.resource.data.motivo.size() <= 3000;
       allow update: if signedIn() && (
-        ownerEditOk()
+        ownerEditOk() && noPrivateFields(request.resource.data)
         // "Amén": cualquiera incrementa oracionesCount en +1
         || (changedKeys().hasOnly(['oracionesCount']) && counterDeltaOk('oracionesCount'))
         || likeOnly()
@@ -152,8 +171,9 @@ service cloud.firestore {
 
       match /comentarios/{comentarioId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.userId == uid();
-        allow update: if signedIn() && (ownerEditOk() || likeOnly());
+        allow create: if signedIn() && request.resource.data.userId == uid() && noPrivateFields(request.resource.data);
+        allow update: if signedIn() && (
+          (ownerEditOk() && noPrivateFields(request.resource.data)) || likeOnly());
         allow delete: if isOwner(resource.data);
       }
     }
@@ -163,10 +183,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.titulo is string
         && request.resource.data.titulo.size() > 0;
       allow update: if signedIn() && (
-        (ownerEditOk() && !changedKeys().hasAny(['replyCount']))
+        (ownerEditOk() && noPrivateFields(request.resource.data) && !changedKeys().hasAny(['replyCount']))
         || voteOnly()
         || (changedKeys().hasOnly(['replyCount']) && counterDeltaOk('replyCount'))
       );
@@ -174,8 +195,9 @@ service cloud.firestore {
 
       match /respuestas/{respuestaId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.userId == uid();
-        allow update: if signedIn() && (ownerEditOk() || voteOnly());
+        allow create: if signedIn() && request.resource.data.userId == uid() && noPrivateFields(request.resource.data);
+        allow update: if signedIn() && (
+          (ownerEditOk() && noPrivateFields(request.resource.data)) || voteOnly());
         allow delete: if isOwner(resource.data);
       }
     }
@@ -184,7 +206,7 @@ service cloud.firestore {
     match /usuarios/{userId} {
       allow read: if true;
       allow create: if signedIn() && uid() == userId
-        && !request.resource.data.keys().hasAny(['email', 'fcmToken']);
+        && noPrivateFields(request.resource.data);
 
       // El dueño gestiona su perfil. Otro usuario solo puede añadirse o
       // quitarse a sí mismo de `seguidores`.
@@ -195,16 +217,33 @@ service cloud.firestore {
       // a la rama del dueño.
       allow update: if signedIn() && (
         (uid() == userId && (
-          !changedKeys().hasAny(['email', 'fcmToken'])
-          || !request.resource.data.keys().hasAny(['email', 'fcmToken'])
+          privateOnlyRemoved('email') && privateOnlyRemoved('fcmToken')
         ))
         || (changedKeys().hasOnly(['seguidores']) && listOnlyTouchesSelf('seguidores'))
       );
       allow delete: if signedIn() && uid() == userId;
 
       match /private/{privateId} {
-        allow read, write: if signedIn() && uid() == userId
-          && privateId == 'account';
+        // Solo el dueño lee/escribe su documento privado. NUNCA añadir
+        // `match /{path=**}/private/{doc}`: abriría un collection group
+        // que expone los datos privados de todos los usuarios.
+        allow read: if signedIn() && uid() == userId && privateId == 'account';
+        allow create: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (request.resource.data.get('email', '') is string
+              && request.resource.data.get('email', '').size() <= 320)
+          && (request.resource.data.get('fcmToken', '') is string
+              && request.resource.data.get('fcmToken', '').size() <= 4096);
+        allow update: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && changedKeys().hasOnly(['email', 'fcmToken'])
+          && (!changedKeys().hasAny(['email'])
+              || (request.resource.data.get('email', '') is string
+                  && request.resource.data.get('email', '').size() <= 320))
+          && (!changedKeys().hasAny(['fcmToken'])
+              || (request.resource.data.get('fcmToken', '') is string
+                  && request.resource.data.get('fcmToken', '').size() <= 4096));
       }
 
       match /bible_highlights/{highlightId} {
@@ -224,6 +263,7 @@ service cloud.firestore {
         allow create: if signedIn()
           && uid() != userId
           && request.resource.data.actorId == uid()
+          && noPrivateFields(request.resource.data)
           && request.resource.data.keys().hasAll(['type', 'title', 'body', 'createdAt'])
           && request.resource.data.read == false;
         allow update: if signedIn() && uid() == userId
@@ -234,7 +274,7 @@ service cloud.firestore {
 
     // ───────────── Feedback ─────────────
     match /feedback/{docId} {
-      allow create: if signedIn() && request.resource.data.userId == uid();
+      allow create: if signedIn() && request.resource.data.userId == uid() && noPrivateFields(request.resource.data);
       allow read: if isOwner(resource.data);
     }
 
@@ -244,6 +284,7 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if false;
       allow create: if signedIn()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.reporterId == uid()
         && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario']
         && request.resource.data.targetId is string

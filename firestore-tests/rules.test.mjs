@@ -224,14 +224,32 @@ test('no se puede crear un perfil con el uid de otro', async () => {
 });
 
 test('datos privados de perfil solo se guardan y leen en private/account', async () => {
-  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), { nombre: 'Alice' }));
+  // Perfil legacy: email y fcmToken en el documento público (app vieja).
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), {
+    nombre: 'Alice', email: 'alice@ejemplo.com', fcmToken: 'token-viejo',
+  }));
+
+  // El cliente no puede reescribir email en el público.
   await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
-    email: 'alice@ejemplo.com',
+    email: 'otra@ejemplo.com',
   }, { merge: true }));
 
+  // Pero sí puede purgarlos del público y guardarlos en privado.
   const cuentaPrivada = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
-  await assertSucceeds(setDoc(cuentaPrivada, { email: 'alice@ejemplo.com', fcmToken: 'token' }));
+  await assertSucceeds(setDoc(cuentaPrivada, { email: 'alice@ejemplo.com', fcmToken: 'token-nuevo' }));
   await assertSucceeds(getDoc(cuentaPrivada));
+
+  // Borrar email y fcmToken del público.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    email: deleteField(), fcmToken: deleteField(),
+  }, { merge: true }));
+
+  // El público ya no tiene privados.
+  const publico = (await getDoc(doc(as(ALICE), 'usuarios', ALICE))).data();
+  assert.equal(publico.email, undefined);
+  assert.equal(publico.fcmToken, undefined);
+
+  // Otro usuario no puede leer ni escribir el privado.
   await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
   await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account'), { email: 'robado' }));
 });
@@ -509,6 +527,148 @@ test('reportes: se crean con el uid propio y nadie los lee desde el cliente', as
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep2'), { ...r, reporterId: ALICE }));
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep3'), { ...r, targetType: 'otro' }));
   await assertFails(getDoc(doc(as(BOB), 'reports', 'rep1')));
+});
+
+// ───────────────────────── Privado (perfil) ─────────────────────────
+
+test('documento privado: solo el dueño lee/escribe; no se puede listar; collectionGroup denegado', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice' }));
+  const cuenta = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
+
+  // El dueño lee y escribe.
+  await assertSucceeds(setDoc(cuenta, { email: 'alice@ejemplo.com' }));
+  await assertSucceeds(getDoc(cuenta));
+
+  // Otro usuario no puede leer ni escribir.
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account'), { email: 'robado' }));
+
+  // No hay match /{path=**}/private/{doc}: cualquier ruta privada ajena cae
+  // en el catch-all y se deniega (fija el piegun de collectionGroup).
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'otro')));
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'otro'), { email: 'x' }));
+});
+
+test('documento privado: solo admite email y fcmToken, con tamaño limitado', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice' }));
+  const cuenta = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
+
+  // Campos no permitidos: denegado.
+  await assertFails(setDoc(cuenta, { role: 'admin' }));
+  await assertFails(setDoc(cuenta, { verified: true }));
+  await assertFails(setDoc(cuenta, { email: 'alice@ejemplo.com', extra: 'no' }));
+
+  // Email demasiado largo (>320): denegado.
+  await assertFails(setDoc(cuenta, { email: 'a'.repeat(320) + '@ejemplo.com' }));
+
+  // fcmToken demasiado largo (>4096): denegado.
+  await assertFails(setDoc(cuenta, { fcmToken: 't'.repeat(4097) }));
+
+  // email y fcmToken válidos: permitido.
+  await assertSucceeds(setDoc(cuenta, {
+    email: 'alice@ejemplo.com',
+    fcmToken: 'tok-' + 'x'.repeat(100),
+  }));
+});
+
+test('perfil público: no admite email/fcmToken en create ni update; el resto funciona', async () => {
+  // Create con email en público: denegado.
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    nombre: 'Alice', email: 'alice@ejemplo.com',
+  }));
+
+  // Create sin privados: permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), { nombre: 'Alice' }));
+
+  // Update que añade email al público: denegado.
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    email: 'alice@ejemplo.com',
+  }, { merge: true }));
+
+  // Update de otros campos del perfil: permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    nombre: 'Alicia', bio: 'Hola',
+  }, { merge: true }));
+
+  // Otro usuario no puede editar el perfil.
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE), { nombre: 'Hack' }, { merge: true }));
+});
+
+test('REGRESIÓN: payload legacy de Usuario.toMap() (con email) se deniega en create', async () => {
+  // toMap() de Usuario ya no envía email, pero si un cliente legacy lo envía,
+  // el create del perfil público debe denegarlo (corte intencionado).
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    nombre: 'Alice', email: 'alice@ejemplo.com', fotoUrl: '', bio: '',
+    fechaCreacion: new Date().toISOString(), siguiendo: [], seguidores: [],
+    modoEnfoque: false, notifHour: 20, notifMin: 0, badges: [], totalPuntos: 0,
+    nivel: 1, progresoLectura: [], maxStreak: 0,
+  }));
+});
+
+test('token FCM se guarda y se borra en private/account', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice' }));
+  const cuenta = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
+
+  // Guardar token.
+  await assertSucceeds(setDoc(cuenta, { fcmToken: 'token-del-cliente' }));
+  const conToken = (await getDoc(cuenta)).data();
+  assert.equal(conToken.fcmToken, 'token-del-cliente');
+
+  // Borrar token (logout).
+  await assertSucceeds(setDoc(cuenta, { fcmToken: deleteField() }, { merge: true }));
+  const sinToken = (await getDoc(cuenta)).data();
+  assert.equal(sinToken.fcmToken, undefined);
+});
+
+test('email no se puede plantar en ningún documento público', async () => {
+  // Reflexión.
+  await assertFails(setDoc(doc(as(ALICE), 'reflexiones', 'x'), {
+    userId: ALICE, userName: 'Alice', texto: 'Hola', fecha: new Date(),
+    pasajeDia: 'Gn 1', email: 'alice@ejemplo.com',
+  }));
+  // Petición de oración.
+  await assertFails(addDoc(collection(as(ALICE), 'peticiones_oracion'), {
+    userId: ALICE, userName: 'Alice', motivo: 'Salud', fecha: new Date(),
+    oracionesCount: 0, email: 'alice@ejemplo.com',
+  }));
+  // Debate.
+  await assertFails(setDoc(doc(as(ALICE), 'debates', 'd1'), {
+    titulo: 'Fe', contenido: '...', userId: ALICE, userName: 'Alice',
+    fecha: new Date(), libroId: 'stg', email: 'alice@ejemplo.com',
+  }));
+  // Notificación.
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'n1'), {
+    actorId: BOB, type: 'follow', title: 't', body: 'b', createdAt: new Date(),
+    read: false, email: 'alice@ejemplo.com',
+  }));
+});
+
+test('el dueño no puede añadir un campo privado a su propio contenido', async () => {
+  await admin((db) => setDoc(doc(db, 'reflexiones', 'r1'), {
+    userId: ALICE, userName: 'Alice', texto: 'Hola', fecha: new Date(),
+    pasajeDia: 'Salmo 23', likes: 0, likedBy: [], commentCount: 0, reactions: {}, tags: [],
+  }));
+  // El dueño edita el texto: permitido.
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { texto: 'editado' }));
+  // Pero no puede añadir email al documento público.
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), {
+    email: 'alice@ejemplo.com',
+  }));
+});
+
+test('borrar el perfil público no deja el documento privado legible por otros', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), {
+    nombre: 'Alice', email: 'alice@ejemplo.com', fcmToken: 'token',
+  }));
+  const cuenta = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
+  await assertSucceeds(setDoc(cuenta, { email: 'alice@ejemplo.com', fcmToken: 'token' }));
+
+  // Borrar el perfil público.
+  await assertSucceeds(deleteDoc(doc(as(ALICE), 'usuarios', ALICE)));
+
+  // El documento privado seguía siendo solo del dueño (ahora inexistente el
+  // padre, el acceso ajeno sigue denegado por el catch-all).
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
 });
 
 // ───────────────────────── Config / catch-all ─────────────────────────
