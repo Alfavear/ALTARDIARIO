@@ -9,6 +9,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - App Check activado en cliente (monitor; pasar a enforce en consola).
 - Perfiles nuevos guardan correo y token FCM en `usuarios/{uid}/private/account`; las reglas impiden añadirlos al perfil público.
 - El perfil público permite reportar usuarios con un motivo validado por Firestore.
+- El dueño de contenido no puede editar ni eliminar los campos de moderación (`hidden`, `hiddenReason`, `hiddenAt`); solo la función de moderación puede establecerlos, evitando que el autor eluda el ocultamiento.
 
 ### Añadido
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).

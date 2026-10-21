@@ -81,6 +81,22 @@ test('el autor no puede reasignar la autoría de su reflexión', async () => {
   await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { userId: BOB }));
 });
 
+test('el autor no puede eludir el ocultamiento de moderación de su contenido', async () => {
+  await seedReflexion();
+  // La función de moderación (admin) oculta la reflexión.
+  await admin((db) => updateDoc(doc(db, 'reflexiones', 'r1'), {
+    hidden: true,
+    hiddenReason: 'Contenido inapropiado',
+    hiddenAt: serverTimestamp(),
+  }));
+  // El autor sigue pudiendo editar el texto de su propia reflexión.
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { texto: 'editado por mí' }));
+  // Pero no puede quitar el ocultamiento ni tocar los campos de moderación.
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { hidden: false }));
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { hiddenReason: 'otro motivo' }));
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { hiddenAt: serverTimestamp() }));
+});
+
 test('cualquier usuario puede dar y quitar like (solo con su propio uid)', async () => {
   await seedReflexion();
   await assertSucceeds(updateDoc(doc(as(BOB), 'reflexiones', 'r1'), {
