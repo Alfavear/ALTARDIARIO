@@ -29,5 +29,42 @@ seguridad depende de las reglas y de App Check, no del secreto.
 3. Recorre: publicar, like, reaccionar, comentar, amén, seguir, chat.
 4. Deploy. Vigila Crashlytics y los "permission-denied" en logs 24 h.
 
+## Migración de datos privados del perfil
+
+Los perfiles públicos guardaban `email` y `fcmToken` en `usuarios/{uid}`, un
+documento de lectura pública. El modelo nuevo los guarda en
+`usuarios/{uid}/private/account`, que solo puede leer su dueño. La migración
+mueve los datos que ya existen.
+
+```bash
+cd functions && npm install
+# informe: no escribe nada
+npm run migrate:private-account -- --project altardiario-ec25f
+# aplicar
+npm run migrate:private-account -- --project altardiario-ec25f --apply
+```
+
+- Requiere la cuenta de servicio con rol `Firebase Admin`
+  (`GOOGLE_APPLICATION_CREDENTIALS`).
+- Es **idempotente**: se puede repetir; los perfiles ya migrados no se tocan.
+- Si el documento privado ya tiene el campo, **gana el privado**: no se
+  sobrescribe el token de FCM más reciente.
+- Verificación: la segunda pasada debe dejar `perfiles con datos privados: 0`.
+
+### Orden de operaciones (no alterar)
+
+1. Publica la versión de la app que escribe en `private/account`.
+2. Ejecuta la migración (informe y después `--apply`).
+3. Despliega las reglas endurecidas de `/usuarios`.
+4. Repite la migración hasta que no quede ningún perfil con datos privados.
+
+> **Clientes antiguos.** Las versiones ya publicadas en Play Store siguen
+> escribiendo `email`/`fcmToken` en el documento público. Si las reglas
+> endurecidas se despliegan antes de que esas versiones se actualicen, sus
+> escrituras se deniegan: el usuario pierde el token de FCM y el guardado de
+> perfil. Por eso la app y la migración van **antes** de endurecer las reglas,
+> y la ventana de compatibilidad se decide con el humano (tarea T-018 del
+> roadmap).
+
 ## Reportar una vulnerabilidad
 Abre un issue privado o escribe al mantenedor. No publiques detalles hasta que haya parche.
