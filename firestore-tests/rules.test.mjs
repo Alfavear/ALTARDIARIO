@@ -223,12 +223,30 @@ test('no se puede crear un perfil con el uid de otro', async () => {
   await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), { nombre: 'Alice' }));
 });
 
-test('perfil: set merge del propio doc (config, FCM, racha, XP) y deleteField del token', async () => {
+test('datos privados de perfil solo se guardan y leen en private/account', async () => {
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), { nombre: 'Alice' }));
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    email: 'alice@ejemplo.com',
+  }, { merge: true }));
+
+  const cuentaPrivada = doc(as(ALICE), 'usuarios', ALICE, 'private', 'account');
+  await assertSucceeds(setDoc(cuentaPrivada, { email: 'alice@ejemplo.com', fcmToken: 'token' }));
+  await assertSucceeds(getDoc(cuentaPrivada));
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account'), { email: 'robado' }));
+});
+
+test('perfil: set merge del propio doc y FCM privado', async () => {
   await admin((db) => setDoc(doc(db, 'usuarios', ALICE), {
     nombre: 'Alice', seguidores: [], siguiendo: [], fcmToken: 'token-viejo',
   }));
   await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), { modoEnfoque: true }, { merge: true }));
-  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), { fcmToken: deleteField() }, { merge: true }));
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    fcmToken: 'token-nuevo',
+  }, { merge: true }));
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    fcmToken: deleteField(),
+  }, { merge: true }));
   await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE), {
     progresoLectura: [{ dia: 1, completado: true }], maxStreak: 3, lastSync: serverTimestamp(),
   }, { merge: true }));

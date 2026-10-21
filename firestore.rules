@@ -168,7 +168,8 @@ service cloud.firestore {
     // ───────────── Usuarios ─────────────
     match /usuarios/{userId} {
       allow read: if true;
-      allow create: if signedIn() && uid() == userId;
+      allow create: if signedIn() && uid() == userId
+        && !request.resource.data.keys().hasAny(['email', 'fcmToken']);
 
       // El dueño gestiona su perfil. Otro usuario solo puede añadirse o
       // quitarse a sí mismo de `seguidores`.
@@ -178,10 +179,18 @@ service cloud.firestore {
       //   && !changedKeys().hasAny(['totalPuntos','badges','nivel','rachaActual'])
       // a la rama del dueño.
       allow update: if signedIn() && (
-        uid() == userId
+        (uid() == userId && (
+          !changedKeys().hasAny(['email', 'fcmToken'])
+          || !request.resource.data.keys().hasAny(['email', 'fcmToken'])
+        ))
         || (changedKeys().hasOnly(['seguidores']) && listOnlyTouchesSelf('seguidores'))
       );
       allow delete: if signedIn() && uid() == userId;
+
+      match /private/{privateId} {
+        allow read, write: if signedIn() && uid() == userId
+          && privateId == 'account';
+      }
 
       match /bible_highlights/{highlightId} {
         allow read, write: if signedIn() && uid() == userId;
