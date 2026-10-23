@@ -151,6 +151,27 @@ final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
   return ref.watch(firestoreServiceProvider).peticionesStream();
 });
 
+class PeticionesFiltroNotifier extends Notifier<bool?> {
+  @override
+  bool? build() => null;
+
+  void setFiltro(bool? value) => state = value;
+}
+
+/// Filtro actual para las peticiones (null = todas, true = respondidas, false = pendientes).
+final peticionesFiltroProvider =
+    NotifierProvider<PeticionesFiltroNotifier, bool?>(
+        PeticionesFiltroNotifier.new);
+
+/// Peticiones de oración filtradas por estado (respondida/pendiente).
+final peticionesFiltradasProvider =
+    StreamProvider<List<PeticionOracion>>((ref) {
+  final filtro = ref.watch(peticionesFiltroProvider);
+  return ref.watch(firestoreServiceProvider).peticionesStreamFiltrado(
+        respondida: filtro,
+      );
+});
+
 /// Mensajes de un chat específico.
 final messagesStreamProvider =
     StreamProvider.family<List<Message>, String>((ref, chatId) {
