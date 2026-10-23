@@ -30,6 +30,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Coordinación entre sesiones: `docs/SESIONES.md` (worktree por sesión, un solo merger, máximo 2 PRs, validar contra `origin/main` citando SHA), registro en `roadmap/sesiones/` y scripts `session-check.sh` / `sync-main.sh` (el `main` local no se usa para trabajar y solo se alinea por fast-forward).
 
 ### Cambiado
+- Refactor (ADR-0001, T-006): la feature de oración vive completa en `lib/features/oracion/`. Limpieza del PR #58: eliminada la pantalla legacy huérfana (`lib/presentation/screens/oracion_screen.dart`, 503 líneas sin importadores) y la copia intermedia de 307 líneas; `app_providers.dart` ya no duplica los providers de oración (solo los reexporta); `FirestoreService` delega en `OracionRepository` (inversión de dependencia, `prayerPageSize` derivado del repositorio). Pantalla de 137 líneas con `PeticionCard`, diálogo y estado vacío extraídos. 11 tests nuevos (8 de repositorio con `fake_cloud_firestore`, 3 de pantalla).
 - CI: el job `Build APK (debug)` solo compila cuando el PR toca `android/`, `pubspec.*` o `.github/workflows/` (y siempre en `main`); añade caché de Gradle y compila una sola ABI. Los PRs de Dart/UI bajan de ~7,6 a ~1,5 min de checks; el nombre del check requerido no cambia.
 - Feed de reflexiones limitado a 100 documentos por lectura (antes: colección completa).
 - Streams de colecciones sociales y chats limitados para controlar lecturas; se conserva el escalado de texto configurado por el sistema.

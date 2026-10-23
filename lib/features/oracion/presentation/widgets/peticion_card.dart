@@ -1,17 +1,16 @@
-import 'package:altar_diario/core/theme/app_theme.dart';
-import 'package:altar_diario/data/models/peticion_oracion.dart';
-import 'package:altar_diario/features/moderation/presentation/report_content_dialog.dart';
-import 'package:altar_diario/presentation/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-/// Card individual para una petición de oración.
-class PeticionCard extends ConsumerWidget {
-  const PeticionCard({required this.peticion, super.key});
+import '../../../../core/theme/app_theme.dart';
+import '../../../../data/models/peticion_oracion.dart';
+import '../../../../presentation/providers/app_providers.dart';
+import '../../../moderation/presentation/report_content_dialog.dart';
 
+class PeticionCard extends ConsumerWidget {
   final PeticionOracion peticion;
+  const PeticionCard({super.key, required this.peticion});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -116,13 +115,13 @@ class PeticionCard extends ConsumerWidget {
               const SizedBox(width: 8),
               // Botón "Marcar como respondida" solo para el autor y si no está respondida
               if (!peticion.respondida)
-                _MarcarRespondidaButton(peticion: peticion),
+                _buildMarcarRespondidaButton(ref, context, peticion),
               const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () {
                   HapticFeedback.mediumImpact();
                   ref
-                      .read(oracionRepositoryProvider)
+                      .read(firestoreServiceProvider)
                       .apoyarPeticion(peticion.id);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -154,16 +153,10 @@ class PeticionCard extends ConsumerWidget {
       ),
     );
   }
-}
 
-/// Botón interno para marcar petición como respondida.
-class _MarcarRespondidaButton extends ConsumerWidget {
-  const _MarcarRespondidaButton({required this.peticion});
-
-  final PeticionOracion peticion;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  // Método para construir el botón "Marcar como respondida"
+  Widget _buildMarcarRespondidaButton(
+      WidgetRef ref, BuildContext context, PeticionOracion peticion) {
     final currentUid = ref.read(effectiveUserUidProvider);
     final isAutor = currentUid == peticion.userId;
 
@@ -191,7 +184,7 @@ class _MarcarRespondidaButton extends ConsumerWidget {
         if (confirm == true) {
           try {
             await ref
-                .read(oracionRepositoryProvider)
+                .read(firestoreServiceProvider)
                 .marcarPeticionComoRespondida(
                   peticion.id,
                   ref.read(effectiveUserUidProvider)!,
@@ -221,5 +214,3 @@ class _MarcarRespondidaButton extends ConsumerWidget {
     );
   }
 }
-
-// RoundedBorderRadius helper removed - using RoundedRectangleBorder directly

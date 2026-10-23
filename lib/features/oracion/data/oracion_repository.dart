@@ -1,42 +1,69 @@
-import 'package:altar_diario/data/models/peticion_oracion.dart';
-import 'package:altar_diario/data/services/firestore_service.dart';
-import 'package:altar_diario/presentation/providers/app_providers.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Repositorio para la feature de oración.
-/// Encapsula el acceso a FirestoreService para peticiones de oración.
+import '../../../data/models/peticion_oracion.dart';
+
+/// Acceso a Firestore de la feature de oración (ADR-0001).
+///
+/// Durante la migración, `FirestoreService` delega en este repositorio para
+/// conservar su API pública. Cuando el servicio desaparezca, este será el
+/// único punto de acceso a `peticiones_oracion`.
 class OracionRepository {
-  OracionRepository(this._firestore);
+  OracionRepository(this._db);
 
-  final FirestoreService _firestore;
+  final FirebaseFirestore _db;
 
-  /// Stream de todas las peticiones de oración.
-  Stream<List<PeticionOracion>> peticionesStream() {
-    return _firestore.peticionesStream();
+  /// Tamaño de página del listado. Sin límite, cada apertura de la pantalla
+  /// leería la colección entera (coste y latencia lineales con las peticiones).
+  static const int pageSize = 100;
+
+  CollectionReference<Map<String, dynamic>> get _peticiones =>
+      _db.collection('peticiones_oracion');
+
+  Stream<List<PeticionOracion>> watchRecientes() {
+    return _peticiones
+        .orderBy('fecha', descending: true)
+        .limit(pageSize)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
+            .toList());
   }
 
-  /// Stream de peticiones filtradas por estado (respondida/pendiente).
-  Stream<List<PeticionOracion>> peticionesStreamFiltrado({bool? respondida}) {
-    return _firestore.peticionesStreamFiltrado(respondida: respondida);
+  Future<void> crear(PeticionOracion peticion) =>
+      _peticiones.add(peticion.toMap());
+
+  Future<void> amen(String peticionId) => _peticiones
+      .doc(peticionId)
+      .update({'oracionesCount': FieldValue.increment(1)});
+
+  /// Peticiones filtradas por estado. Si [respondida] es null, no filtra.
+  Stream<List<PeticionOracion>> watchFiltrado({bool? respondida}) {
+    Query<Map<String, dynamic>> query =
+        _peticiones.orderBy('fecha', descending: true).limit(pageSize);
+
+    if (respondida != null) {
+      query = query.where('respondida', isEqualTo: respondida);
+    }
+
+    return query.snapshots().map((s) => s.docs
+        .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
+        .toList());
   }
 
-  /// Crea una nueva petición de oración.
-  Future<void> crearPeticionOracion(PeticionOracion peticion) {
-    return _firestore.crearPeticionOracion(peticion);
-  }
+  Future<void> marcarComoRespondida(String peticionId, String userId) async {
+    final docRef = _peticiones.doc(peticionId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
 
-  /// Marca una petición como respondida (solo el autor).
-  Future<void> marcarPeticionComoRespondida(String peticionId, String uid) {
-    return _firestore.marcarPeticionComoRespondida(peticionId, uid);
-  }
+    final data = doc.data()!;
+    if (data['userId'] != userId) {
+      throw StateError(
+          'Solo el autor puede marcar la petición como respondida');
+    }
 
-  /// Apoya una petición (incrementa oracionesCount).
-  Future<void> apoyarPeticion(String peticionId) {
-    return _firestore.apoyarPeticion(peticionId);
+    await docRef.update({
+      'respondida': true,
+      'fechaRespondida': FieldValue.serverTimestamp(),
+    });
   }
 }
-
-/// Provider del repositorio de oración.
-final oracionRepositoryProvider = Provider<OracionRepository>((ref) {
-  return OracionRepository(ref.watch(firestoreServiceProvider));
-});

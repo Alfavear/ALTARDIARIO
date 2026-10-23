@@ -1,4 +1,4 @@
-import 'package:altar_diario/features/oracion/presentation/oracion_screen.dart'
+import 'package:altar_diario/features/oracion/presentation/screens/oracion_screen.dart'
     as oracion_feature show OracionScreen;
 import 'package:flutter/material.dart';
 

@@ -8,7 +8,6 @@ import '../../data/models/debate.dart';
 import '../../data/models/debate_reply.dart';
 import '../../data/models/message.dart';
 import '../../data/models/notification.dart';
-import '../../data/models/peticion_oracion.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/models/usuario.dart';
 import '../../data/services/auth_service.dart';
@@ -21,13 +20,10 @@ import '../../data/services/storage_service.dart';
 /// Mantienen compatibilidad con código existente que importe desde app_providers.dart.
 /// ──────────────────────────────────────────────────────────────────────────────
 
-/// Re-export del repositorio de oración.
-export 'package:altar_diario/features/oracion/data/oracion_repository.dart'
-    show OracionRepository, oracionRepositoryProvider;
-
 /// Re-export de providers de peticiones de oración.
 export 'package:altar_diario/features/oracion/providers/oracion_providers.dart'
     show
+        oracionRepositoryProvider,
         PeticionesFiltroNotifier,
         peticionesFiltroProvider,
         peticionesStreamProvider,
@@ -161,32 +157,6 @@ final reflexionesStreamProvider = StreamProvider<List<Reflexion>>((ref) {
 final userReflexionesProvider =
     StreamProvider.family<List<Reflexion>, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserReflexiones(userId);
-});
-
-/// Peticiones de oración de la comunidad.
-final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
-  return ref.watch(firestoreServiceProvider).peticionesStream();
-});
-
-class PeticionesFiltroNotifier extends Notifier<bool?> {
-  @override
-  bool? build() => null;
-
-  void setFiltro(bool? value) => state = value;
-}
-
-/// Filtro actual para las peticiones (null = todas, true = respondidas, false = pendientes).
-final peticionesFiltroProvider =
-    NotifierProvider<PeticionesFiltroNotifier, bool?>(
-        PeticionesFiltroNotifier.new);
-
-/// Peticiones de oración filtradas por estado (respondida/pendiente).
-final peticionesFiltradasProvider =
-    StreamProvider<List<PeticionOracion>>((ref) {
-  final filtro = ref.watch(peticionesFiltroProvider);
-  return ref.watch(firestoreServiceProvider).peticionesStreamFiltrado(
-        respondida: filtro,
-      );
 });
 
 /// Mensajes de un chat específico.
