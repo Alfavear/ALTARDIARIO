@@ -37,6 +37,13 @@ flutter analyze --no-pub
 step "flutter test"
 flutter test --no-pub --coverage
 
+step "tests del grafo de conocimiento (node)"
+if command -v node > /dev/null 2>&1; then
+  node --test scripts/tests/kg-jsonl.test.mjs
+else
+  echo "(node no disponible) saltando tests del grafo"
+fi
+
 if [ "$FAST" = 0 ]; then
   step "tests de reglas de Firestore (emulador)"
   scripts/rules_test.sh
