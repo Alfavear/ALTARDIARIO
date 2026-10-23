@@ -17,5 +17,14 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [],
+  {
+    "collectionGroup": "chats",
+    "queryScope": "COLLECTION",
+    "fields": [
+      { "fieldPath": "participantIds", "order": "ASCENDING" },
+      { "fieldPath": "lastUpdate", "order": "DESCENDING" }
+    ]
+  }
+]
 }
