@@ -9,7 +9,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Chats: allowlist de campos actualizables en `/chats` (`participantIds`, `lastMessage`, `lastSenderId`, `lastUpdate`, `participantNames`) y `create` con participantes duplicados rechazado.
 - App Check activado en cliente (monitor; pasar a enforce en consola).
 - Bloqueo real: si un usuario te bloqueó (o tú a él), ninguno de los dos puede comentar, responder, escribir en el chat, notificar ni seguir al otro; las reglas lo comprueban con `exists()` sobre `usuarios/{uid}/blocked/{uid}`. Dejar de seguir sigue permitido para que el bloqueado pueda limpiar su rastro. 6 tests de reglas nuevos (41/41).
-- Documento privado de cuenta (`usuarios/{uid}/private/account`): solo admite `email` (≤320 caracteres) y `fcmToken` (≤4096 caracteres); solo el dueño puede leer/escribir/borrar; cualquier otro campo (role, verified, etc.) es rechazado por las reglas. 8 tests de reglas nuevos.
+- Documento privado de cuenta (`usuarios/{uid}/private/account`): solo admite `email` (≤320 caracteres) y `fcmToken` (≤4096 caracteres); solo el dueño puede leer/escribir/borrar; cualquier otro campo (role, verified, etc.) es rechazado por las reglas. 10 tests de reglas nuevos.
 
 ### Añadido
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).

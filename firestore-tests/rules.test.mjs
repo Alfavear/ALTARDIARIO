@@ -775,8 +775,12 @@ test('privada: el dueño no puede escribir campos arbitrarios (role, verified, b
 });
 
 test('privada: el dueño no puede escribir email mayor a 320 caracteres', async () => {
-  const emailLargo = 'a'.repeat(310) + '@ejemplo.com'; // 320 en total
-  const emailMuyLargo = 'a'.repeat(311) + '@ejemplo.com'; // 321 en total
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@ejemplo.com', fcmToken: 'token-inicial',
+  }));
+  const sufijo = '@ejemplo.com'; // 12 caracteres
+  const emailLargo = 'a'.repeat(320 - sufijo.length) + sufijo; // 320 en total
+  const emailMuyLargo = 'a'.repeat(321 - sufijo.length) + sufijo; // 321 en total
   await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
     email: emailMuyLargo,
   }));
@@ -787,6 +791,9 @@ test('privada: el dueño no puede escribir email mayor a 320 caracteres', async 
 });
 
 test('privada: el dueño no puede escribir fcmToken mayor a 4096 caracteres', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@ejemplo.com', fcmToken: 'token-inicial',
+  }));
   const tokenMuyLargo = 't'.repeat(4097);
   await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
     fcmToken: tokenMuyLargo,
@@ -826,5 +833,35 @@ test('privada: el dueño puede eliminar su documento privado', async () => {
     email: 'alice@ejemplo.com', fcmToken: 'token-privado',
   }));
   await assertSucceeds(deleteDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account')));
-  await assertFails(getDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account')));
+  // Las reglas permiten al dueño leer la ruta: el get tiene éxito y el
+  // documento ya no existe (semántica de Firestore con docs inexistentes).
+  const borrado = await assertSucceeds(
+    getDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account')),
+  );
+  assert.equal(borrado.exists(), false, 'el documento privado ya no existe');
+});
+
+test('privada: otro usuario no puede eliminar el documento privado', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@ejemplo.com', fcmToken: 'token-privado',
+  }));
+  await assertFails(deleteDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
+});
+
+test('privada: el dueño no puede escribir email o token vacíos ni de otro tipo', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@ejemplo.com', fcmToken: 'token-inicial',
+  }));
+  await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: '',
+  }));
+  await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 12345,
+  }));
+  await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    fcmToken: '',
+  }));
+  await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    fcmToken: true,
+  }));
 });
