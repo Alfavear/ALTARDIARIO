@@ -398,6 +398,19 @@ class FirestoreService {
         .set(usuario.toMap(), SetOptions(merge: true));
   }
 
+  Future<void> toggleTemaSeguido(String uid, String tema, bool siguiendo) async {
+    if (!_available) return;
+    if (siguiendo) {
+      await _usuarios.doc(uid).update({
+        'temasSeguidos': FieldValue.arrayUnion([tema]),
+      });
+    } else {
+      await _usuarios.doc(uid).update({
+        'temasSeguidos': FieldValue.arrayRemove([tema]),
+      });
+    }
+  }
+
   Future<void> toggleFollow(
       String currentUserId, String targetUserId, bool isFollowing) async {
     if (!_available) return;
