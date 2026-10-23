@@ -188,6 +188,68 @@ test('foro: crear debate y respuesta con el uid propio; replyCount +1 en debate 
   await assertFails(updateDoc(doc(as(BOB), 'debates', 'd1'), { replyCount: increment(5) }));
 });
 
+test('límites de tamaño: debates, respuestas, comentarios y notificaciones', async () => {
+  // Debate con título válido y contenido válido: permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'debates', 'dlim'), {
+    titulo: 'Fe y obras', contenido: 'Santiago 2', userId: ALICE, userName: 'Alice',
+    libroId: 'stg', libroNombre: 'Santiago', fecha: new Date().toISOString(),
+    upvotes: 0, votedBy: [], replyCount: 0,
+  }));
+  // Título demasiado largo (>200): denegado.
+  await assertFails(setDoc(doc(as(ALICE), 'debates', 'dlim2'), {
+    titulo: 'x'.repeat(201), contenido: 'contenido', userId: ALICE, userName: 'Alice',
+    libroId: 'stg', fecha: new Date().toISOString(),
+    upvotes: 0, votedBy: [], replyCount: 0,
+  }));
+  // Contenido demasiado largo (>5000): denegado.
+  await assertFails(setDoc(doc(as(ALICE), 'debates', 'dlim3'), {
+    titulo: 'Ok', contenido: 'x'.repeat(5001), userId: ALICE, userName: 'Alice',
+    libroId: 'stg', fecha: new Date().toISOString(),
+    upvotes: 0, votedBy: [], replyCount: 0,
+  }));
+  // Dueño edita título dentro del límite: permitido.
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'debates', 'dlim'), { titulo: 'Nuevo título' }));
+  // Dueño edita título excediendo el límite: denegado.
+  await assertFails(updateDoc(doc(as(ALICE), 'debates', 'dlim'), { titulo: 'x'.repeat(201) }));
+
+  // Respuesta con contenido válido: permitido.
+  await assertSucceeds(addDoc(collection(as(BOB), 'debates', 'dlim', 'respuestas'), {
+    userId: BOB, userName: 'Bob', contenido: 'Amén', fecha: new Date().toISOString(),
+  }));
+  // Respuesta con contenido demasiado largo (>2000): denegado.
+  await assertFails(addDoc(collection(as(BOB), 'debates', 'dlim', 'respuestas'), {
+    userId: BOB, userName: 'Bob', contenido: 'x'.repeat(2001), fecha: new Date().toISOString(),
+  }));
+
+  // Comentario de petición con texto válido: permitido.
+  await assertSucceeds(addDoc(collection(as(ALICE), 'peticiones_oracion'), {
+    userId: ALICE, userName: 'Alice', motivo: 'Salud', fecha: new Date(), oracionesCount: 0,
+  }));
+  await assertSucceeds(addDoc(collection(as(BOB), 'peticiones_oracion', 'plim', 'comentarios'), {
+    userId: BOB, userName: 'Bob', texto: 'Amén', fecha: new Date().toISOString(),
+  }));
+  // Comentario de petición con texto demasiado largo (>2000): denegado.
+  await assertFails(addDoc(collection(as(BOB), 'peticiones_oracion', 'plim', 'comentarios'), {
+    userId: BOB, userName: 'Bob', texto: 'x'.repeat(2001), fecha: new Date().toISOString(),
+  }));
+
+  // Notificación con title y body válidos: permitido.
+  await assertSucceeds(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'nlim'), {
+    actorId: BOB, type: 'follow', title: 'Nuevo seguidor', body: 'Bob te sigue',
+    createdAt: new Date(), read: false,
+  }));
+  // Notificación con title demasiado largo (>200): denegado.
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'nlim2'), {
+    actorId: BOB, type: 'follow', title: 'x'.repeat(201), body: 'cuerpo',
+    createdAt: new Date(), read: false,
+  }));
+  // Notificación con body demasiado largo (>1000): denegado.
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'nlim3'), {
+    actorId: BOB, type: 'follow', title: 'Ok', body: 'x'.repeat(1001),
+    createdAt: new Date(), read: false,
+  }));
+});
+
 test('foro: votar una respuesta solo con el propio uid y ±1', async () => {
   await admin((db) => setDoc(doc(db, 'debates', 'd1', 'respuestas', 'r1'), {
     userId: ALICE, userName: 'Alice', contenido: '...', fecha: new Date().toISOString(),
@@ -258,6 +320,41 @@ test('notas y subrayados bíblicos son privados', async () => {
   await admin((db) => setDoc(doc(db, 'usuarios', ALICE, 'notes', 'n1'), nota));
   await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'notes', 'n1')));
   await assertSucceeds(getDoc(doc(as(ALICE), 'usuarios', ALICE, 'notes', 'n1')));
+});
+
+test('bloqueos: solo el dueño crea y borra sus propios bloqueos', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice' }));
+  await admin((db) => setDoc(doc(db, 'usuarios', BOB), { nombre: 'Bob' }));
+
+  // Alice bloquea a Bob: permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', BOB), {
+    uid: ALICE,
+    blockedUid: BOB,
+    fecha: new Date(),
+  }));
+  // Alice lee sus bloqueos: permitido.
+  await assertSucceeds(getDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', BOB)));
+
+  // El auto-bloqueo lo previene el cliente (bloquearUsuario), no las reglas.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', ALICE), {
+    uid: ALICE,
+    blockedUid: ALICE,
+    fecha: new Date(),
+  }));
+
+  // Bob no puede crear un bloqueo en nombre de Alice (blockedUid ajeno).
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'blocked', BOB), {
+    uid: ALICE,
+    blockedUid: BOB,
+    fecha: new Date(),
+  }));
+  // Bob no puede borrar el bloqueo de Alice.
+  await assertFails(deleteDoc(doc(as(BOB), 'usuarios', ALICE, 'blocked', BOB)));
+  // Bob no puede leer los bloqueos de Alice.
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'blocked', BOB)));
+
+  // Alice borra su propio bloqueo: permitido (las reglas lo autorizan).
+  await assertSucceeds(deleteDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', BOB)));
 });
 
 test('bible_highlights, bible_notes y notes: escribir y borrar solo lo propio', async () => {

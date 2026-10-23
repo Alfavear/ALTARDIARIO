@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../models/bible_models.dart';
+import '../models/bloqueo.dart';
 import '../models/comment.dart';
 import '../models/debate.dart';
 import '../models/debate_reply.dart';
@@ -768,22 +769,6 @@ class FirestoreService {
     });
   }
 
-  /// Stream de uids bloqueados por [uid].
-  Stream<List<String>> getUsuariosBloqueados(String uid) {
-    if (!_available) return Stream.value([]);
-    return _usuarios
-        .doc(uid)
-        .collection('blocked')
-        .snapshots()
-        .map((s) => s.docs.map((d) => d.id).toList());
-  }
-
-  /// Desbloquea a [blockedUid] para [uid].
-  Future<void> desbloquearUsuario(String uid, String blockedUid) async {
-    if (!_available) return;
-    await _usuarios.doc(uid).collection('blocked').doc(blockedUid).delete();
-  }
-
   Stream<List<Map<String, dynamic>>> getUserChats(String userId) {
     if (!_available) return Stream.value([]);
     return _chats
@@ -813,5 +798,33 @@ class FirestoreService {
                     return otro.isNotEmpty && !bloqueados.contains(otro);
                   }).toList());
     }).asyncExpand((s) => s);
+  }
+  // ── Bloqueos de usuarios ───────────────────────────────────────────────────
+
+  /// Bloquea a [blockedUid] desde la perspectiva de [uid].
+  /// Guarda el documento en `usuarios/{uid}/blocked/{blockedUid}`.
+  Future<void> bloquearUsuario(String uid, String blockedUid) async {
+    if (!_available) return;
+    if (uid == blockedUid) return;
+    await _usuarios.doc(uid).collection('blocked').doc(blockedUid).set(
+        Bloqueo(uid: uid, blockedUid: blockedUid, fecha: DateTime.now())
+            .toMap(),
+        SetOptions(merge: true));
+  }
+
+  /// Desbloquea a [blockedUid] para [uid].
+  Future<void> desbloquearUsuario(String uid, String blockedUid) async {
+    if (!_available) return;
+    await _usuarios.doc(uid).collection('blocked').doc(blockedUid).delete();
+  }
+
+  /// Stream de uids bloqueados por [uid].
+  Stream<List<String>> getUsuariosBloqueados(String uid) {
+    if (!_available) return Stream.value([]);
+    return _usuarios
+        .doc(uid)
+        .collection('blocked')
+        .snapshots()
+        .map((s) => s.docs.map((d) => d.id).toList());
   }
 }
