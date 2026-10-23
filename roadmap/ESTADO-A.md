@@ -1,9 +1,19 @@
 # Estado del carril A (orquestadora)
 
-Actualizado: ciclo 10 del roadmap. **21/49 tareas cerradas (43 %)**.
+Actualizado: ciclo 10 del roadmap + tanda 4 de merges. **21/53 tareas cerradas (40 %)**.
+`main` en `dfb6ca9`.
 
 ## Ahora
 
+- **Directrices de coordinación publicadas** (`docs/SESIONES.md`, PR #51): un worktree por
+  sesión, un solo merger, máximo 2 PRs abiertos, validar siempre contra `origin/main`
+  citando SHA, y registro por sesión en `roadmap/sesiones/`. `AGENTS.md` §1c las resume
+  para que cualquier sesión las cargue al arrancar.
+- **`main` local**: estaba 99 commits por detrás y 5 por delante. Rescatado en
+  `rescate/main-local-20261022-2201` y alineado a `origin/main`; a partir de ahora no se
+  usa para trabajar (`scripts/sync-main.sh` solo hace fast-forward).
+- **Tanda 4 de merges cerrada**: #42 (reportar peticiones y debates), #49
+  (`reflexion_publicada`), #41 (cierre del ciclo 9) y #51 (directrices + T-050..T-053).
 - **Tanda 3 de merges cerrada**: #48 (CI), #38 (T-024), #43 (T-005), #45 (T-017), #36 (T-023).
 - **El CI ya no es el cuello de botella.** El job `Build APK (debug)` se ejecuta siempre
   (el check requerido nunca queda en `expected`) pero solo compila si el PR toca
@@ -33,6 +43,10 @@ Actualizado: ciclo 10 del roadmap. **21/49 tareas cerradas (43 %)**.
 | #43 | Tests de interacción en Firestore (T-005) | `0a568f2` |
 | #45 | `markAllNotificationsAsRead` sin batch vacío (T-017) | `15d4cb8` |
 | #36 | Bloqueos en chats y notificaciones (T-023) | `7559028` |
+| #42 | Reportar peticiones y debates (B12) | `30126d6` |
+| #49 | `reflexion_publicada` al publicar | `eecce3d` |
+| #41 | Cierre del ciclo 9 (7 tareas) | `410a6f7` |
+| #51 | Directrices de sesiones + T-050..T-053 | `dfb6ca9` |
 
 ## Hallazgos de la noche (encontrados al verificar, no al escribir)
 
@@ -53,10 +67,32 @@ hecho sobre un checkout atrasado 67 commits: daba por muerto el diálogo de repo
 (se instancia en el feed en dos sitios), daba por ausente el allowlist de `comentario`
 (ya está en `main` y desplegado) y pedía un `maxLength` en el motivo (existe, 200).
 
-## En cola de merge
+6. **Un bloqueado sin foto desaparece del diálogo** y no se puede desbloquear
+   (`perfil_screen.dart:1657-1658`). **T-050 (P1)**.
+7. **El diálogo de bloqueados confunde carga y error con "no tienes bloqueados"** y
+   desborda con texto grande (`:1642`, `:1649`). **T-051 (P2)**.
+8. **Filtros de bloqueo a medias**: el badge cuenta sobre el stream sin filtrar
+   (`app_providers.dart:590`), `actorId` nulo se descarta (`firestore_service.dart:519`),
+   el `.limit()` se aplica antes del filtro (`:136`, `:500`), `getUsuariosBloqueados` no
+   tiene límite (`:825`), `chatListProvider` está muerto (`app_providers.dart:167`) y en
+   chats de grupo se oculta el chat entero (`:801`). **T-052 (P2)**.
+9. **Bloquear solo oculta contenido, no impide escribir**: quien te bloqueó puede seguir
+   comentando y escribiéndote. **T-053 (P2)** — decisión de producto, ver abajo.
 
-#42 (T-025, conflicto del diálogo resuelto a favor de la versión con tests),
-#49 (`reflexion_publicada`) y #41 (este cierre).
+## En espera (no es cola de merge)
+
+| PR | Qué | Por qué no entra |
+|---|---|---|
+| #46 | Grafo de conocimiento con `OPENAI_API_KEY`, `contents: write` y `push --force` | decisión humana: coste, secreto y código enviado a OpenAI |
+| #47 | Paginación por cursor | sin tests, sin consumidores y sobre un `main` viejo (revertiría #44) |
+| #50 | Design system tokenizado | revisar solape con `DESIGN.md` y §1c de `AGENTS.md` |
+| #29/#30 | Stack de privacidad | orden: publicar app → subir `minVersion` → migración a 0 |
+
+## Decisión pendiente de producto
+
+¿El bloqueo debe ser **real** (el bloqueado no puede escribir en tu contenido) o se queda
+como está, **solo visibilidad**? Si es real, va por reglas con `exists()` sobre
+`usuarios/{autor}/blocked/{uid}` (T-053), con un coste de una lectura extra por escritura.
 
 ## En espera
 
