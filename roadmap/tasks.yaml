@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 7
+  cycle_counter: 8
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -448,7 +448,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-004
     acceptance:
@@ -461,6 +461,13 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1
     created_at: 2026-10-21T02:36:45.757Z
+    started_cycle: 8
+    started_at: 2026-10-23T01:35:57.112Z
+    done_at: 2026-10-23T01:35:57.115Z
+    evidence: "PR #32 mergeado en main (fa7d0a4). Subcoleccion propietaria usuarios/{uid}/blocked con reglas y
+      tests; additivo, no cambia escrituras existentes. CI 4/4 (Format/Analyze/Test, reglas, Build Web, Build
+      APK)."
+    commit: fa7d0a4
   - id: T-020
     title: Paginacion por cursor en comentarios, debates y chats
     type: feature
@@ -503,7 +510,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - feed, peticiones, debates, comentarios y perfiles no muestran contenido de cuentas bloqueadas
@@ -513,6 +520,13 @@ tasks:
       - lib/presentation/providers/app_providers.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1 (secuencia 3)
     created_at: 2026-10-21T02:44:52.914Z
+    started_cycle: 8
+    started_at: 2026-10-23T01:35:57.115Z
+    done_at: 2026-10-23T01:35:57.115Z
+    evidence: "PR #33 mergeado en main (90ea33c). Filtrado de usuarios bloqueados en los proveedores sociales
+      (feed, oracion, debate, perfiles). La rama se rebaso sobre main y el duplicado de getUsuariosBloqueados
+      se resolvio antes de mergear. CI 4/4."
+    commit: 90ea33c
   - id: T-023
     title: Filtrar bloqueos en chats y notificaciones, y desbloqueo en Ajustes
     type: feature
@@ -878,7 +892,7 @@ tasks:
     phase: 1
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - debates.titulo y debates.contenido tienen tope de caracteres
@@ -890,6 +904,13 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: sin topes de tamano en contenido publico (spam y coste)"
     created_at: 2026-10-21T02:56:57.771Z
+    started_cycle: 8
+    started_at: 2026-10-23T01:35:57.115Z
+    done_at: 2026-10-23T01:35:57.115Z
+    evidence: "PR #31 mergeado en main (068f2db). Limites de tamano en reglas para debates (titulo<=200,
+      contenido<=5000), respuestas<=2000, comentarios de peticion<=2000 y notificaciones (title<=200,
+      body<=1000), tambien en la edicion del dueno. CI 4/4 con tests de reglas."
+    commit: 068f2db
   - id: T-045
     title: "CI: job de functions y correccion del glob de los tests de functions"
     type: infra

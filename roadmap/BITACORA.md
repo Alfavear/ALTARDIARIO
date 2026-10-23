@@ -176,3 +176,23 @@ El MCP del roadmap ya no puede reformatear tasks.yaml en masa: dos tests de regr
 **Siguiente:** Carril A: T-028 (reflexion guiada), T-033 (biblioteca personal), T-036 y T-037. Carril B: B1 = T-040 asignada por comentario en sus PRs.
 
 ---
+## Ciclo 8 — 2026-10-23T01:35:57.115Z
+- **Tarea:** T-019, T-044, T-022 · Bloqueo de usuarios, limites en reglas y filtrado de bloqueados
+- **Resultado:** mergeado en main (PRs #31, #32, #33; #34 T-027 en la misma tanda)
+- **Rama/commit:** fix/lane-b-06-tamano-limites, fix/lane-b-07-bloquear-usuarios, fix/lane-b-08-filtrar-bloqueados, auto/T-027-inicio-hoy @ 068f2db, fa7d0a4, 90ea33c, c0aa2b3
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Conflictos resueltos a mano: CHANGELOG (#31), firestore_service duplicado + llave perdida (#33, #36).
+
+Tanda de merges de la noche. La otra sesion (carril B) produce rama+PR y esta sesion mergea. Se resolvieron conflictos en serie sin reescribir historia y se detecto que el auto-merge de #36 rompia el fichero (metodos duplicados y una llave sin cerrar): corregido antes de pushear.
+
+**Problemas:**
+- La proteccion de main exige los 4 checks sobre el head actual: cada merge deja BEHIND a los demas y hay que update-branch + esperar otra ronda (~15 min por PR).
+- Los CHANGELOG de PRs simultaneos chocan en el mismo ancla; se estandarizo el bloque de [Unreleased] en las ramas abiertas.
+
+**Decisiones:**
+- Solo esta sesion mergea a main; el carril B nunca mergea ni toca el roadmap.
+- El stack de privacidad (#29, #30) queda abierto a proposito hasta publicar la app y subir minVersion.
+
+**Siguiente:** T-023, T-024, T-038, T-028, T-033, T-036 en cola de merge; despues carril A: T-037 y T-035.
+
+---
