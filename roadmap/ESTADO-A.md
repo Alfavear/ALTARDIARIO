@@ -38,8 +38,12 @@ Actualizado: ciclo 8 del roadmap.
 
 ## Siguiente (carril B)
 
-La cola vive en `roadmap/BANDEJA.md`. Tras B11: B12 = T-025, B13 = T-039,
-B14 = T-004, B15 = T-005, B16 = T-017.
+Antes de B12: **T-047** (P1, bug) — alinear los topes del cliente con los límites
+que ya están desplegados en las reglas. Un título de debate de 250 caracteres
+hoy recibe "permiso denegado" en vez de un aviso.
+
+Después, la cola de `roadmap/BANDEJA.md`: B12 = T-025, B13 = T-039, B14 = T-004,
+B15 = T-005, B16 = T-017.
 
 ## Reglas del carril A
 
