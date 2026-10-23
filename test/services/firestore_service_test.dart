@@ -192,4 +192,52 @@ void main() {
       expect(doc.exists, isFalse);
     });
   });
+
+  group('FirestoreService.markAllNotificationsAsRead', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('sin notificaciones sin leer no hace commit de batch', () async {
+      await service.markAllNotificationsAsRead('u1');
+
+      final notifications =
+          await fake.collection('usuarios/u1/notifications').get();
+      expect(notifications.docs, isEmpty);
+    });
+
+    test('marca como leídas solo las notificaciones no leídas', () async {
+      final batch = fake.batch();
+      batch.set(fake.collection('usuarios/u1/notifications').doc('n1'), {
+        'read': false,
+        'title': 'No leída',
+        'body': 'Cuerpo',
+        'createdAt': DateTime.now().toIso8601String(),
+        'actorId': 'u2',
+        'type': 'test',
+      });
+      batch.set(fake.collection('usuarios/u1/notifications').doc('n2'), {
+        'read': true,
+        'title': 'Ya leída',
+        'body': 'Cuerpo',
+        'createdAt': DateTime.now().toIso8601String(),
+        'actorId': 'u3',
+        'type': 'test',
+      });
+      await batch.commit();
+
+      await service.markAllNotificationsAsRead('u1');
+
+      final n1 =
+          await fake.collection('usuarios/u1/notifications').doc('n1').get();
+      final n2 =
+          await fake.collection('usuarios/u1/notifications').doc('n2').get();
+      expect(n1.data()!['read'], isTrue);
+      expect(n2.data()!['read'], isTrue);
+    });
+  });
 }

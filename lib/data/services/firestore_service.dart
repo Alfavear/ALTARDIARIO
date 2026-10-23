@@ -513,6 +513,7 @@ class FirestoreService {
   }
 
   /// Marca todas las notificaciones como leídas.
+  /// Si no hay notificaciones sin leer, retorna sin hacer commit de batch vacío.
   Future<void> markAllNotificationsAsRead(String uid) async {
     if (!_available) return;
     final snapshot = await _usuarios
@@ -520,6 +521,7 @@ class FirestoreService {
         .collection('notifications')
         .where('read', isEqualTo: false)
         .get();
+    if (snapshot.docs.isEmpty) return;
     final batch = _firestore!.batch();
     for (final doc in snapshot.docs) {
       batch.update(doc.reference, {'read': true});
