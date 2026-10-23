@@ -10,6 +10,10 @@
 > git show origin/ops/estado:roadmap/ESTADO-B.md   # en qué está el carril B
 > git show origin/ops/estado:roadmap/ESTADO-A.md   # en qué está la orquestadora
 > ```
+>
+> **Coordinación entre sesiones**: `docs/SESIONES.md` (un worktree por sesión, un solo
+> merger, máximo 2 PRs abiertos, validar siempre contra `origin/main` citando SHA).
+> Orientación en 30 segundos: `scripts/session-check.sh`. Registro: `roadmap/sesiones/`.
 
 ## Reglas comunes (obligatorias)
 
