@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/observability/product_events.dart';
 import '../../core/services/community_policy_service.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -217,6 +218,18 @@ class _PublicarReflexionScreenState
 
     try {
       await firestoreService.publicarReflexion(nuevaReflexion);
+      // Métrica sin datos personales: longitud y si lleva pasaje. El texto de
+      // la reflexión no sale de aquí (sanitizarParametros lo descartaría).
+      unawaited(
+        ProductoAnalytics.registrar(
+          EventoProducto.reflexionPublicada,
+          parametros: {
+            'tipo': 'reflexion',
+            'longitud_texto': texto.length,
+            'tiene_pasaje': _titleController.text.trim().isNotEmpty,
+          },
+        ),
+      );
       // Publicada: el borrador ya no hace falta.
       await _borrador.borrar();
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
