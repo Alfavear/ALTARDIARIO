@@ -223,6 +223,16 @@ service cloud.firestore {
       );
       allow delete: if signedIn() && uid() == userId;
 
+      // Bloqueos de usuarios: solo el dueño puede crear/borrar sus propios
+      // bloqueos. El cliente impide el auto-bloqueo (uid == blockedUid).
+      match /blocked/{blockedUid} {
+        allow read: if signedIn() && uid() == userId;
+        allow create: if signedIn() && uid() == userId
+          && request.resource.data.blockedUid is string;
+        allow delete: if signedIn() && uid() == userId;
+        allow update: if false;
+      }
+
       match /bible_highlights/{highlightId} {
         allow read, write: if signedIn() && uid() == userId;
       }

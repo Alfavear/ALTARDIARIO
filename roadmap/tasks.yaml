@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 5
+  cycle_counter: 6
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -287,9 +287,9 @@ tasks:
     status: backlog
     depends_on: []
     acceptance:
-      - "con BITACORA.md sin entradas de ciclo, STATE.md muestra 'Últimos ciclos: —' y no la cabecera de la
-        bitácora"
-      - con 1+ entradas, muestra solo las entradas de ciclo (no la cabecera del documento)
+      - 'el generador de STATE.md no duplica el encabezado ("## ## Ciclo N") ni deja un ciclo sin encabezado
+        en "Ultimos ciclos"'
+      - corregido en tools/roadmap-mcp/roadmap.mjs, sin editar STATE.md a mano
     files:
       - tools/roadmap-mcp/roadmap.mjs
       - roadmap/STATE.md
@@ -405,7 +405,7 @@ tasks:
     phase: 1
     priority: P0
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - script o Cloud Function idempotente copia email/fcmToken de usuarios/{uid} a
@@ -421,8 +421,15 @@ tasks:
       - lib/data/services/firestore_service.dart
     source: "audit docs/AUDIT_REMEDIATION_PLAN.md seccion 2 (bloquea el PR #21)"
     created_at: 2026-10-21T02:36:45.757Z
+    started_cycle: 6
+    started_at: 2026-10-21T02:40:04.647Z
+    done_at: 2026-10-21T02:58:42.089Z
+    evidence: "scripts/check.sh completo (con emulador): Formatted 82 files (0 changed) | No issues found! (6.6s)
+      | flutter test 123/123 All tests passed | suite de reglas 30 pass 0 fail | exit 0. functions: npm run
+      build (tsc) + npm test 9/9 (3 previos + 6 nuevos de la migracion). Commit abddd55."
+    commit: abddd55
   - id: T-019
-    title: Bloqueo de usuarios y ocultacion de contenido y contactos bloqueados
+    title: "Bloquear usuarios: documento de bloqueo y reglas"
     type: feature
     phase: 1
     priority: P1
@@ -431,15 +438,14 @@ tasks:
     depends_on:
       - T-004
     acceptance:
-      - acciones de reportar y bloquear disponibles desde perfil publico, feed, peticiones y debates
-      - las consultas y pantallas ocultan contenido y contactos de usuarios bloqueados
-      - reglas de Firestore para el documento de bloqueo con test dedicado
-      - tests de widget del flujo de bloqueo en la pantalla de perfil
+      - el bloqueo se guarda como usuarios/{uid}/blocked/{blockedUid} y solo su dueño puede leerlo o
+        modificarlo
+      - las reglas impiden leer o modificar los bloqueos de otro usuario
+      - tests de reglas para crear, listar y borrar el propio bloqueo
     files:
       - firestore.rules
       - firestore-tests/rules.test.mjs
-      - lib/presentation/screens/public_profile_screen.dart
-    source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 3
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1
     created_at: 2026-10-21T02:36:45.757Z
   - id: T-020
     title: Paginacion por cursor en comentarios, debates y chats
@@ -477,3 +483,407 @@ tasks:
       - lib/presentation/screens/perfil_screen.dart
     source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 4 (cumplimiento de tiendas)
     created_at: 2026-10-21T02:36:45.757Z
+  - id: T-022
+    title: Filtrar usuarios bloqueados en feed, oración, debate y perfiles
+    type: feature
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - feed, peticiones, debates, comentarios y perfiles no muestran contenido de cuentas bloqueadas
+      - las consultas filtran usando el documento de bloqueos del usuario actual
+      - tests de provider y de widget del estado filtrado
+    files:
+      - lib/presentation/providers/app_providers.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1 (secuencia 3)
+    created_at: 2026-10-21T02:44:52.914Z
+  - id: T-023
+    title: Filtrar bloqueos en chats y notificaciones, y desbloqueo en Ajustes
+    type: feature
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - no se puede iniciar ni continuar un chat con una cuenta bloqueada
+      - las notificaciones de cuentas bloqueadas no se muestran
+      - Ajustes lista los usuarios bloqueados y permite desbloquearlos
+      - tests de widget de la lista de bloqueados y del chat bloqueado
+    files:
+      - lib/presentation/screens/chat_list_screen.dart
+      - lib/presentation/screens/notificaciones_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1 (secuencia 4)
+    created_at: 2026-10-21T02:44:52.915Z
+  - id: T-024
+    title: Reportar reflexiones y comentarios
+    type: feature
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - reflexiones y comentarios tienen menu de reporte con los motivos validos
+      - cada reporte escribe solo los cinco campos de la allowlist de /reports
+      - tests de reglas y de widget del dialogo de reporte
+    files:
+      - lib/presentation/screens/feed_screen.dart
+      - lib/presentation/widgets/
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 5)
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-025
+    title: Reportar peticiones, debates y respuestas, y probar la Function de moderacion
+    type: feature
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - cada targetType de la Function tiene test propio
+      - la Function marca hidden cuando hay tres reportantes distintos
+      - el autor no puede eludir el estado hidden editando su contenido
+    files:
+      - functions/src/moderation.ts
+      - lib/presentation/screens/debate_detail_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 6)
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-026
+    title: Filtrar contenido oculto (hidden) en providers y pantallas
+    type: security
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - ningun provider devuelve contenido con hidden true
+      - las pantallas ocultan ese contenido y no lo cuentan en contadores
+      - test de provider con un documento hidden y otro visible
+    files:
+      - lib/presentation/providers/app_providers.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 7)
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-027
+    title: 'Inicio "Hoy": lectura pendiente, dia completado y sin conexion'
+    type: feature
+    phase: 4
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - en menos de dos toques se abre la lectura pendiente
+      - si el dia esta completo se muestra una celebracion discreta y la siguiente lectura disponible
+      - skeleton de carga, estado offline y escalado de texto accesible
+      - widget test para pendiente, completado y sin conexion
+    files:
+      - lib/presentation/screens/home_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.1 (secuencia 10)
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-028
+    title: Reflexion guiada y privada por defecto
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - borrador local recuperable tras cerrar la app
+      - publicar exige confirmacion explicita y muestra vista previa
+      - el usuario convierte su nota en publicacion sin copiar texto
+      - no se eleva el limite de texto sin revisar coste y moderacion
+    files:
+      - lib/presentation/screens/publicar_reflexion_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.2
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-029
+    title: "Oracion con seguimiento: estado respondida, actualizacion y filtros del feed"
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - solo el autor marca una peticion como respondida y anade la actualizacion
+      - el aviso a quienes la apoyaron es opcional y no expone texto sensible en la pantalla de bloqueo
+      - las consultas tienen indice, limite y paginacion
+    files:
+      - lib/presentation/screens/oracion_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.3
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-030
+    title: Busqueda y temas seguidos en la comunidad
+    type: feature
+    phase: 4
+    priority: P3
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - la busqueda tiene minimo de caracteres, debounce y limites de consulta
+      - los resultados no muestran usuarios bloqueados ni contenido oculto
+      - no se envian a Analytics textos de publicaciones ni datos personales
+    files:
+      - lib/presentation/providers/app_providers.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 3.2
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-031
+    title: "Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel y reportar/bloquear visibles"
+    type: feature
+    phase: 4
+    priority: P3
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - cada consulta esta indexada, limitada y paginada
+      - el autor puede cerrar su debate y la moderacion puede ocultarlo
+      - la UI muestra las reglas comunitarias antes de la primera publicacion
+    files:
+      - lib/presentation/screens/debate_detail_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 3.3
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-032
+    title: "Ajustes de lectura: traduccion, tamano, espaciado y alto contraste"
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - no se anula MediaQuery.textScaler
+      - todos los controles se pueden usar con lector de pantalla y teclado web
+      - contraste y areas tactiles cumplen Material 3
+    files:
+      - lib/core/theme/app_theme.dart
+      - lib/presentation/screens/perfil_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 4.1
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-033
+    title: "Biblioteca personal: resaltados, notas y reflexiones privadas con filtros"
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - los datos siguen siendo privados en Firestore y en el almacenamiento local
+      - la exportacion la pide el usuario y no se envia a terceros automaticamente
+      - los estados vacio y offline orientan sin bloquear la lectura
+    files:
+      - lib/presentation/screens/notes_screen.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 4.2
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-034
+    title: "Notificaciones con intencion: preferencias por categoria y horario tranquilo"
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - el usuario controla cada categoria y puede desactivarla sin perder datos
+      - las preferencias de FCM se guardan en el documento privado de cuenta
+      - las notificaciones no incluyen el texto sensible de las peticiones de oracion
+    files:
+      - lib/core/services/notification_service.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 4.3
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-035
+    title: Migrar la feature de moderacion a lib/features/moderation
+    type: refactor
+    phase: 3
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - la feature vive en lib/features/moderation con data/, providers/ y presentation/
+      - los providers globales que usa se mueven a la feature
+      - tests en test/features/moderation y check.sh en verde
+    files:
+      - lib/features/moderation/
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 5.1
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-036
+    title: "Observabilidad accionable: eventos de producto sin datos sensibles"
+    type: infra
+    phase: 3
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - eventos para completar lectura, guardar nota, publicar reflexion, reportar y bloquear
+      - ningun evento incluye textos, correos, tokens ni motivos libres
+      - test que verifica que los payloads no llevan datos personales
+    files:
+      - lib/core/observability/observability.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 5.2
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-037
+    title: "Rendimiento y resiliencia: metricas, cache offline de Biblia y reintentos"
+    type: infra
+    phase: 3
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - se mide el tiempo de primer contenido y el tamano de las consultas
+      - la Biblia se sirve de cache offline y las lecturas de red tienen reintento explicito
+      - no se anaden dependencias sin justificar
+    files:
+      - lib/data/services/bible_service.dart
+    source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 5.3
+    created_at: 2026-10-21T02:44:52.916Z
+  - id: T-038
+    title: "Chats: indice compuesto para la lista de chats (participantIds + lastUpdate)"
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "firestore.indexes.json declara el indice chats: participantIds (arrayContains) + lastUpdate
+        (descending)"
+      - la consulta de getUserChats se ejecuta en el emulador y en produccion sin FAILED_PRECONDITION
+      - el deploy de indices en verde
+    files:
+      - firestore.indexes.json
+    source: "revision T-015 (PR #23): la lista de chats falla en produccion por falta de indice"
+    created_at: 2026-10-21T02:56:57.769Z
+  - id: T-039
+    title: "Chats: impedir chats no solicitados (el otro participante puede ser cualquiera)"
+    type: security
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - las reglas exigen que el otro participante acepte el chat o que exista una relacion previa que lo
+        justifique
+      - un usuario no puede abrir chats a desconocidos ni inundar su lista de conversaciones
+      - test de reglas que cubra el caso del chat no solicitado
+    files:
+      - firestore.rules
+      - lib/presentation/screens/
+    source: "revision T-015 (PR #23): crear un chat con cualquier uid permite spam"
+    created_at: 2026-10-21T02:56:57.770Z
+  - id: T-040
+    title: "Privacidad: helper noPrivateFields() en todo el contenido publico"
+    type: security
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - ningun documento publico (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones,
+        feedback) puede llevar email ni fcmToken
+      - el helper se aplica tambien a los update del propio contenido (ownerEditOk)
+      - tests de reglas que intenten plantar un email en cada coleccion publica
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: "rules-auditor: hoy los create usan hasAll y aceptan campos extra"
+    created_at: 2026-10-21T02:56:57.770Z
+  - id: T-041
+    title: "Privacidad: documento privado con allowlist de campos, tipos y tamanos"
+    type: security
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - usuarios/{uid}/private/account solo admite email y fcmToken
+      - "email: string de 320 caracteres como maximo; fcmToken: string de 4096 como maximo"
+      - tests de reglas que intenten escribir role, verified o basura en el documento privado
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: "rules-auditor: allow read, write sin restriccion de contenido"
+    created_at: 2026-10-21T02:56:57.770Z
+  - id: T-042
+    title: "Privacidad: permitir borrar email/fcmToken del perfil publico sin bloqueo"
+    type: security
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - el helper privateOnlyRemoved permite borrar los campos privados del perfil publico
+      - "borrar email con fcmToken presente ya no se deniega (hoy hay un bloqueo: no se puede limpiar el token
+        al cerrar sesion)"
+      - test de reglas con un perfil legacy que tiene email y fcmToken
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: "rules-auditor: deadlock de limpieza del token FCM"
+    created_at: 2026-10-21T02:56:57.770Z
+  - id: T-043
+    title: "Privacidad: el borrado del perfil borra tambien el documento privado"
+    type: security
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - eliminar la cuenta borra tambien usuarios/{uid}/private/account (Firestore no cascada)
+      - el email del usuario no sobrevive al borrado de perfil
+      - test de la operacion de borrado
+    files:
+      - lib/data/services/firestore_service.dart
+      - functions/
+    source: "rules-auditor: el subdocumento privado queda huerfano tras borrar el perfil"
+    created_at: 2026-10-21T02:56:57.771Z
+  - id: T-044
+    title: Limites de tamano en debates, respuestas, notificaciones y comentarios de peticion
+    type: security
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - debates.titulo y debates.contenido tienen tope de caracteres
+      - respuestas.contenido y notificaciones.title/body tienen tope
+      - peticiones_oracion/{id}/comentarios valida el texto (hoy no valida nada)
+      - test de reglas por cada limite
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: "rules-auditor: sin topes de tamano en contenido publico (spam y coste)"
+    created_at: 2026-10-21T02:56:57.771Z
+  - id: T-045
+    title: "CI: job de functions y correccion del glob de los tests de functions"
+    type: infra
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - la CI compila functions/ y ejecuta sus tests en cada push
+      - el script de test de functions descubre todos los *.test.js (el glob actual solo cubre un nivel y se
+        salta gamification.test.js)
+      - el job es visible como check obligatorio en la proteccion de main
+    files:
+      - .github/workflows/ci.yml
+      - functions/package.json
+    source: "rules-auditor + revision del stack Codex: functions/ no corre en CI"
+    created_at: 2026-10-21T02:56:57.771Z

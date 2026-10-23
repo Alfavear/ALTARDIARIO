@@ -322,6 +322,41 @@ test('notas y subrayados bíblicos son privados', async () => {
   await assertSucceeds(getDoc(doc(as(ALICE), 'usuarios', ALICE, 'notes', 'n1')));
 });
 
+test('bloqueos: solo el dueño crea y borra sus propios bloqueos', async () => {
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice' }));
+  await admin((db) => setDoc(doc(db, 'usuarios', BOB), { nombre: 'Bob' }));
+
+  // Alice bloquea a Bob: permitido.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', BOB), {
+    uid: ALICE,
+    blockedUid: BOB,
+    fecha: new Date(),
+  }));
+  // Alice lee sus bloqueos: permitido.
+  await assertSucceeds(getDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', BOB)));
+
+  // El auto-bloqueo lo previene el cliente (bloquearUsuario), no las reglas.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', ALICE), {
+    uid: ALICE,
+    blockedUid: ALICE,
+    fecha: new Date(),
+  }));
+
+  // Bob no puede crear un bloqueo en nombre de Alice (blockedUid ajeno).
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'blocked', BOB), {
+    uid: ALICE,
+    blockedUid: BOB,
+    fecha: new Date(),
+  }));
+  // Bob no puede borrar el bloqueo de Alice.
+  await assertFails(deleteDoc(doc(as(BOB), 'usuarios', ALICE, 'blocked', BOB)));
+  // Bob no puede leer los bloqueos de Alice.
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'blocked', BOB)));
+
+  // Alice borra su propio bloqueo: permitido (las reglas lo autorizan).
+  await assertSucceeds(deleteDoc(doc(as(ALICE), 'usuarios', ALICE, 'blocked', BOB)));
+});
+
 test('bible_highlights, bible_notes y notes: escribir y borrar solo lo propio', async () => {
   // Shapes reales de los modelos Dart: estas reglas solo miran el uid, pero
   // el payload debe reflejar lo que la app escribe de verdad.
