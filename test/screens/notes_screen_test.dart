@@ -22,9 +22,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('solo en este dispositivo'),
+      find.textContaining('solo tú puedes verlas'),
       findsOneWidget,
-      reason: 'el usuario debe saber que sus notas son locales',
+      reason: 'el usuario debe saber que sus notas son privadas',
     );
     expect(find.byTooltip('Exportar mi biblioteca'), findsOneWidget);
 
@@ -32,6 +32,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Exportar mi biblioteca'), findsOneWidget);
-    expect(find.textContaining('no envía tus notas'), findsOneWidget);
+    expect(
+      find.textContaining('No se envía nada a otros usuarios'),
+      findsOneWidget,
+    );
   });
 }

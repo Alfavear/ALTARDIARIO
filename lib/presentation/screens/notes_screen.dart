@@ -189,7 +189,7 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
                       SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          'Tus notas se guardan solo en este dispositivo.',
+                          'Tus notas son privadas: solo tú puedes verlas.',
                           style: TextStyle(
                               fontSize: 11, color: AppTheme.completedGreen),
                         ),

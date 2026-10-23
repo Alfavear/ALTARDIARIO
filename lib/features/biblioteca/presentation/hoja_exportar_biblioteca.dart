@@ -55,7 +55,7 @@ class HojaExportarBiblioteca extends StatelessWidget {
             const SizedBox(height: 4),
             const Text(
               'Se copia en tu portapapeles y tú decides dónde pegarla. '
-              'AltarDiario no envía tus notas a ningún sitio.',
+              'No se envía nada a otros usuarios ni a terceros.',
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 12),

@@ -16,7 +16,8 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('no envía tus notas'), findsOneWidget);
+    expect(find.textContaining('No se envía nada a otros usuarios'),
+        findsOneWidget);
     expect(find.textContaining('# Mi biblioteca'), findsOneWidget);
   });
 
