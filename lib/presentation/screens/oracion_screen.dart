@@ -392,4 +392,3 @@ class _PeticionCard extends ConsumerWidget {
     );
   }
 }
-
