@@ -8,6 +8,7 @@ class DebateReply {
   final int upvotes;
   final List<String> votedBy;
   final String? parentId;
+  final bool oculto;
 
   DebateReply({
     required this.id,
@@ -19,6 +20,7 @@ class DebateReply {
     this.upvotes = 0,
     this.votedBy = const [],
     this.parentId,
+    this.oculto = false,
   });
 
   factory DebateReply.fromMap(Map<String, dynamic> map) => DebateReply(
@@ -36,6 +38,7 @@ class DebateReply {
         votedBy:
             map['votedBy'] != null ? List<String>.from(map['votedBy']) : [],
         parentId: map['parentId'] as String?,
+        oculto: map['oculto'] ?? false,
       );
 
   Map<String, dynamic> toMap() => {
@@ -47,6 +50,7 @@ class DebateReply {
         'upvotes': upvotes,
         'votedBy': votedBy,
         if (parentId != null) 'parentId': parentId,
+        'oculto': oculto,
       };
 
   bool hasVoted(String userId) => votedBy.contains(userId);

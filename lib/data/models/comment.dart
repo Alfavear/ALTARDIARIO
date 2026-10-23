@@ -8,6 +8,7 @@ class Comment {
   final DateTime fecha;
   final int likes;
   final List<String> likedBy;
+  final bool oculto;
 
   Comment({
     required this.id,
@@ -19,6 +20,7 @@ class Comment {
     required this.fecha,
     this.likes = 0,
     this.likedBy = const [],
+    this.oculto = false,
   });
 
   factory Comment.fromMap(Map<String, dynamic> map) => Comment(
@@ -34,6 +36,7 @@ class Comment {
         likes: map['likes'] ?? 0,
         likedBy:
             map['likedBy'] != null ? List<String>.from(map['likedBy']) : [],
+        oculto: map['oculto'] ?? false,
       );
 
   Map<String, dynamic> toMap() => {
@@ -45,6 +48,7 @@ class Comment {
         'fecha': fecha.toIso8601String(),
         'likes': likes,
         'likedBy': likedBy,
+        'oculto': oculto,
       };
 
   bool isLikedBy(String userId) => likedBy.contains(userId);
