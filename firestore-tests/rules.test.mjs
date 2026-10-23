@@ -222,7 +222,9 @@ test('límites de tamaño: debates, respuestas, comentarios y notificaciones', a
   }));
 
   // Comentario de petición con texto válido: permitido.
-  await assertSucceeds(addDoc(collection(as(ALICE), 'peticiones_oracion'), {
+  // El padre se crea con id explícito: la regla de comentarios lee su autor
+  // para comprobar el bloqueo, así que tiene que existir de verdad.
+  await assertSucceeds(setDoc(doc(as(ALICE), 'peticiones_oracion', 'plim'), {
     userId: ALICE, userName: 'Alice', motivo: 'Salud', fecha: new Date(), oracionesCount: 0,
   }));
   await assertSucceeds(addDoc(collection(as(BOB), 'peticiones_oracion', 'plim', 'comentarios'), {
@@ -601,4 +603,140 @@ test('config es solo lectura; colecciones desconocidas están cerradas', async (
   await assertSucceeds(getDoc(doc(anon(), 'config', 'app')));
   await assertFails(setDoc(doc(as(ALICE), 'config', 'app'), { minVersion: '0' }));
   await assertFails(setDoc(doc(as(ALICE), 'colección_inventada', 'x'), { a: 1 }));
+});
+
+// ───────────────────────── Bloqueo real (T-053) ─────────────────────────
+// Decisión de producto: bloquear no solo oculta contenido; impide escribir.
+// El bloqueo es simétrico: si Alice bloqueó a Bob, ninguno de los dos escribe
+// en el contenido del otro. Un tercero sin bloqueo no se ve afectado.
+
+const seedBlock = (owner, blocked) =>
+  admin((db) => setDoc(doc(db, 'usuarios', owner, 'blocked', blocked), {
+    uid: owner, blockedUid: blocked, fecha: new Date(),
+  }));
+
+const seedPeticion = (id, userId) =>
+  admin((db) => setDoc(doc(db, 'peticiones_oracion', id), {
+    userId, userName: 'Alice', motivo: 'Orad por mí', fecha: new Date(),
+    oracionesCount: 0, likes: 0, likedBy: [],
+  }));
+
+const seedDebate = (id, userId) =>
+  admin((db) => setDoc(doc(db, 'debates', id), {
+    userId, userName: 'Alice', titulo: 'Tema', contenido: 'Contenido',
+    fecha: new Date(), upvotes: 0, votedBy: [], replyCount: 0,
+  }));
+
+test('bloqueo real: quien te bloqueó no puede comentar tu reflexión', async () => {
+  await seedReflexion('r1', ALICE);
+  await seedBlock(ALICE, BOB);
+
+  await assertFails(addDoc(collection(as(BOB), 'reflexiones', 'r1', 'comentarios'), {
+    userId: BOB, texto: 'no debería poder',
+  }));
+  // Un tercero sin bloqueo sigue comentando.
+  await assertSucceeds(addDoc(collection(as(EVE), 'reflexiones', 'r1', 'comentarios'), {
+    userId: EVE, texto: 'sigue siendo posible',
+  }));
+  // El dueño comenta en su propia reflexión.
+  await assertSucceeds(addDoc(collection(as(ALICE), 'reflexiones', 'r1', 'comentarios'), {
+    userId: ALICE, texto: 'mi propio comentario',
+  }));
+});
+
+test('bloqueo real: tampoco en peticiones de oración ni en debates', async () => {
+  await seedPeticion('p1', ALICE);
+  await seedDebate('d1', ALICE);
+  await seedBlock(ALICE, BOB);
+
+  await assertFails(addDoc(collection(as(BOB), 'peticiones_oracion', 'p1', 'comentarios'), {
+    userId: BOB, texto: 'no debería poder',
+  }));
+  await assertFails(addDoc(collection(as(BOB), 'debates', 'd1', 'respuestas'), {
+    userId: BOB, contenido: 'no debería poder',
+  }));
+  await assertSucceeds(addDoc(collection(as(EVE), 'peticiones_oracion', 'p1', 'comentarios'), {
+    userId: EVE, texto: 'sigue siendo posible',
+  }));
+  await assertSucceeds(addDoc(collection(as(EVE), 'debates', 'd1', 'respuestas'), {
+    userId: EVE, contenido: 'sigue siendo posible',
+  }));
+});
+
+test('bloqueo real: es simétrico, quien bloquea tampoco escribe en el bloqueado', async () => {
+  await seedReflexion('r2', BOB);
+  await seedBlock(ALICE, BOB);
+
+  await assertFails(addDoc(collection(as(ALICE), 'reflexiones', 'r2', 'comentarios'), {
+    userId: ALICE, texto: 'tampoco por este lado',
+  }));
+  // Bob sigue escribiendo en su propio contenido.
+  await assertSucceeds(addDoc(collection(as(BOB), 'reflexiones', 'r2', 'comentarios'), {
+    userId: BOB, texto: 'lo mío sigue siendo mío',
+  }));
+});
+
+test('bloqueo real: no hay mensajes ni metadatos en un chat con quien te bloqueó', async () => {
+  await admin((db) => setDoc(doc(db, 'chats', 'ab'), {
+    participantIds: [ALICE, BOB], lastMessage: 'hola', lastUpdate: new Date(),
+  }));
+  await seedBlock(ALICE, BOB);
+
+  await assertFails(addDoc(collection(as(BOB), 'chats', 'ab', 'messages'), {
+    senderId: BOB, text: 'no debería poder', timestamp: serverTimestamp(),
+  }));
+  // Tampoco puede dejar un "último mensaje" fantasma en los metadatos.
+  await assertFails(updateDoc(doc(as(BOB), 'chats', 'ab'), {
+    lastMessage: 'fantasma', lastSenderId: BOB, lastUpdate: new Date(),
+  }));
+  // Alice bloqueó, así que tampoco escribe ella.
+  await assertFails(addDoc(collection(as(ALICE), 'chats', 'ab', 'messages'), {
+    senderId: ALICE, text: 'ni por este lado', timestamp: serverTimestamp(),
+  }));
+
+  // Un chat sin bloqueo sigue funcionando.
+  await admin((db) => setDoc(doc(db, 'chats', 'be'), {
+    participantIds: [BOB, EVE], lastMessage: '',
+  }));
+  await assertSucceeds(addDoc(collection(as(BOB), 'chats', 'be', 'messages'), {
+    senderId: BOB, text: 'hola Eve', timestamp: serverTimestamp(),
+  }));
+});
+
+test('bloqueo real: no se puede notificar a quien te bloqueó', async () => {
+  await seedBlock(ALICE, BOB);
+  const noti = {
+    type: 'follow', title: 'Nuevo seguidor', body: 'Bob te sigue',
+    data: {}, actorId: BOB, read: false, createdAt: new Date(),
+  };
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'n1'), noti));
+  await assertSucceeds(setDoc(doc(as(EVE), 'usuarios', ALICE, 'notifications', 'n2'), {
+    ...noti, actorId: EVE,
+  }));
+});
+
+test('bloqueo real: no se puede seguir a quien te bloqueó (ni al revés)', async () => {
+  await admin(async (db) => {
+    await setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice', seguidores: [], siguiendo: [] });
+    await setDoc(doc(db, 'usuarios', BOB), { nombre: 'Bob', seguidores: [], siguiendo: [] });
+    await setDoc(doc(db, 'usuarios', EVE), { nombre: 'Eve', seguidores: [], siguiendo: [] });
+  });
+  await seedBlock(ALICE, BOB);
+
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE), {
+    seguidores: arrayUnion(BOB),
+  }, { merge: true }));
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', BOB), {
+    seguidores: arrayUnion(ALICE),
+  }, { merge: true }));
+  // Quitarse de los seguidores del otro sí se permite: el bloqueado tiene que
+  // poder limpiar su propio rastro aunque haya un bloqueo de por medio.
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), { seguidores: [BOB] }, { merge: true }));
+  await assertSucceeds(setDoc(doc(as(BOB), 'usuarios', ALICE), {
+    seguidores: arrayRemove(BOB),
+  }, { merge: true }));
+  // Un tercero sin bloqueo sigue pudiendo seguir.
+  await assertSucceeds(setDoc(doc(as(EVE), 'usuarios', ALICE), {
+    seguidores: arrayUnion(EVE),
+  }, { merge: true }));
 });
