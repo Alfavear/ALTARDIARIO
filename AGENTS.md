@@ -119,6 +119,21 @@ crearlos en `lib/features/<feature>/providers/`.
 - Pantallas sociales: comprobar `isGuestUserProvider` al inicio de `build()` y
   renderizar `GuestAccessRestrictedWidget` o esconder acciones.
 
+### UI/UX (obligatorio)
+- Antes de escribir o refactorizar interfaz, lee `DESIGN.md` y usa los tokens de
+  `lib/core/theme/app_theme.dart`. Prohibido el `Color(0x…)` suelto en un widget,
+  el `EdgeInsets` numérico arbitrario y cualquier valor fuera de la escala
+  4/8/12/16/24/32/48.
+- Toda vista que consulte datos remotos declara los **cuatro** estados: datos,
+  carga (skeleton no bloqueante), error (mensaje humano + reintento) y vacío
+  (icono + texto + acción inicial). `AsyncValue.when` no exime del vacío.
+- Touch target ≥ 48×48 dp; contraste WCAG AA (4.5:1 texto, 3:1 gráficos);
+  un solo CTA primario por vista, el resto outlined o text.
+- Microcopia sin jerga técnica: cada error dice qué pasó y qué hacer. Nunca
+  `Exception`, `null`, `PERMISSION_DENIED` ni códigos de estado en la interfaz.
+- Revisa el resultado con el skill `frontend-design` antes de darlo por terminado
+  (teclado que no tapa campos, overflow, `textScaler` al 200%).
+
 ### Seguridad (no negociable)
 - Nunca commitear `.env`, `google-services.json`, `GoogleService-Info.plist`, keystores.
 - Toda regla de Firestore nueva lleva test. Lee `.opencode/skills/firestore-rules/SKILL.md`.
@@ -186,6 +201,7 @@ usa el MCP `roadmap` (`get_state`, `next_task`, `start_task`, `complete_task`,
 
 | Archivo | Para qué |
 |---|---|
+| `DESIGN.md` | Design system: tokens, tipografía, estados obligatorios y microcopia |
 | `roadmap/tasks.yaml` · `roadmap/STATE.md` | Backlog ejecutable y panel de progreso (vía MCP) |
 | `roadmap/BITACORA.md` | Qué hizo cada ciclo autónomo |
 | `docs/ROADMAP.md` | Visión por fases (narrativa; las tareas concretas están en roadmap/tasks.yaml) |

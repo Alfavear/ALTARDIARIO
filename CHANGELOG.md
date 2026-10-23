@@ -18,6 +18,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - CI/CD en GitHub Actions: format/analyze/test, reglas, builds Android/Web, deploy de Firebase, release Android por tag, Dependabot.
 - `scripts/check.sh`, `scripts/rules_test.sh`, `scripts/bootstrap.sh`.
 - Documentación: ROADMAP, ADR-0001/0002/0003, AI_WORKFLOW, SECURITY, RELEASE.
+- `DESIGN.md` (antes `design.md`): escala espacial cerrada, CTA único por vista y estados obligatorios de vista (datos/carga/error/vacío) con microcopia UX.
 
 ### Cambiado
 - Feed de reflexiones limitado a 100 documentos por lectura (antes: colección completa).
@@ -32,6 +33,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Chats: las reglas aceptan el reordenamiento de `participantIds` al enviar mensajes (antes solo podía escribir quien creó el chat). Tests de reglas para todas las escrituras del cliente.
 - Build Android en CI: Gradle 8.14.3, AGP 8.11.1 y Kotlin 2.2.20 (mínimos de Flutter stable); `google-services.json` restaurado desde secret; archivos generados (`local.properties`, `GeneratedPluginRegistrant.java`, logs de Kotlin) fuera del control de versiones.
 - Firestore: eliminado el índice redundante de un solo campo en `respuestas` que impedía el deploy de índices; Firestore ya cubre `fecha` con el índice de campo único.
+- Skill `frontend-design`: reescrito en markdown válido (el archivo estaba escapado con `\---` y `\#`, por lo que no se cargaba); añade ergonomía táctil, microcopia y checklist de entrega, y enlaza los tokens de `DESIGN.md`.
 
 ### Pendiente (no incluido en esta rama)
 - UI de reportar/bloquear usuario.
