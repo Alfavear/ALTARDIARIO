@@ -521,6 +521,9 @@ class FirestoreService {
         .collection('notifications')
         .where('read', isEqualTo: false)
         .get();
+    if (snapshot.docs.isEmpty) {
+      return; // No hay notificaciones sin leer, no crear batch vacío
+    }
     final batch = _firestore!.batch();
     for (final doc in snapshot.docs) {
       batch.update(doc.reference, {'read': true});
