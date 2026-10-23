@@ -201,12 +201,6 @@ final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
   return uid == authorId;
 });
 
-/// Lista de chats del usuario.
-final chatListProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUserChats(userId);
-});
-
 /// Lista de chats filtrando usuarios bloqueados.
 final chatListFiltradoProvider =
     StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
@@ -624,9 +618,9 @@ final notificationsFiltradasProvider =
   });
 });
 
-/// Contador de notificaciones no leídas.
+/// Contador de notificaciones no leídas (sobre el stream filtrado).
 final unreadNotificationsCountProvider = Provider<int>((ref) {
-  final notificationsAsync = ref.watch(notificationsStreamProvider);
+  final notificationsAsync = ref.watch(notificationsFiltradasProvider);
   return notificationsAsync.when(
     data: (notifications) => notifications.where((n) => !n.read).length,
     loading: () => 0,
