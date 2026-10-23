@@ -1,0 +1,55 @@
+# ? BANDEJA DE INTEGRACI?N (Orquestador)
+
+Actualizado: 2026-10-23T23:35:00Z
+Trunk SHA: `origin/main` @ 969bb1fa (post-merge #59)
+
+---
+
+## ? CARRIL B ? UI / Vistas (Sesi?n: carril-b)
+
+| Estado | Tarea | Prioridad | Esfuerzo | Descripci?n | Rama |
+|--------|-------|-----------|----------|-------------|------|
+| **? in_progress** | **T-030 (B19)** | P3 | M | **B?squeda y temas seguidos en la comunidad** ? min chars, debounce, l?mites, filtrar bloqueados/oculto, sin PII en Analytics | `fix/lane-b-19-busqueda-temas` |
+| **? queued** | **T-031 (B20)** | P3 | M | **Debate b?blico de calidad** ? etiquetas, respuestas anidadas 1 nivel, reportar/bloquear visibles, ?ndices y paginaci?n | ? |
+| **? backlog next** | T-032 (B21) | P2 | M | Ajustes de lectura: traducci?n, tama?o, espaciado, alto contraste | ? |
+| **? backlog next** | T-034 (B22) | P2 | M | Notificaciones con intenci?n: preferencias por categor?a, horario tranquilo | ? |
+| **? backlog next** | T-007 | P1 | M | Paginaci?n real del feed con startAfterDocument e infinite scroll | ? |
+| **? backlog next** | T-010 | P2 | M | Compartir vers?culo como imagen (WhatsApp/Instagram) | ? |
+| **? backlog next** | T-011 | P2 | L | Planes de lectura flexibles (empezar cualquier d?a, ponerse al d?a, 7/21 d?as) | ? |
+
+---
+
+## ? CARRIL A ? Core / Seguridad (Sesi?n: carril-a / orquestadora)
+
+| Estado | Tarea | Prioridad | Esfuerzo | Descripci?n | Rama |
+|--------|-------|-----------|----------|-------------|------|
+| **? in_progress** | **T-041** | P1 | S | **Privacidad: documento privado con allowlist de campos, tipos y tama?os** ? `usuarios/{uid}/private/account` solo admite email y fcmToken, email ? 320 chars, fcmToken ? 4096 chars, tests de reglas que intenten escribir role/verified/basura | ? |
+| **? queued** | **T-040** | P1 | M | **Privacidad: helper noPrivateFields() en todo el contenido p?blico** ? ning?n doc p?blico lleva email/fcmToken, tests de reglas | ? |
+| **? backlog next** | T-042 | P1 | S | Privacidad: permitir borrar email/fcmToken del perfil p?blico sin bloqueo | ? |
+| **? backlog next** | T-004 | P1 | M | UI de reportar contenido y bloquear usuario (App Store 1.2) | ? |
+| **? backlog next** | T-026 | P1 | M | Filtrar contenido oculto (hidden) en providers y pantallas | ? |
+
+---
+
+## ? COMPLETADAS (este ciclo)
+
+| Tarea | Resultado | Rama/commit |
+|-------|-----------|---------------|
+| T-006 | Migraci?n feature oraci?n a lib/features/oracion/ | PR #58 @ 62ff61f |
+| T-029 | Oraci?n con seguimiento (estado respondida y filtros) | PR #57 @ d2e1ec0 |
+| T-024 | Reportar reflexiones y comentarios | PR #54 @ 6806dc1 |
+
+---
+
+## ? BLOQUEADAS (No asignar hasta decisi?n externa)
+
+| Tarea | Motivo |
+|-------|--------|
+| T-009 | Requiere plan Blaze + decisi?n humana de deploy Cloud Functions |
+
+---
+
+## ? REGLAS DE OPERACI?N
+
+1. **Carril B** trabaja en `fix/lane-b-XX-*` branches. Reporta `LISTO_PARA_MERGE` al terminar.
+2. **Carril A** trabaja en `auto/T-XXX-*` branches. Reporta `LISTO_PARA_MERGE` al terminar.

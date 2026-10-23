@@ -310,6 +310,18 @@ class FirestoreService {
     }
   }
 
+  /// Oculta una reflexión (moderación).
+  Future<void> ocultarReflexion(String reflexionId) async {
+    if (!_available) return;
+    await _reflexiones.doc(reflexionId).update({'oculto': true});
+  }
+
+  /// Oculta una petición de oración (moderación).
+  Future<void> ocultarPeticion(String peticionId) async {
+    if (!_available) return;
+    await _peticiones.doc(peticionId).update({'oculto': true});
+  }
+
   // ââ Reacciones âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Future<void> toggleReaction(String reflexionId, String userId, String? emoji,
