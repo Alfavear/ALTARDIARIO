@@ -1125,7 +1125,7 @@ tasks:
     phase: 1
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - Las reglas impiden crear comentarios, respuestas, mensajes y oraciones en el contenido de quien
@@ -1138,3 +1138,11 @@ tasks:
       - docs/SECURITY.md
     source: audit
     created_at: 2026-10-23T03:00:12.536Z
+    started_cycle: 10
+    started_at: 2026-10-23T03:46:34.667Z
+    done_at: 2026-10-23T03:46:34.668Z
+    evidence: "Reglas desplegadas en main 360f7af (deploy Firebase: rules success). 41/41 tests de reglas (6
+      nuevos: bloqueo denegado en reflexion, peticion, debate, chat, notificacion y seguir; tercero sin
+      bloqueo permitido; simetria; dejar de seguir permitido). check.sh --fast 168/168. Coste documentado en
+      docs/SECURITY.md."
+    commit: 360f7af
