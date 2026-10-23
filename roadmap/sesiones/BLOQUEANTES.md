@@ -1,4 +1,4 @@
-# 🛑 BLOQUEANTES Y PREGUNTAS — Canal del Orquestador
+# 🚧 BLOQUEANTES Y PREGUNTAS 👉 Canal del Orquestador
 
 Este archivo es el **único punto de contacto** entre el Orquestador (Merge Authority) y las otras sesiones (Carril A, Carril B).
 
@@ -8,13 +8,14 @@ Este archivo es el **único punto de contacto** entre el Orquestador (Merge Auth
 2. **Usa el formato exacto** mostrado abajo para que el Orquestador pueda parsearlo automáticamente.
 3. **El Orquestador responde** en la misma entrada (respuesta debajo de la pregunta) o crea una entrada de resolución.
 4. **Una vez resuelto**, marca como `✅ RESUELTO` y el Orquestador cierra la entrada.
+5. **No borres nada** — es un historial permanente.
 
 ---
 
 ## Formato de entrada
 
 ```
-### [ID] Título corto — [sesion-id]
+### [ID] Título corto 👉 [sesion-id]
 
 **Tipo:** bloqueo | pregunta | revision | integra
 **Urgencia:** baja | media | alta | critica
@@ -43,11 +44,41 @@ Cómo crees que debería resolverse.
 
 ## Entradas resueltas
 
-<!-- El Orgestrador mueve aquí las entradas cerradas con resolución -->
+### [T-027] Bloquear usuario en perfil completado 👉 carril-b
+
+**Tipo:** integra
+**Urgencia:** alta
+**Fecha:** 2026-10-23T15:30:00Z
+
+**Descripción:**
+Implementada la funcionalidad de bloquear usuario desde el perfil. Agregado PopupMenuButton en appBar con opciones "Reportar" y "Bloquear". La acción de bloquear usa `firestoreServiceProvider.bloquearUsuario` y muestra SnackBar de confirmación.
+
+**Impacto:**
+Tarea completada. PR #65 listo para merge.
+
+**Resolución:**
+✅ RESUELTO - Implementado en PR #65 (fix/lane-b-27-report-block)
 
 ---
 
-## Cómo el Orgestrador responde
+### [T-030] Reportar contenido en perfil completado 👉 carril-b
+
+**Tipo:** integra
+**Urgencia:** alta
+**Fecha:** 2026-10-23T15:30:00Z
+
+**Descripción:**
+Implementada la funcionalidad de reportar usuario/contenido desde el perfil. Usa el `ReportContentDialog` existente con `targetType: 'usuario'`.
+
+**Impacto:**
+Tarea completada. PR #65 listo para merge.
+
+**Resolución:**
+✅ RESUELTO - Implementado en PR #65 (fix/lane-b-27-report-block)
+
+---
+
+## Cómo el Orquestador responde
 
 | Tipo | Acción del Orquestador | SLA |
 |------|------------------------|-----|
@@ -61,7 +92,7 @@ Cómo crees que debería resolverse.
 ## Ejemplo de entrada
 
 ```
-### T-041-duda-permitidos — carril-a
+### [T-041-duda-permitidos] 👉 carril-a
 
 **Tipo:** pregunta
 **Urgencia:** alta
@@ -75,6 +106,4 @@ No puedo escribir las reglas de Firestore ni los tests sin saber los campos perm
 
 **Propuesta:**
 Permitir email, fcmToken y temasSeguidos (para T-030).
-
----
 ```
