@@ -293,6 +293,34 @@ service cloud.firestore {
           && changedKeys().hasOnly(['read']);
         allow delete: if signedIn() && uid() == userId;
       }
+
+      // ───────────── Cuenta privada (T-041) ─────────────
+      // Documento privado del usuario: solo email y fcmToken, con tope de tamaño.
+      // Solo el dueño puede leer/escribir/borrar. Otro usuario nunca puede tocarlo.
+      match /private/{docId} {
+        allow read: if signedIn() && uid() == userId;
+        allow create: if signedIn() && uid() == userId
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (!request.resource.data.hasAny(['email'])
+              || (request.resource.data.email is string
+                  && request.resource.data.email.size() > 0
+                  && request.resource.data.email.size() <= 320))
+          && (!request.resource.data.hasAny(['fcmToken'])
+              || (request.resource.data.fcmToken is string
+                  && request.resource.data.fcmToken.size() > 0
+                  && request.resource.data.fcmToken.size() <= 4096));
+        allow update: if signedIn() && uid() == userId
+          && changedKeys().hasOnly(['email', 'fcmToken'])
+          && (!changedKeys().hasAny(['email'])
+              || (request.resource.data.email is string
+                  && request.resource.data.email.size() > 0
+                  && request.resource.data.email.size() <= 320))
+          && (!changedKeys().hasAny(['fcmToken'])
+              || (request.resource.data.fcmToken is string
+                  && request.resource.data.fcmToken.size() > 0
+                  && request.resource.data.fcmToken.size() <= 4096));
+        allow delete: if signedIn() && uid() == userId;
+      }
     }
 
     // ───────────── Feedback ─────────────
