@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/comment.dart';
 import '../../data/models/reflexion.dart';
+import '../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
 import '../widgets/guest_access_restricted_widget.dart';
 import '../widgets/shimmer_loading_widget.dart';
@@ -517,6 +518,26 @@ class _ReflexionCard extends ConsumerWidget {
                   );
                 },
               ),
+              _ActionBtn(
+                icon: Icons.flag_outlined,
+                label: 'Reportar',
+                onTap: () {
+                  final authorName = (authorProfile?.nombre.isNotEmpty == true)
+                      ? authorProfile!.displayName
+                      : reflexion.userName;
+                  showDialog(
+                    context: context,
+                    builder: (_) => ReportContentDialog(
+                      targetType: 'reflexion',
+                      targetId: reflexion.id,
+                      targetTitle: reflexion.texto.length > 50
+                          ? '${reflexion.texto.substring(0, 50)}...'
+                          : reflexion.texto,
+                      targetAuthor: authorName,
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -757,6 +778,27 @@ class _CommentTile extends ConsumerWidget {
                                   color: isLiked ? Colors.red : Colors.grey)),
                         ],
                       ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => ReportContentDialog(
+                          targetType: 'comentario',
+                          targetId: comment.id,
+                          targetTitle: comment.texto.length > 50
+                              ? '${comment.texto.substring(0, 50)}...'
+                              : comment.texto,
+                          targetAuthor: comment.userName,
+                        ),
+                      );
+                    },
+                    child: const Icon(
+                      Icons.flag_outlined,
+                      size: 14,
+                      color: Colors.grey,
                     ),
                   ),
                 ],

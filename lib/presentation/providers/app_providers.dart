@@ -51,6 +51,12 @@ final effectiveUserUidProvider = Provider<String?>((ref) {
 final firestoreServiceProvider =
     Provider<FirestoreService>((ref) => FirestoreService());
 
+/// UIDs bloqueados por el usuario actual.
+final usuariosBloqueadosProvider =
+    StreamProvider.family<List<String>, String>((ref, uid) {
+  return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
+});
+
 /// Servicio de la Biblia (SQLite local).
 final bibleServiceProvider = Provider<BibleService>((ref) => BibleService());
 Future<void> syncProgressGuarded(
@@ -163,10 +169,25 @@ final chatListProvider =
   return ref.watch(firestoreServiceProvider).getUserChats(userId);
 });
 
-/// Perfil de otro usuario (público).
+/// Perfil de otro usuario (público). Retorna null si el usuario actual lo
+/// ha bloqueado.
 final otherUserProfileProvider =
     StreamProvider.family<Usuario?, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUsuario(userId);
+  final currentUid = ref.watch(effectiveUserUidProvider);
+  if (currentUid == null) {
+    return ref.watch(firestoreServiceProvider).getUsuario(userId);
+  }
+  final bloqueadosAsync = ref.watch(usuariosBloqueadosProvider(currentUid));
+  return bloqueadosAsync.when(
+    data: (bloqueados) {
+      if (bloqueados.contains(userId)) {
+        return Stream.value(null);
+      }
+      return ref.watch(firestoreServiceProvider).getUsuario(userId);
+    },
+    loading: () => Stream.value(null),
+    error: (_, __) => Stream.value(null),
+  );
 });
 
 /// Datos de racha de un amigo para mostrar en ranking.
@@ -195,7 +216,10 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
   final storage = ref.read(storageProvider);
   final usuario = await firestore.getUsuarioOnce(uid);
   if (usuario == null) return [];
-  final allUids = [uid, ...usuario.siguiendo];
+  final bloqueados = await firestore.getUsuariosBloqueados(uid).first;
+  final allUids = [uid, ...usuario.siguiendo]
+      .where((id) => !bloqueados.contains(id))
+      .toList();
   final streaksData = await firestore.getStreaksData(allUids);
   final results = <FriendStreak>[];
   for (final id in allUids) {
@@ -279,7 +303,10 @@ final globalLeaderboardProvider =
   final storage = ref.read(storageProvider);
 
   // Obtener top 100 usuarios ordenados por racha (aproximado: traer todos y ordenar localmente)
-  final allUsers = await firestore.getAllUsuarios();
+  final bloqueados = await firestore.getUsuariosBloqueados(uid).first;
+  final allUsers = (await firestore.getAllUsuarios())
+      .where((u) => !bloqueados.contains(u.id))
+      .toList();
   if (allUsers.isEmpty) return [];
 
   final allUids = allUsers.map((u) => u.id).toList();
@@ -389,7 +416,14 @@ final sugerenciasAmistadProvider = FutureProvider<List<Usuario>>((ref) async {
   final uid = ref.watch(effectiveUserUidProvider);
   final firestore = ref.read(firestoreServiceProvider);
   final usuario = uid != null ? await firestore.getUsuarioOnce(uid) : null;
-  final excludeIds = <String>{if (uid != null) uid, ...?usuario?.siguiendo};
+  final bloqueados = uid != null
+      ? await firestore.getUsuariosBloqueados(uid).first
+      : <String>[];
+  final excludeIds = <String>{
+    if (uid != null) uid,
+    ...?usuario?.siguiendo,
+    ...bloqueados
+  };
   final allUsers = await firestore.getAllUsuarios();
 
   final mappedUsers = allUsers

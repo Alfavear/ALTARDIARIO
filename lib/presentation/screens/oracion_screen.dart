@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../features/moderation/presentation/report_content_dialog.dart';
 import '../../core/services/community_policy_service.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/peticion_oracion.dart';
-import '../../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
 import '../widgets/guest_access_restricted_widget.dart';
 import '../widgets/shimmer_loading_widget.dart';

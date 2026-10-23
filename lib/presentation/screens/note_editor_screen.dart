@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/observability/product_events.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/note.dart';
 import '../providers/app_providers.dart';
@@ -53,6 +54,14 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       final firestore = ref.read(firestoreServiceProvider);
       await firestore.syncNote(uid, note);
     }
+    // Métrica sin datos personales: ni el título ni el texto salen de aquí.
+    await ProductoAnalytics.registrar(
+      EventoProducto.notaGuardada,
+      parametros: {
+        'longitud_texto': note.content.length,
+        'tiene_pasaje': note.title.trim().isNotEmpty,
+      },
+    );
     if (mounted) Navigator.pop(context, true);
   }
 
