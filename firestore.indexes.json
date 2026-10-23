@@ -15,16 +15,15 @@
         { "fieldPath": "libroId", "order": "ASCENDING" },
         { "fieldPath": "fecha", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "chats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "lastUpdate", "order": "DESCENDING" }
+      ]
     }
   ],
-  "fieldOverrides": [],
-  {
-    "collectionGroup": "chats",
-    "queryScope": "COLLECTION",
-    "fields": [
-      { "fieldPath": "participantIds", "order": "ASCENDING" },
-      { "fieldPath": "lastUpdate", "order": "DESCENDING" }
-    ]
-  }
-]
+  "fieldOverrides": []
 }
