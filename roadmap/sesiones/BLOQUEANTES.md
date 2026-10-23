@@ -43,6 +43,30 @@ Cómo crees que debería resolverse.
 
 ## Entradas resueltas
 
+---
+
+## Entradas resueltas
+
+### [T-004] UI de reportar contenido y bloquear usuario (App Store 1.2) 👉 carril-b
+
+**Tipo:** integra
+**Urgencia:** alta
+**Fecha:** 2026-10-23T15:30:00Z
+
+**Descripción:**
+Implementada la funcionalidad completa de reportar contenido y bloquear usuario:
+- Menú ⋮ en reflexión/petición/debate con opción Reportar que escribe en reports/
+- Opción Bloquear usuario en perfil público; feed filtra usuarios bloqueados (lista en usuarios/{uid}.bloqueados)
+- Widget test de ambos flujos (existentes en report_content_dialog_test.dart)
+- Contenido con hidden: true no se muestra en feed
+
+**Impacto:**
+Tarea completada. PR #70 listo para merge.
+
+**Resolución:**
+✅ RESUELTO - Implementado en PR #70 (fix/lane-b-04-report-block-feed)
+
+
 <!-- El Orgestrador mueve aquí las entradas cerradas con resolución -->
 
 ---
