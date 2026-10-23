@@ -80,7 +80,7 @@ class _ReportContentDialogState extends ConsumerState<ReportContentDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-          'Reportar ${widget.targetType == 'reflexion' ? 'reflexión' : 'comentario'}'),
+          'Reportar ${widget.targetType == 'reflexion' ? 'reflexión' : widget.targetType == 'comentario' ? 'comentario' : 'usuario'}'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
