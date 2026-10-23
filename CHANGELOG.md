@@ -9,6 +9,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Chats: allowlist de campos actualizables en `/chats` (`participantIds`, `lastMessage`, `lastSenderId`, `lastUpdate`, `participantNames`) y `create` con participantes duplicados rechazado.
 - App Check activado en cliente (monitor; pasar a enforce en consola).
 - Bloqueo real: si un usuario te bloqueó (o tú a él), ninguno de los dos puede comentar, responder, escribir en el chat, notificar ni seguir al otro; las reglas lo comprueban con `exists()` sobre `usuarios/{uid}/blocked/{uid}`. Dejar de seguir sigue permitido para que el bloqueado pueda limpiar su rastro. 6 tests de reglas nuevos (41/41).
+- **T-040: helper `noPrivateFields()` en todo contenido público** — ningún documento público (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones, feedback) puede llevar `email` ni `fcmToken`; el helper se aplica en `create` y dentro de `ownerEditOk` para actualizaciones del dueño. 10 tests de reglas nuevos (51/51 en total).
 
 ### Añadido
 - Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel, reglas comunitarias visibles, cerrar debate por autor, reportar debate. (T-031)

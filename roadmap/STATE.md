@@ -1,18 +1,18 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 10 · **Fase actual:** 1 · **Progreso global:** ████████░░░░░░░░░░░░ 21/53 (40%)
+**Ciclo:** 10 · **Fase actual:** 1 · **Progreso global:** ████████░░░░░░░░░░░░ 22/53 (42%)
 
 | Fase | Progreso |
 |---|---|
 | 1. Estabilizar (seguridad, observabilidad, CI) | ██████████░░░░░░░░░░ 16/32 |
 | 2. Andamiaje IA y tests | ██████████░░░░░░░░░░ 1/2 |
-| 3. Arquitectura feature-first y backend | ███░░░░░░░░░░░░░░░░░ 1/8 |
+| 3. Arquitectura feature-first y backend | █████░░░░░░░░░░░░░░░ 2/8 |
 | 4. Producto | █████░░░░░░░░░░░░░░░ 3/11 |
 
-**En curso:** —
-**Siguiente:** T-041 · Privacidad: documento privado con allowlist de campos, tipos y tamanos (P1, S)
+**En curso:** T-040 · Privacidad: helper noPrivateFields() en todo el contenido publico
+**Siguiente:** T-040 · Privacidad: helper noPrivateFields() en todo el contenido publico (P1, M)
 
-**Conteo:** backlog=31 · ready=0 · in_progress=0 · review=0 · done=21 · blocked=1 · dropped=0
+**Conteo:** backlog=29 · ready=0 · in_progress=1 · review=0 · done=22 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar

@@ -128,6 +128,84 @@ test('comentarios: crear con uid propio; nadie edita el de otro', async () => {
   }));
 });
 
+// ───────────────────────── noPrivateFields: email/fcmToken prohibidos en contenido público ─────────────────────────
+
+test('noPrivateFields: reflexión rechaza email al crear', async () => {
+  await assertFails(setDoc(doc(as(ALICE), 'reflexiones', 'x'), {
+    userId: ALICE, userName: 'Alice', texto: 'Hola', fecha: new Date(), pasajeDia: 'Gn 1',
+    email: 'alice@example.com',
+  }));
+});
+
+test('noPrivateFields: reflexión rechaza fcmToken al crear', async () => {
+  await assertFails(setDoc(doc(as(ALICE), 'reflexiones', 'y'), {
+    userId: ALICE, userName: 'Alice', texto: 'Hola', fecha: new Date(), pasajeDia: 'Gn 1',
+    fcmToken: 'tok',
+  }));
+});
+
+test('noPrivateFields: comentario de reflexión rechaza email al crear', async () => {
+  await seedReflexion();
+  await assertFails(setDoc(doc(as(BOB), 'reflexiones', 'r1', 'comentarios', 'c2'), {
+    userId: BOB, userName: 'Bob', texto: 'Amén', fecha: new Date(),
+    email: 'bob@example.com',
+  }));
+});
+
+test('noPrivateFields: autor no puede añadir email al editar su propia reflexión', async () => {
+  await seedReflexion();
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { email: 'alice@example.com' }));
+});
+
+test('noPrivateFields: petición rechaza email al crear', async () => {
+  await assertFails(setDoc(doc(as(ALICE), 'peticiones_oracion', 'px'), {
+    userId: ALICE, userName: 'Alice', motivo: 'Salud', fecha: new Date(),
+    email: 'alice@example.com',
+  }));
+});
+
+test('noPrivateFields: comentario de petición rechaza email al crear', async () => {
+  await admin((db) => setDoc(doc(db, 'peticiones_oracion', 'p1'), {
+    userId: ALICE, userName: 'Alice', motivo: 'Salud', fecha: new Date(), oracionesCount: 0,
+  }));
+  await assertFails(setDoc(doc(as(BOB), 'peticiones_oracion', 'p1', 'comentarios', 'c1'), {
+    userId: BOB, userName: 'Bob', texto: 'Amén', fecha: new Date(),
+    email: 'bob@example.com',
+  }));
+});
+
+test('noPrivateFields: debate rechaza email al crear', async () => {
+  await assertFails(setDoc(doc(as(ALICE), 'debates', 'd1'), {
+    userId: ALICE, userName: 'Alice', titulo: 'T', contenido: 'C', fecha: new Date(),
+    email: 'alice@example.com',
+  }));
+});
+
+test('noPrivateFields: respuesta de debate rechaza email al crear', async () => {
+  await admin((db) => setDoc(doc(db, 'debates', 'd1'), {
+    userId: ALICE, userName: 'Alice', titulo: 'T', contenido: 'C', fecha: new Date(),
+    replyCount: 0, upvotes: 0, votedBy: [],
+  }));
+  await assertFails(setDoc(doc(as(BOB), 'debates', 'd1', 'respuestas', 'r1'), {
+    userId: BOB, userName: 'Bob', contenido: 'Resp', fecha: new Date(),
+    email: 'bob@example.com',
+  }));
+});
+
+test('noPrivateFields: notificación rechaza email al crear', async () => {
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'n1'), {
+    type: 'like', title: 'T', body: 'B', createdAt: new Date(), read: false, actorId: BOB,
+    email: 'bob@example.com',
+  }));
+});
+
+test('noPrivateFields: feedback rechaza email al crear', async () => {
+  await assertFails(setDoc(doc(as(ALICE), 'feedback', 'f1'), {
+    userId: ALICE, userName: 'Alice', texto: 'Bien', fecha: new Date(),
+    email: 'alice@example.com',
+  }));
+});
+
 // ───────────────────────── Peticiones ─────────────────────────
 
 test('petición: "Amén" (+1) permitido a cualquiera, edición solo al dueño', async () => {

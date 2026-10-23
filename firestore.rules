@@ -120,7 +120,15 @@ service cloud.firestore {
     // ni manipular contadores sociales.
     function ownerEditOk() {
       return isOwner(resource.data)
-        && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount']);
+        && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount'])
+        && noPrivateFields(request.resource.data);
+    }
+
+    // Rechaza cualquier documento que lleve email o fcmToken (campos privados
+    // que solo pertenecen al documento privado de cuenta). Se aplica en los
+    // create de contenido público y dentro de ownerEditOk para actualizaciones.
+    function noPrivateFields(data) {
+      return !data.keys().hasAny(['email', 'fcmToken']);
     }
 
     // ───────────── Reflexiones (feed) ─────────────
@@ -130,6 +138,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.userId == uid()
         && request.resource.data.keys().hasAll(['userId', 'userName', 'texto', 'fecha', 'pasajeDia'])
+        && noPrivateFields(request.resource.data)
         && request.resource.data.texto is string
         && request.resource.data.texto.size() > 0
         && request.resource.data.texto.size() <= 5000;
@@ -152,6 +161,7 @@ service cloud.firestore {
         allow create: if signedIn()
           && request.resource.data.userId == uid()
           && !blockBetween(get(/databases/$(database)/documents/reflexiones/$(reflexionId)).data.userId)
+          && noPrivateFields(request.resource.data)
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 2000;
@@ -165,6 +175,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.motivo is string
         && request.resource.data.motivo.size() > 0
         && request.resource.data.motivo.size() <= 3000;
@@ -180,6 +191,7 @@ service cloud.firestore {
         allow read: if true;
         allow create: if signedIn() && request.resource.data.userId == uid()
           && !blockBetween(get(/databases/$(database)/documents/peticiones_oracion/$(peticionId)).data.userId)
+          && noPrivateFields(request.resource.data)
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 2000;
@@ -197,6 +209,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.titulo is string
         && request.resource.data.titulo.size() > 0
         && request.resource.data.titulo.size() <= 200
@@ -220,6 +233,7 @@ service cloud.firestore {
         allow create: if signedIn()
           && request.resource.data.userId == uid()
           && !blockBetween(get(/databases/$(database)/documents/debates/$(debateId)).data.userId)
+          && noPrivateFields(request.resource.data)
           && request.resource.data.contenido is string
           && request.resource.data.contenido.size() > 0
           && request.resource.data.contenido.size() <= 2000;
@@ -282,6 +296,7 @@ service cloud.firestore {
           && !blockBetween(userId)
           && request.resource.data.actorId == uid()
           && request.resource.data.keys().hasAll(['type', 'title', 'body', 'createdAt'])
+          && noPrivateFields(request.resource.data)
           && request.resource.data.read == false
           && request.resource.data.title is string
           && request.resource.data.title.size() > 0
@@ -297,7 +312,8 @@ service cloud.firestore {
 
     // ───────────── Feedback ─────────────
     match /feedback/{docId} {
-      allow create: if signedIn() && request.resource.data.userId == uid();
+      allow create: if signedIn() && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data);
       allow read: if isOwner(resource.data);
     }
 

@@ -884,7 +884,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: in_progress
     depends_on: []
     acceptance:
       - ningun documento publico (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones,
@@ -896,6 +896,8 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: hoy los create usan hasAll y aceptan campos extra"
     created_at: 2026-10-21T02:56:57.770Z
+    started_cycle: 10
+    started_at: 2026-10-23T23:31:40.319Z
   - id: T-041
     title: "Privacidad: documento privado con allowlist de campos, tipos y tamanos"
     type: security
