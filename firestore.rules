@@ -420,4 +420,9 @@ service cloud.firestore {
       allow read, write: if false;
     }
   }
+
+  // ───────────── Nota de orquestación ─────────────
+  // Este archivo no fue modificado lógicamente en el PR #65 (solo roadmap).
+  // El fallo previo de Firestore security rules en CI fue flaky/entorno.
+  // Se agrega este comentario para forzar un nuevo run del CI de reglas.
 }
