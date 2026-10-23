@@ -39,8 +39,15 @@ class _ReportContentDialogState extends ConsumerState<ReportContentDialog> {
 
   Future<void> _submit() async {
     final uid = ref.read(effectiveUserUidProvider);
-    final reason = _selectedReason == 'Otro' ? _customReason : _selectedReason;
-    if (uid == null || reason == null || reason.isEmpty) return;
+    final reason =
+        _selectedReason == 'Otro' ? _customReason?.trim() : _selectedReason;
+    if (uid == null) return;
+    if (reason == null || reason.isEmpty) {
+      setState(
+        () => _errorMessage = 'Escribe el motivo o elige una de las opciones.',
+      );
+      return;
+    }
 
     setState(() {
       _sending = true;
@@ -114,6 +121,7 @@ class _ReportContentDialogState extends ConsumerState<ReportContentDialog> {
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
+                      maxLength: 200,
                       onChanged: (value) => _customReason = value,
                     ),
                   ],
