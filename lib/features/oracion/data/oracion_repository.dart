@@ -35,4 +35,35 @@ class OracionRepository {
   Future<void> amen(String peticionId) => _peticiones
       .doc(peticionId)
       .update({'oracionesCount': FieldValue.increment(1)});
+
+  /// Peticiones filtradas por estado. Si [respondida] es null, no filtra.
+  Stream<List<PeticionOracion>> watchFiltrado({bool? respondida}) {
+    Query<Map<String, dynamic>> query =
+        _peticiones.orderBy('fecha', descending: true).limit(pageSize);
+
+    if (respondida != null) {
+      query = query.where('respondida', isEqualTo: respondida);
+    }
+
+    return query.snapshots().map((s) => s.docs
+        .map((d) => PeticionOracion.fromMap({'id': d.id, ...d.data()}))
+        .toList());
+  }
+
+  Future<void> marcarComoRespondida(String peticionId, String userId) async {
+    final docRef = _peticiones.doc(peticionId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    if (data['userId'] != userId) {
+      throw StateError(
+          'Solo el autor puede marcar la petición como respondida');
+    }
+
+    await docRef.update({
+      'respondida': true,
+      'fechaRespondida': FieldValue.serverTimestamp(),
+    });
+  }
 }

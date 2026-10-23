@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/oracion/presentation/screens/oracion_screen.dart';
 import 'calendario_view.dart';
 import 'feed_screen.dart';
 import 'home_screen.dart';
-import 'oracion_screen.dart';
 import 'perfil_screen.dart';
 
 class MainNavigationView extends StatefulWidget {

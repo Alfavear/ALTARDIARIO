@@ -2,10 +2,11 @@
 
 **Estado:** plan listo · **Rama:** `lane-a/T-006` · **Rol:** carril A (arquitectura y core)
 
-> **Progreso (andamiaje hecho):** `lib/features/oracion/data/oracion_repository.dart`
-> y `test/features/oracion/oracion_repository_test.dart` existen y están verdes
-> (rojo → verde, 4 tests). Falta lo que colisiona con #54: delegación desde
-> `FirestoreService`, providers, mover pantalla y partirla.
+> **Progreso:** migración completada. `OracionRepository` (5 métodos), providers
+> en la feature (con reexport en `app_providers`), `FirestoreService` como fachada
+> y pantalla partida en `PeticionCard`, `mostrarDialogoNuevaPeticion` y
+> `OracionEmptyState` (137 líneas). 11 tests verdes (8 + 3). El modelo se queda
+> en `lib/data/models/` por la restricción de no tocar tests existentes.
 
 
 Refactor puro: **sin cambios de comportamiento**. Si aparece un bug durante la
@@ -213,3 +214,11 @@ Criterios de aceptación de T-006:
    mensaje humano con reintento (DESIGN.md, estados obligatorios).
 3. **Fallback `'anonimo'`** como uid cuando no hay sesión: con el guard de invitado
    es inalcanzable hoy, pero es una trampa si el guard cambia.
+4. **Falta el índice compuesto** de `peticiones_oracion` para
+   `where('respondida') + orderBy('fecha')`: `firestore.indexes.json` no tiene
+   entrada para esa colección, así que el filtro de B18 fallará en producción
+   con `failed-precondition`. Es de carril B (índices).
+5. **`RefreshIndicator` refresca el provider equivocado**: la vista escucha
+   `peticionesFiltradasProvider`, pero `onRefresh` llama a
+   `peticionesStreamProvider.future`, así que el gesto no recarga la lista
+   visible. Se conservó tal cual para no mezclar comportamiento con migración.

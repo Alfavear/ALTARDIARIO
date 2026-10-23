@@ -4,12 +4,11 @@
   esta sesión fue la orquestadora; desde ahora implementa y solo entrega PRs.
 - **worktree**: `C:\Users\ALVEAR\.local\share\opencode\worktree\60cd09\roadmap-t018`
 - **rama**: `lane-a/T-006`
-- **PR**: #56 (`chore/t-053-cierre`) abierto a la espera de merge ajeno; 0 PRs propios de T-006.
-- **validado en**: `360f7af` (`origin/main`)
-- **último latido**: `2026-10-23T11:08Z`
+- **PR**: #56 (`chore/t-053-cierre`) abierto a la espera de merge ajeno; falta abrir el de T-006.
+- **validado en**: `d2e1ec0` (`origin/main`, con #54 y #57 dentro)
+- **último latido**: `2026-10-23T11:22Z`
 - **tarea**: T-006 en `in_progress`, `assigned: lane-a`, ciclo 10.
-- **siguiente paso**: esperar el merge de **#54**; después ejecutar el plan y abrir
-  PR con `[CARRIL A] T-006 LISTO PARA INTEGRACIÓN | SHA: <commit>`.
+- **siguiente paso**: abrir PR de T-006 con `[CARRIL A] T-006 LISTO PARA INTEGRACIÓN | SHA: <commit>`.
 - **bloqueos**: #54 (oración de B18) y #47 tocan los mismos cuatro ficheros que T-006.
 
 ## Normas de esta sesión
@@ -26,9 +25,12 @@
 
 - [x] T-006 planificado en `docs/planes/T-006-migracion-oracion.md`.
 - [x] T-006 marcada `in_progress` + `assigned: lane-a`.
-- [x] Andamiaje: `OracionRepository` + 4 tests (rojo → verde), sin tocar ficheros de #54.
+- [x] Andamiaje: `OracionRepository` + tests (rojo → verde).
+- [x] Migración completa: repositorio con 5 métodos, providers en la feature,
+      `FirestoreService` como fachada, pantalla de 137 líneas + 3 widgets,
+      `app_providers` reexporta. 11 tests verdes.
 - [x] Cierre de T-053 publicado en el PR #56 (a la espera de merge).
-- [ ] Ejecutar T-006 (bloqueado por #54).
+- [ ] Abrir PR de T-006 y esperar integración.
 
 ## Pendiente de otros (heredado de la etapa orquestadora)
 

@@ -94,5 +94,86 @@ void main() {
       final data = (await ref.get()).data()!;
       expect(data['oracionesCount'], 3);
     });
+
+    test('watchFiltrado devuelve solo las respondidas cuando se pide',
+        () async {
+      final coleccion = fake.collection('peticiones_oracion');
+      await coleccion.doc('pendiente').set({
+        'userId': 'u1',
+        'userName': 'Ana',
+        'motivo': 'Pendiente',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
+        'respondida': false,
+      });
+      await coleccion.doc('respondida').set({
+        'userId': 'u2',
+        'userName': 'Bea',
+        'motivo': 'Respondida',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
+        'respondida': true,
+      });
+
+      final respondidas = await repo.watchFiltrado(respondida: true).first;
+
+      expect(respondidas.map((p) => p.id), ['respondida']);
+    });
+
+    test('watchFiltrado sin filtro devuelve todas', () async {
+      final coleccion = fake.collection('peticiones_oracion');
+      await coleccion.doc('pendiente').set({
+        'userId': 'u1',
+        'userName': 'Ana',
+        'motivo': 'Pendiente',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
+        'respondida': false,
+      });
+      await coleccion.doc('respondida').set({
+        'userId': 'u2',
+        'userName': 'Bea',
+        'motivo': 'Respondida',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
+        'respondida': true,
+      });
+
+      final todas = await repo.watchFiltrado().first;
+
+      expect(todas, hasLength(2));
+    });
+
+    test('marcarComoRespondida marca la petición del autor', () async {
+      final ref = fake.collection('peticiones_oracion').doc('plim');
+      await ref.set({
+        'userId': 'u1',
+        'userName': 'Ana',
+        'motivo': 'Necesito oración',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 1, 5)),
+        'respondida': false,
+      });
+
+      await repo.marcarComoRespondida('plim', 'u1');
+
+      final data = (await ref.get()).data()!;
+      expect(data['respondida'], isTrue);
+      expect(data['fechaRespondida'], isNotNull);
+    });
+
+    test('marcarComoRespondida rechaza a quien no es el autor', () async {
+      final ref = fake.collection('peticiones_oracion').doc('plim');
+      await ref.set({
+        'userId': 'u1',
+        'userName': 'Ana',
+        'motivo': 'Necesito oración',
+        'fecha': Timestamp.fromDate(DateTime.utc(2026, 1, 5)),
+        'respondida': false,
+      });
+
+      await expectLater(
+        repo.marcarComoRespondida('plim', 'u2'),
+        throwsStateError,
+      );
+
+      final data = (await ref.get()).data()!;
+      expect(data['respondida'], isFalse);
+    });
   });
 }

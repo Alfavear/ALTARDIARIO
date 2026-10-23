@@ -8,13 +8,15 @@ import '../../data/models/debate.dart';
 import '../../data/models/debate_reply.dart';
 import '../../data/models/message.dart';
 import '../../data/models/notification.dart';
-import '../../data/models/peticion_oracion.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/models/usuario.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/bible_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/storage_service.dart';
+
+// Compatibilidad ADR-0001: los providers de oración viven ya en su feature.
+export '../../features/oracion/providers/oracion_providers.dart';
 
 /// StorageService — se inicializa con override en main.dart
 final storageProvider = Provider<StorageService>((ref) {
@@ -144,32 +146,6 @@ final reflexionesStreamProvider = StreamProvider<List<Reflexion>>((ref) {
 final userReflexionesProvider =
     StreamProvider.family<List<Reflexion>, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserReflexiones(userId);
-});
-
-/// Peticiones de oración de la comunidad.
-final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
-  return ref.watch(firestoreServiceProvider).peticionesStream();
-});
-
-class PeticionesFiltroNotifier extends Notifier<bool?> {
-  @override
-  bool? build() => null;
-
-  void setFiltro(bool? value) => state = value;
-}
-
-/// Filtro actual para las peticiones (null = todas, true = respondidas, false = pendientes).
-final peticionesFiltroProvider =
-    NotifierProvider<PeticionesFiltroNotifier, bool?>(
-        PeticionesFiltroNotifier.new);
-
-/// Peticiones de oración filtradas por estado (respondida/pendiente).
-final peticionesFiltradasProvider =
-    StreamProvider<List<PeticionOracion>>((ref) {
-  final filtro = ref.watch(peticionesFiltroProvider);
-  return ref.watch(firestoreServiceProvider).peticionesStreamFiltrado(
-        respondida: filtro,
-      );
 });
 
 /// Mensajes de un chat específico.
