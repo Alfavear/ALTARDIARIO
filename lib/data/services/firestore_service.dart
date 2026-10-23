@@ -79,7 +79,8 @@ class FirestoreService {
         .limit(feedPageSize)
         .snapshots()
         .map((s) => s.docs
-            .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+            .map((d) => Reflexion.fromMap(
+                {'id': d.id, ...d.data()}))
             .toList());
   }
 
@@ -91,7 +92,8 @@ class FirestoreService {
         .limit(userReflectionsPageSize)
         .snapshots()
         .map((s) => s.docs
-            .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+            .map((d) => Reflexion.fromMap(
+                {'id': d.id, ...d.data()}))
             .toList());
   }
 
@@ -124,7 +126,8 @@ class FirestoreService {
         .limit(userReflectionsPageSize)
         .snapshots()
         .map((s) => s.docs
-            .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+            .map((d) => Reflexion.fromMap(
+                {'id': d.id, ...d.data()}))
             .toList());
   }
 
@@ -136,7 +139,8 @@ class FirestoreService {
         .limit(50)
         .get();
     return snapshot.docs
-        .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+        .map((d) => Reflexion.fromMap(
+            {'id': d.id, ...d.data()}))
         .toList();
   }
 
@@ -253,7 +257,8 @@ class FirestoreService {
         .limit(debateRepliesPageSize)
         .snapshots()
         .map((s) => s.docs
-            .map((d) => DebateReply.fromMap({'id': d.id, ...d.data()}))
+            .map((d) => DebateReply.fromMap(
+                {'id': d.id, ...d.data()}))
             .toList());
   }
 
@@ -318,8 +323,9 @@ class FirestoreService {
 
   Stream<Usuario?> getUsuario(String uid) {
     if (!_available) return Stream.value(null);
-    return _usuarios.doc(uid).snapshots().map(
-        (d) => d.exists ? Usuario.fromMap({'id': d.id, ...d.data()!}) : null);
+    return _usuarios.doc(uid).snapshots().map((d) => d.exists
+        ? Usuario.fromMap({'id': d.id, ...d.data()!})
+        : null);
   }
 
   Future<Usuario?> getUsuarioOnce(String uid) async {
@@ -334,7 +340,8 @@ class FirestoreService {
     if (uids.isEmpty) return Stream.value([]);
     return _usuarios.where(FieldPath.documentId, whereIn: uids).snapshots().map(
         (s) => s.docs
-            .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+            .map((d) => Usuario.fromMap(
+                {'id': d.id, ...d.data()}))
             .toList());
   }
 
@@ -346,7 +353,8 @@ class FirestoreService {
         .where(FieldPath.documentId, whereIn: usuario.siguiendo)
         .get();
     return snapshot.docs
-        .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+        .map((d) =>
+            Usuario.fromMap({'id': d.id, ...d.data()}))
         .toList();
   }
 
@@ -354,7 +362,8 @@ class FirestoreService {
     if (!_available) return [];
     final snapshot = await _usuarios.limit(100).get();
     return snapshot.docs
-        .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+        .map((d) =>
+            Usuario.fromMap({'id': d.id, ...d.data()}))
         .toList();
   }
 
@@ -366,7 +375,8 @@ class FirestoreService {
         .where(FieldPath.documentId, whereIn: usuario.seguidores)
         .get();
     return snapshot.docs
-        .map((d) => Usuario.fromMap({'id': d.id, ...d.data()}))
+        .map((d) =>
+            Usuario.fromMap({'id': d.id, ...d.data()}))
         .toList();
   }
 
@@ -499,7 +509,9 @@ class FirestoreService {
         .orderBy('createdAt', descending: true)
         .limit(50)
         .snapshots()
-        .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList())
+        .map((s) => s.docs
+            .map((d) => {'id': d.id, ...d.data()})
+            .toList())
         .handleError((_) => <Map<String, dynamic>>[]);
   }
 
@@ -644,6 +656,23 @@ class FirestoreService {
             .toList());
   }
 
+  /// Stream de peticiones filtrado por estado (respondida/pendiente).
+  /// Si [respondida] es null, no filtra por estado.
+  Stream<List<PeticionOracion>> peticionesStreamFiltrado({bool? respondida}) {
+    if (!_available) return Stream.value([]);
+    Query query =
+        _peticiones.orderBy('fecha', descending: true).limit(prayerPageSize);
+
+    if (respondida != null) {
+      query = query.where('respondida', isEqualTo: respondida);
+    }
+
+    return query.snapshots().map((s) => s.docs
+        .map((d) => PeticionOracion.fromMap(
+            {'id': d.id, ...d.data() as Map<String, dynamic>}))
+        .toList());
+  }
+
   Future<void> crearPeticionOracion(PeticionOracion peticion) async {
     if (!_available) return;
     await _peticiones.add(peticion.toMap());
@@ -654,6 +683,27 @@ class FirestoreService {
     await _peticiones
         .doc(peticionId)
         .update({'oracionesCount': FieldValue.increment(1)});
+  }
+
+  /// Marca una petición de oración como respondida.
+  /// Solo el autor puede marcar su propia petición como respondida.
+  Future<void> marcarPeticionComoRespondida(
+      String peticionId, String userId) async {
+    if (!_available) return;
+    final docRef = _peticiones.doc(peticionId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    if (data['userId'] != userId) {
+      throw StateError(
+          'Solo el autor puede marcar la petición como respondida');
+    }
+
+    await docRef.update({
+      'respondida': true,
+      'fechaRespondida': FieldValue.serverTimestamp(),
+    });
   }
 
   // ── Feedback ─────────────────────────────────────────────────────────────
@@ -779,7 +829,9 @@ class FirestoreService {
         .orderBy('lastUpdate', descending: true)
         .limit(chatsPageSize)
         .snapshots()
-        .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
+        .map((s) => s.docs
+            .map((d) => {'id': d.id, ...d.data()})
+            .toList());
   }
 
   /// Stream de chats filtrando usuarios bloqueados (excluye chats donde
@@ -850,3 +902,4 @@ class FirestoreService {
     });
   }
 }
+
