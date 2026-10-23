@@ -36,7 +36,7 @@ jobs:
 
       - name: Subir cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/lcov.info
@@ -143,7 +143,7 @@ jobs:
         # Una sola ABI: el job es una prueba de humo del toolchain Android
         # (Gradle/AGP/Kotlin/manifest/plugins), no un artefacto de entrega.
         run: flutter build apk --debug --target-platform android-arm64
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.filtro.outputs.build == 'true'
         with:
           name: app-debug.apk
