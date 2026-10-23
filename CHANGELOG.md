@@ -12,6 +12,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Documento privado de cuenta (`usuarios/{uid}/private/account`): solo admite `email` (≤320 caracteres) y `fcmToken` (≤4096 caracteres); solo el dueño puede leer/escribir/borrar; cualquier otro campo (role, verified, etc.) es rechazado por las reglas. 10 tests de reglas nuevos.
 
 ### Añadido
+- Moderación (T-048): `procesarReporte` en `functions/src/moderation.ts` cubre 5 targetType (reflexion, peticion, debate, usuario, comentario). Comentarios resueltos vía collectionGroup query (nuevo índice `__name__` en `firestore.indexes.json`). Perfiles (`usuario`) ocultan documento completo. 9 tests con fake de Firestore e inyección de `ResolvedorComentario`. `firestore.indexes.json` incluye índice de grupo `comentarios`.
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).
 - Observabilidad: Crashlytics, Analytics (`lib/core/observability`).
 - Base de i18n (ARB es/en) y `flutter_localizations`.

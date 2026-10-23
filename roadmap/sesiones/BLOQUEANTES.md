@@ -97,9 +97,48 @@ T-048 para carril A (es core puro: Cloud Functions, sin UI). T-047 toca pantalla
 
 ---
 
+### T-040-helper-noPrivateFields — carril-a
+
+**Tipo:** integra
+**Urgencia:** alta
+**Fecha:** 2026-10-23T20:50Z
+
+**Descripción:**
+T-040 (helper `noPrivateFields()`) listo para iniciar en cuanto se libere cupo de PR (máx 2). La tarea consiste en:
+1. Añadir función `noPrivateFields(data)` a `firestore.rules` que rechace cualquier documento público (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones, feedback) que contenga `email` o `fcmToken`.
+2. Aplicar el helper en `allow create` y `allow update` (también `ownerEditOk`) de todas las colecciones públicas.
+3. Tests de reglas en `firestore-tests/rules.test.mjs` que intenten plantar `email`/`fcmToken` en cada colección pública y verifiquen que se rechazan.
+
+**Impacto:**
+Completa la barrera de privacidad: ningún documento público lleva email ni fcmToken. Requisito previo para T-042 (borrar email/fcmToken del perfil sin bloqueo).
+
+**Propuesta (opcional):**
+Confirmar reparto (T-040 para carril A, T-047 para carril B) y carril A marca `in_progress` al liberar cupo (merge de #66 o #56).
+
+---
+
+---
+
 ## Entradas resueltas
 
 <!-- El Orgestrador mueve aquí las entradas cerradas con resolución -->
+
+### T-048-completada — carril-a
+
+**Tipo:** integra
+**Urgencia:** alta
+**Fecha:** 2026-10-23T20:50Z
+
+**Descripción:**
+T-048 completada en rama `auto/T-048-moderation` (SHA `4fb89b0`). `functions/src/moderation.ts` implementa `procesarReporte` para 5 targetType: `reflexion`, `peticion`, `debate`, `usuario`, `comentario`. Los comentarios se resuelven vía `collectionGroup` query (nuevo índice `__name__` en `firestore.indexes.json` con `queryScope: COLLECTION_GROUP`). Perfiles (`usuario`) ocultan el documento completo. 9 tests unitarios con fake de Firestore (sin emulador), `ResolvedorComentario` inyectable para tests. Gates: 18/18 tests funciones, 51/51 reglas, 167 Flutter, `fast-lint` OK. PR pendiente de abrir (cupo lleno).
+
+**Impacto:**
+La Function de moderación ya cubre reportes de comentarios y perfiles (antes ignorados). El índice de `comentarios` permite la consulta de grupo en producción.
+
+**Propuesta (opcional):**
+Mergear #66 o #56 para liberar cupo y abrir PR. El Orquestador puede mergear la rama directamente.
+
+✅ **RESUELTO** — 2026-10-23T20:50Z
 
 ---
 
