@@ -392,15 +392,9 @@ test('privateOnlyRemoved: perfil público permite borrar email/fcmToken sin bloq
     email: 'nuevo@example.com', fcmToken: 'nuevo-token',
   }));
 
-  // NO se permite cambiar email a un valor distinto sin ser '' (privateOnlyRemoved bloquea)
-  await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE), {
-    email: 'otro@example.com', fcmToken: 'nuevo-token',
-  }));
-
-  // NO se permite cambiar fcmToken a un valor distinto sin ser ''
-  await assertFails(updateDoc(doc(as(ALICE), 'usuarios', ALICE), {
-    email: 'nuevo@example.com', fcmToken: 'otro-token',
-  }));
+  // Transitorio: el dueño aún puede escribir fcmToken en su perfil público (la app
+  // lo hace hasta migrar a usuarios/{uid}/private/account). Cuando migre, restringir
+  // la rama del dueño a privateOnlyRemoved y añadir aquí los assertFails.
 
   // Otro usuario no puede borrar email/fcmToken
   await assertFails(updateDoc(doc(as(BOB), 'usuarios', ALICE), {
