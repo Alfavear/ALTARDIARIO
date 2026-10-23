@@ -16,6 +16,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Esqueleto de Cloud Functions: XP en servidor y moderación por reportes.
 - Andamiaje de IA: `AGENTS.md` v2, `opencode.jsonc` V2, agentes `planner`/`reviewer`/`rules-auditor`/`release-manager`, comandos y skills.
 - CI/CD en GitHub Actions: format/analyze/test, reglas, builds Android/Web, deploy de Firebase, release Android por tag, Dependabot.
+- Grafo de conocimiento versionado (`.opencode/knowledge-graph.jsonl`): el CI lo sincroniza desde el diff de contratos y abre un PR; en local es de solo lectura.
 - `scripts/check.sh`, `scripts/rules_test.sh`, `scripts/bootstrap.sh`.
 - Documentación: ROADMAP, ADR-0001/0002/0003, AI_WORKFLOW, SECURITY, RELEASE.
 
