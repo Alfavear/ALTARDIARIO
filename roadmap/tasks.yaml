@@ -204,7 +204,7 @@ tasks:
     phase: 3
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-003
       - T-005
@@ -213,6 +213,13 @@ tasks:
       - oracion_screen.dart < 400 líneas
       - app_providers.dart exporta los providers migrados para compatibilidad
       - sin cambios de comportamiento (tests existentes pasan sin modificar)
+    started_cycle: 11
+    started_at: 2026-10-23T11:17:00.568Z
+    done_at: 2026-10-23T11:17:09.723Z
+    evidence: "T-006 migracion oracion completada. check.sh --fast: 168/168 tests pasan, analyze limpio. Feature
+      migrada a lib/features/oracion/ con OracionRepository, providers, presentation screen y PeticionCard
+      widget. oracion_screen.dart: 308 lineas (< 400 limite). PR #58 mergeado en main (62ff61f)."
+    commit: 62ff61f
   - id: T-007
     title: Paginación real del feed con startAfterDocument e infinite scroll
     type: feature
