@@ -41,7 +41,22 @@ Cómo crees que debería resolverse.
 
 ---
 
-## Entradas resueltas
+### T-040-listo-para-merge — carril-a
+
+**Tipo:** integra
+**Urgencia:** alta
+**Fecha:** 2026-10-23T23:55:00Z
+
+**Descripción:**
+LISTO_PARA_MERGE de **T-040**: rama `auto/T-040-noPrivateFields` (SHA `d1a3049`), base `origin/main` @ `5f4efe0`. Añade la función `noPrivateFields(data)` en `firestore.rules` que rechaza cualquier documento con `email` o `fcmToken`. Se aplica en los `create` de reflexiones, peticiones_oracion, debates, comentarios (x2), respuestas, notificaciones y feedback, y dentro de `ownerEditOk` para actualizaciones del dueño. 10 tests de reglas nuevos (51/51 totales con `scripts/rules_test.sh`); `check.sh --fast` verde y `fast-lint` verde.
+
+**Impacto:**
+Ningún documento público puede llevar `email` ni `fcmToken`. Cierre de la barrera de privacidad de campos en contenido público.
+
+**Propuesta (opcional):**
+Mergear #66 o #56 para liberar cupo de PR y abrir el PR de T-040; el Orquestador puede mergear la rama directamente (es el único merger).
+
+---
 
 <!-- El Orgestrador mueve aquí las entradas cerradas con resolución -->
 
