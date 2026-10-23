@@ -8,8 +8,8 @@
 
 ## Tarea en curso
 
-- **id**: B11
-- **qué**: T-038 índice compuesto de chats (`participantIds` + `lastUpdate`) en `firestore.indexes.json`
+- **id**: B12
+- **qué**: T-025 reportar peticiones, debates y respuestas + test de la Function
 - **rama**: — (a crear sobre origin/main)
 - **PR**: —
 
@@ -17,6 +17,7 @@
 
 | fecha | tarea | rama / PR | verificación | qué cambió |
 |---|---|---|---|---|
+| 2026-10-22 | B11 Índice compuesto chats (T-038) | `fix/lane-b-11-chats-indice` → PR #39 | 127/127 Dart, format+analyze limpios | Índice compuesto `participantIds` + `lastUpdate` en `firestore.indexes.json` para colección `chats` |
 | 2026-10-22 | B10 Reportar reflexiones y comentarios (T-024) | `fix/lane-b-10-reportar-reflexiones` → PR #38 | 127/127 Dart, format+analyze limpios | `reportarContenido` en FirestoreService; `ReportContentDialog` reutilizable; botones 'Reportar' en _ReflexionCard y _CommentTile |
 | 2026-10-22 | B9 Filtrar bloqueos en chats, notificaciones + UI desbloqueo (T-023) | `fix/lane-b-09-filtrar-chats-notif` → PR #36 | 123/123 Dart, 34/34 reglas, format+analyze limpios | getUserChatsFiltrados, notificationsStreamFiltrado, providers filtrados, _showBloqueadosDialog con desbloquear, getUsuariosBloqueados/desbloquearUsuario |
 | 2026-10-21 | B8 Filtrar usuarios bloqueados en proveedores sociales (T-022) | `fix/lane-b-08-filtrar-bloqueados` → PR #33 | 123/123 Dart, format+analyze limpios | usuariosBloqueadosProvider; otherUserProfileProvider retorna null si bloqueado; friendStreaksProvider, sugerenciasAmistadProvider, globalLeaderboardProvider excluyen bloqueados; getUsuariosBloqueados(uid) en FirestoreService |
@@ -32,6 +33,6 @@
 
 ## Notas para la orquestadora
 
-- Tareas completadas: B0, B5, B6, B7, B8, B9, B10 (7 PRs: #29, #30, #31, #32, #33, #36, #38).
-- Siguiente tarea libre: B11 (T-038 índice compuesto de chats).
+- Tareas completadas: B0, B5, B6, B7, B8, B9, B10, B11 (8 PRs: #29, #30, #31, #32, #33, #36, #38, #39).
+- Siguiente tarea libre: B12 (T-025 reportar peticiones, debates y respuestas + test de la Function).
 - Todas las ramas están basadas en origin/main; ninguna está mergeada a main.
