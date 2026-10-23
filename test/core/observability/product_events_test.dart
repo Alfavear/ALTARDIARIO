@@ -77,4 +77,36 @@ void main() {
       expect(evento.nombre.length, lessThanOrEqualTo(40));
     }
   });
+
+  test('reflexion_publicada conserva el nombre pactado con Analytics', () {
+    // Si cambia el nombre, los paneles de producto dejan de recibir el evento.
+    expect(EventoProducto.reflexionPublicada.nombre, 'reflexion_publicada');
+  });
+
+  group('payload de reflexionPublicada', () {
+    test('lo que envía la pantalla de publicar sobrevive intacto', () {
+      // Mismo mapa que construye publicar_reflexion_screen.dart: sin el texto.
+      final limpio = sanitizarParametros({
+        'tipo': 'reflexion',
+        'longitud_texto': 240,
+        'tiene_pasaje': true,
+      });
+
+      expect(limpio, {
+        'tipo': 'reflexion',
+        'longitud_texto': 240,
+        'tiene_pasaje': true,
+      });
+    });
+
+    test('si alguien añade el texto de la reflexión, se descarta', () {
+      final conTexto = sanitizarParametros({
+        'tipo': 'reflexion',
+        'longitud_texto': 240,
+        'texto': 'una confesión muy personal',
+      });
+
+      expect(conTexto, {'tipo': 'reflexion', 'longitud_texto': 240});
+    });
+  });
 }
