@@ -539,6 +539,9 @@ class FirestoreService {
         .collection('notifications')
         .where('read', isEqualTo: false)
         .get();
+    if (snapshot.docs.isEmpty) {
+      return; // No hay notificaciones sin leer, no crear batch vacío
+    }
     final batch = _firestore!.batch();
     for (final doc in snapshot.docs) {
       batch.update(doc.reference, {'read': true});
@@ -826,5 +829,24 @@ class FirestoreService {
         .collection('blocked')
         .snapshots()
         .map((s) => s.docs.map((d) => d.id).toList());
+  }
+
+  /// Envía un reporte para revisión por la función de moderación.
+  Future<void> reportarContenido({
+    required String reporterId,
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {
+    if (!_available) {
+      throw StateError('Firestore no está disponible para enviar el reporte.');
+    }
+    await _firestore!.collection('reports').add({
+      'reporterId': reporterId,
+      'targetType': targetType,
+      'targetId': targetId,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }
