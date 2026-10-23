@@ -169,6 +169,12 @@ final chatListProvider =
   return ref.watch(firestoreServiceProvider).getUserChats(userId);
 });
 
+/// Lista de chats filtrando usuarios bloqueados.
+final chatListFiltradoProvider =
+    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
+  return ref.watch(firestoreServiceProvider).getUserChatsFiltrados(userId);
+});
+
 /// Perfil de otro usuario (público). Retorna null si el usuario actual lo
 /// ha bloqueado.
 final otherUserProfileProvider =
@@ -558,6 +564,21 @@ final notificationsStreamProvider =
   return ref
       .watch(firestoreServiceProvider)
       .notificationsStream(uid)
+      .map((list) {
+    return list
+        .map((map) => AppNotification.fromMap(map['id'] ?? '', map))
+        .toList();
+  });
+});
+
+/// Stream de notificaciones filtrando usuarios bloqueados.
+final notificationsFiltradasProvider =
+    StreamProvider<List<AppNotification>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref
+      .watch(firestoreServiceProvider)
+      .notificationsStreamFiltrado(uid)
       .map((list) {
     return list
         .map((map) => AppNotification.fromMap(map['id'] ?? '', map))
