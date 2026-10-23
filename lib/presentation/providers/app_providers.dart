@@ -125,6 +125,15 @@ Future<void> pushPendingProgress(WidgetRef ref) async {
   } catch (_) {}
 }
 
+/// Provider de temas seguidos por el usuario actual.
+final temasSeguidosProvider = StreamProvider<List<String>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).getUsuario(uid).map(
+        (u) => u?.temasSeguidos ?? [],
+      );
+});
+
 /// Perfil del usuario autenticado en Firestore.
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
