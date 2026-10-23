@@ -91,6 +91,31 @@ service cloud.firestore {
         && counterDeltaOk('upvotes');
     }
 
+    // ───────────── Bloqueo real (T-053) ─────────────
+    // Si A bloqueó a B, ninguno de los dos escribe en el contenido del otro:
+    // B no puede seguir hostigando y A no interactúa con quien bloqueó.
+    // Coste: 2 lecturas de documento por escritura (el límite es 10).
+    function blockBetween(otherUid) {
+      return exists(/databases/$(database)/documents/usuarios/$(otherUid)/blocked/$(uid()))
+        || exists(/databases/$(database)/documents/usuarios/$(uid())/blocked/$(otherUid));
+    }
+
+    // En un chat 1:1 el bloqueo puede estar en cualquiera de los dos lados.
+    // Las reglas no recorren listas; el create y el update de /chats exigen
+    // exactamente 2 participantes, así que comprobar ambos cubre el caso real.
+    function chatBlocked(participants) {
+      return blockBetween(participants[0]) || blockBetween(participants[1]);
+    }
+
+    // Añadirse a los seguidores de otro (frente a quitarse). Quitarse se
+    // permite siempre: con un bloqueo de por medio, el bloqueado tiene que
+    // poder limpiar su propio rastro de la lista del otro.
+    function addsFollower() {
+      let before = resource.data.get('seguidores', []).toSet();
+      let after = request.resource.data.get('seguidores', []).toSet();
+      return after.hasAll(before);
+    }
+
     // El dueño puede editar su contenido, pero nunca reasignar autoría
     // ni manipular contadores sociales.
     function ownerEditOk() {
@@ -126,6 +151,7 @@ service cloud.firestore {
         allow read: if true;
         allow create: if signedIn()
           && request.resource.data.userId == uid()
+          && !blockBetween(get(/databases/$(database)/documents/reflexiones/$(reflexionId)).data.userId)
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 2000;
@@ -153,6 +179,7 @@ service cloud.firestore {
       match /comentarios/{comentarioId} {
         allow read: if true;
         allow create: if signedIn() && request.resource.data.userId == uid()
+          && !blockBetween(get(/databases/$(database)/documents/peticiones_oracion/$(peticionId)).data.userId)
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 2000;
@@ -192,6 +219,7 @@ service cloud.firestore {
         allow read: if true;
         allow create: if signedIn()
           && request.resource.data.userId == uid()
+          && !blockBetween(get(/databases/$(database)/documents/debates/$(debateId)).data.userId)
           && request.resource.data.contenido is string
           && request.resource.data.contenido.size() > 0
           && request.resource.data.contenido.size() <= 2000;
@@ -219,7 +247,9 @@ service cloud.firestore {
       // a la rama del dueño.
       allow update: if signedIn() && (
         uid() == userId
-        || (changedKeys().hasOnly(['seguidores']) && listOnlyTouchesSelf('seguidores'))
+        || (changedKeys().hasOnly(['seguidores'])
+            && listOnlyTouchesSelf('seguidores')
+            && (!addsFollower() || !blockBetween(userId)))
       );
       allow delete: if signedIn() && uid() == userId;
 
@@ -249,6 +279,7 @@ service cloud.firestore {
         allow read: if signedIn() && uid() == userId;
         allow create: if signedIn()
           && uid() != userId
+          && !blockBetween(userId)
           && request.resource.data.actorId == uid()
           && request.resource.data.keys().hasAll(['type', 'title', 'body', 'createdAt'])
           && request.resource.data.read == false
@@ -314,6 +345,7 @@ service cloud.firestore {
       // Reordenar `participantIds` es válido (el emisor reenvía la lista con
       // su uid primero), pero nunca cambiar quiénes participan.
       allow update: if isParticipant(resource.data)
+        && !chatBlocked(resource.data.participantIds)
         && changedKeys().hasOnly(['participantIds', 'lastMessage', 'lastSenderId', 'lastUpdate', 'participantNames'])
         && (!changedKeys().hasAny(['participantIds'])
             || (sameMembers('participantIds')
@@ -326,6 +358,7 @@ service cloud.firestore {
         allow read: if signedIn() && uid() in chatParticipants(chatId);
         allow create: if signedIn()
           && uid() in chatParticipants(chatId)
+          && !chatBlocked(chatParticipants(chatId))
           && request.resource.data.senderId == uid()
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 4000;

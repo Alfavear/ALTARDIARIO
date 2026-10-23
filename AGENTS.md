@@ -102,6 +102,19 @@ Código existente se migra feature a feature, una por PR, sin mezclar refactor
 con funcionalidad nueva. No crear providers nuevos en `app_providers.dart`;
 crearlos en `lib/features/<feature>/providers/`.
 
+### 3b. Grafo de conocimiento versionado
+
+`.opencode/knowledge-graph.jsonl` es documentación derivada de los contratos y
+**lo escribe únicamente el CI** (`.github/workflows/graph-sync.yml`), que abre
+un PR tras cada merge en `main`. En local es **de solo lectura**: el MCP
+`knowledge-graph-memory` arranca con `kg-server.mjs` (config global), que
+trabaja sobre una copia temporal. Aunque el agente escriba, el repo no se
+ensucia.
+
+- Consultar (`search_nodes`, `open_nodes`, `read_graph`): sí, antes de explorar.
+- Mutar (`create_entities`, `create_relations`, `delete_*`): no sobre este grafo.
+- Si falta contexto, se lee el código. Nunca se edita el grafo a mano.
+
 ## 4. Convenciones
 
 | Qué | Convención | Ejemplo |
