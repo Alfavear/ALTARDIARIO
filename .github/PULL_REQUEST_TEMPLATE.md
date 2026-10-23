@@ -1,3 +1,5 @@
+**Tarea:** T-___ · **Carril:** a / b / i (rama `a|b|i/T-xxx-slug`, ver `docs/FLUJO.md`)
+
 ## Qué cambia
 
 <!-- Una o dos frases. Enlaza el issue: Closes #123 -->

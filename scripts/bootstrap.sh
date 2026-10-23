@@ -23,12 +23,9 @@ echo "▶ MCP del roadmap"
 (cd tools/roadmap-mcp && npm install --silent && npm test --silent)
 node tools/roadmap-mcp/cli.mjs render
 
-echo "▶ Instalando hook pre-commit"
-cat > .git/hooks/pre-commit <<'HOOK'
-#!/usr/bin/env bash
-scripts/check.sh --fast
-HOOK
-chmod +x .git/hooks/pre-commit
+echo "▶ Instalando hooks versionados (pre-commit ligero, pre-push con tests y reglas)"
+chmod +x scripts/hooks/*
+git config core.hooksPath scripts/hooks
 
 echo
 echo "✔ Listo. Corre 'scripts/check.sh' para validar, o 'opencode' para trabajar con el agente."

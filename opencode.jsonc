@@ -25,6 +25,13 @@
     { "action": "edit",  "resource": "roadmap/BITACORA.md",      "effect": "deny" },
     { "action": "edit",  "resource": "roadmap/STATE.md",         "effect": "deny" },
     { "action": "edit",  "resource": ".github/workflows/**",    "effect": "ask" },
+    // Rutas de humanRequired en ownership.json: reglas, sus tests y el reparto de carriles
+    { "action": "edit",  "resource": "firestore.rules",         "effect": "ask" },
+    { "action": "edit",  "resource": "firestore-tests/**",      "effect": "ask" },
+    { "action": "edit",  "resource": "ownership.json",          "effect": "ask" },
+    // Saltarse los hooks se pregunta siempre (y se anota en el PR)
+    { "action": "shell", "resource": "git commit*--no-verify*", "effect": "ask" },
+    { "action": "shell", "resource": "git push*--no-verify*",   "effect": "ask" },
 
     // Operaciones irreversibles o que tocan producción: preguntar siempre
     { "action": "shell", "resource": "git push*",               "effect": "ask" },
