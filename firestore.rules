@@ -54,6 +54,24 @@ service cloud.firestore {
       return after is int && (after - before) >= -1 && (after - before) <= 1;
     }
 
+    // El documento público no puede contener email ni fcmToken (privacidad).
+    // Se usa en create y en ownerEditOk para validar payloads.
+    function noPrivateFields(data) {
+      return !data.keys().hasAny(['email', 'fcmToken']);
+    }
+
+    // Permite borrar email/fcmToken del perfil público sin bloquear la escritura
+    // si el resto del payload cumple las reglas. Se usa en allow update de usuarios.
+    function privateOnlyRemoved(campo) {
+      let before = resource.data.get(campo, '');
+      let after = request.resource.data.get(campo, '');
+      return after == '' || after == before;
+    }
+      let before = resource.data.get(field, 0);
+      let after = request.resource.data.get(field, 0);
+      return after is int && (after - before) >= -1 && (after - before) <= 1;
+    }
+
     // El set de `field` es el mismo, sin importar el orden (el cliente reenvía
     // participantIds con el uid propio primero al enviar un mensaje).
     function sameMembers(field) {
@@ -120,7 +138,8 @@ service cloud.firestore {
     // ni manipular contadores sociales.
     function ownerEditOk() {
       return isOwner(resource.data)
-        && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount']);
+        && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount'])
+        && noPrivateFields(request.resource.data);
     }
 
     // ───────────── Reflexiones (feed) ─────────────
@@ -250,6 +269,9 @@ service cloud.firestore {
         || (changedKeys().hasOnly(['seguidores'])
             && listOnlyTouchesSelf('seguidores')
             && (!addsFollower() || !blockBetween(userId)))
+        || (changedKeys().hasOnly(['email', 'fcmToken'])
+            && privateOnlyRemoved('email')
+            && privateOnlyRemoved('fcmToken'))
       );
       allow delete: if signedIn() && uid() == userId;
 
