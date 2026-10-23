@@ -9,7 +9,7 @@
     "lint": "eslint src --ext .ts",
     "serve": "npm run build && firebase emulators:start --only functions,firestore",
     "deploy": "firebase deploy --only functions",
-    "test": "npm run build && node --test lib/gamification.test.js lib/migration/privateAccount.test.js",
+    "test": "npm run build && node --test lib/gamification.test.js lib/migration/privateAccount.test.js lib/moderation.test.js",
     "migrate:private-account": "npm run build && node lib/migration/migratePrivateAccount.js"
   },
   "dependencies": {

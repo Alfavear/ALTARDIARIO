@@ -23,6 +23,13 @@
         { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "lastUpdate", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "comentarios",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -44,10 +44,28 @@ void main() {
     expect(campos[1]['fieldPath'], 'lastUpdate');
     expect(campos[1]['order'], 'DESCENDING');
 
+    // Índice para consulta de grupo en comentarios (búsqueda por documentId en rutaDeComentario).
+    final comentarios =
+        indexes.where((i) => i['collectionGroup'] == 'comentarios').toList();
+    expect(
+      comentarios,
+      hasLength(1),
+      reason: 'la consulta de grupo de comentarios necesita su índice',
+    );
+    final camposComentarios =
+        (comentarios.single['fields'] as List).cast<Map<String, dynamic>>();
+    expect(camposComentarios, hasLength(1));
+    expect(camposComentarios[0]['fieldPath'], '__name__');
+    expect(camposComentarios[0]['order'], 'ASCENDING');
+
     // Forma mínima que exige firebase-tools en todos los índices.
     for (final index in indexes) {
       expect(index['collectionGroup'], isA<String>());
-      expect(index['queryScope'], 'COLLECTION');
+      if (index['collectionGroup'] == 'comentarios') {
+        expect(index['queryScope'], 'COLLECTION_GROUP');
+      } else {
+        expect(index['queryScope'], 'COLLECTION');
+      }
       expect(index['fields'], isA<List>());
     }
   });
