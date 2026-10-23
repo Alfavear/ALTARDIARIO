@@ -1,4 +1,4 @@
-# 🛑 BLOQUEANTES Y PREGUNTAS — Canal del Orquestador
+# 🚧 BLOQUEANTES Y PREGUNTAS 👉 Canal del Orquestador
 
 Este archivo es el **único punto de contacto** entre el Orquestador (Merge Authority) y las otras sesiones (Carril A, Carril B).
 
@@ -14,7 +14,7 @@ Este archivo es el **único punto de contacto** entre el Orquestador (Merge Auth
 ## Formato de entrada
 
 ```
-### [ID] Título corto — [sesion-id]
+### [ID] Título corto 👉 [sesion-id]
 
 **Tipo:** bloqueo | pregunta | revision | integra
 **Urgencia:** baja | media | alta | critica
@@ -43,6 +43,26 @@ Cómo crees que debería resolverse.
 
 ## Entradas resueltas
 
+### [T-026] Filtrado hidden completado y PR listo para merge 👉 carril-b
+
+**Tipo:** integra
+**Urgencia:** media
+**Fecha:** 2026-10-23T23:45:00Z
+
+**Descripción:**
+T-026 (Filtrado de contenido oculto/hidden) completado y verificado. Todos los streams filtran `where('oculto', isEqualTo: false)`. PR #68 listo para merge.
+
+**Impacto:**
+Ninguno - tarea completada, lista para merge a main.
+
+**Propuesta:**
+Merge PR #68 a main.
+
+**Resolución:**
+✅ RESUELTO - PR #68 creado y listo para merge.
+
+---
+
 <!-- El Orgestrador mueve aquí las entradas cerradas con resolución -->
 
 ---
@@ -61,7 +81,7 @@ Cómo crees que debería resolverse.
 ## Ejemplo de entrada
 
 ```
-### T-041-duda-permitidos — carril-a
+### [T-041-duda-permitidos] 👉 carril-a
 
 **Tipo:** pregunta
 **Urgencia:** alta
