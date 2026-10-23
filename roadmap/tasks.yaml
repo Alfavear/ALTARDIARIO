@@ -204,7 +204,7 @@ tasks:
     phase: 3
     priority: P1
     effort: M
-    status: backlog
+    status: in_progress
     depends_on:
       - T-003
       - T-005
@@ -213,6 +213,10 @@ tasks:
       - oracion_screen.dart < 400 líneas
       - app_providers.dart exporta los providers migrados para compatibilidad
       - sin cambios de comportamiento (tests existentes pasan sin modificar)
+    started_cycle: 10
+    started_at: 2026-10-23T03:51:58.313Z
+    assigned: lane-a
+    branch: lane-a/T-006
   - id: T-007
     title: Paginación real del feed con startAfterDocument e infinite scroll
     type: feature

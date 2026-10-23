@@ -9,10 +9,10 @@
 | 3. Arquitectura feature-first y backend | ███░░░░░░░░░░░░░░░░░ 1/8 |
 | 4. Producto | █████░░░░░░░░░░░░░░░ 3/11 |
 
-**En curso:** —
-**Siguiente:** T-041 · Privacidad: documento privado con allowlist de campos, tipos y tamanos (P1, S)
+**En curso:** T-006 · Migrar feature oracion a lib/features/oracion/ (ADR-0001)
+**Siguiente:** T-006 · Migrar feature oracion a lib/features/oracion/ (ADR-0001) (P1, M)
 
-**Conteo:** backlog=31 · ready=0 · in_progress=0 · review=0 · done=21 · blocked=1 · dropped=0
+**Conteo:** backlog=30 · ready=0 · in_progress=1 · review=0 · done=21 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
