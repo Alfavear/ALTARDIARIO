@@ -9,7 +9,8 @@
     "lint": "eslint src --ext .ts",
     "serve": "npm run build && firebase emulators:start --only functions,firestore",
     "deploy": "firebase deploy --only functions",
-    "test": "npm run build && node --test lib/**/*.test.js"
+    "test": "npm run build && node --test lib/gamification.test.js lib/migration/privateAccount.test.js",
+    "migrate:private-account": "npm run build && node lib/migration/migratePrivateAccount.js"
   },
   "dependencies": {
     "firebase-admin": "^12.6.0",

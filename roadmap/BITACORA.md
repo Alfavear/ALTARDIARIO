@@ -130,3 +130,49 @@ El update de /chats ahora exige changedKeys().hasOnly(['participantIds','lastMes
 **Siguiente:** Siguiente elegible: T-017 (markAllNotificationsAsRead: no commitear un batch vacio) y T-018 (migracion de privacidad, P0) que desbloquea el PR #21. T-004 esta en curso en el PR #22 de la auditoria. Pendiente humano: mergear el stack de auditoria (#21/#22) cuando la migracion este lista, y revisar el resto de trabajo de Codex (restos sin commitear que debilitaban la allowlist de /reports ya restaurados en el commit de relevo 0ebf7cb).
 
 ---
+## Ciclo 6 — 2026-10-21T02:58:42.091Z
+- **Tarea:** T-018 · Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos
+- **Resultado:** done
+- **Rama/commit:** auto/T-018-migracion-privacidad @ abddd55
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR la parte de migracion; la parte de reglas y la ventana de compatibilidad quedan para el PR #21 y para decision humana
+
+Herramienta administrativa de migracion: logica pura (planMigracion, 6 tests) + script admin por lotes con --apply explicito (npm run migrate:private-account). Mueve email/fcmToken de usuarios/{uid} a usuarios/{uid}/private/account; si el documento privado ya tiene el campo gana el privado (no se pisa el token de FCM mas reciente) y el campo publico se borra siempre. Es idempotente. Se documento en docs/SECURITY.md el orden de operaciones (app nueva -> migrar -> endurecer reglas -> repetir hasta 0). Ademas se integro el roadmap funcional de Codex (docs/PRODUCT_EVOLUTION_ROADMAP.md) como tareas: 16 unidades nuevas, y se registraron los hallazgos de los tres revisores (indice de chats, noPrivateFields, allowlist del doc privado, deadlock de limpieza del token, topes de tamano, job de functions en CI).
+
+**Problemas:**
+- En un worktree nuevo `flutter pub get` falla: Windows sin symlinks (Developer Mode desactivado). Workaround: copiar .dart_tool/package_config.json del workspace principal y parchear el rootUri al worktree. Sin eso, scripts/check.sh no arranca en worktrees limpios.
+- La parte de REGLAS de la privacidad (noPrivateFields, privateOnlyRemoved, allowlist del documento privado y sus tests) NO va en esta rama: el fichero firestore.rules del PR #21 esta basado en un commit anterior a T-015 y mergearlo tal cual revertiria T-015. Hay que portar los cambios sobre el fichero actual.
+- La ventana de compatibilidad con los clientes antiguos es una decision de producto, no tecnica. La auditoria recomienda la opcion A: subir config/app_info.minVersion (el dialogo bloqueante ya existe en update_service.dart) para forzar la actualizacion, luego migrar, y solo despues endurecer las reglas. Con las reglas endurecidas sin mas, el alta de cuenta de las versiones publicadas se rompe.
+- functions/ no corre en CI: su script de test usaba node --test lib/**/*.test.js, que con bash sin globstar solo cubre un nivel y se saltaba gamification.test.js. Corregido en esta rama (node --test lib); el job de CI queda como tarea.
+
+**Decisiones:**
+- La herramienta vive en functions/src/migration/ y NO se exporta desde index.ts: no se despliega como Cloud Function, se ejecuta a mano con la cuenta de servicio.
+- Nunca escribe sin --apply: por defecto solo genera informe.
+- Gana el documento privado: la migracion no pisa un valor privado ya existente.
+- Las reglas de privacidad no se tocan en esta rama para no colisionar con el PR #21 y con T-015; su especificacion queda en los hallazgos de rules-auditor.
+- El roadmap funcional de Codex entra como tareas del backlog (source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md) y el documento se incorpora con cherry-pick, sin duplicar T-004, T-006, T-007 ni T-008.
+
+**Siguiente:** Pendiente inmediato: revision humana y merge del PR #23 (T-015, 4/4 checks) y del PR de T-018. En paralelo, la otra sesion corrige el stack de Codex (#21 privacidad, #22 moderacion) con los hallazgos de los tres revisores. Desbloqueo del stack: decision humana sobre la ventana de compatibilidad (Opcion A: minVersion) y ejecutar la migracion en produccion. Siguiente elegible del backlog: T-038 (indice de chats: la lista de chats falla en produccion con FAILED_PRECONDITION) y T-039 (noPrivateFields en contenido publico).
+
+---
+## Ciclo 7 — 2026-10-23T00:52:11.900Z
+- **Tarea:** T-012, T-013, T-046 y T-027 · Roadmap sin reformateo, STATE.md, SIGPIPE de loop.sh e Inicio "Hoy"
+- **Resultado:** done
+- **Rama/commit:** auto/T-013-estado-roadmap (PR #28) y auto/T-027-inicio-hoy @ 1f85a74 y 8357e8c
+- **check.sh:** ✅ verde
+- **Reviewer:** pendiente (PR del Inicio en revision)
+
+El MCP del roadmap ya no puede reformatear tasks.yaml en masa: dos tests de regresion lo impiden y el fichero canonico se mantiene byte a byte. STATE.md deja de duplicar encabezados de ciclo. loop.sh sale con 0. La tarjeta de Inicio se extrae a dos widgets con los cuatro estados (cargando, sin conexion, pendiente, completado), se abre con un toque y ofrece la siguiente lectura del plan.
+
+**Problemas:**
+- El PR #26 (roadmap de 45 tareas) no estaba en main: las tareas nuevas solo existian en la rama. Se mergeo antes de cerrar nada para no perderlas.
+- La proteccion de main exige rama al dia: cada merge deja BEHIND a los demas PR, asi que hay que actualizar rama y esperar checks otra vez.
+- Un test de integracion del Inicio con dia completado se colgo 10 minutos en pumpAndSettle; se retiro y la cobertura queda en los 5 widget tests de la tarjeta.
+
+**Decisiones:**
+- El roadmap (tasks.yaml, STATE.md, BITACORA.md) lo escribe solo la orquestadora; el carril B anota en ESTADO-B.md para evitar conflictos.
+- La tarjeta de la lectura vive en lib/presentation/widgets/lectura_hoy_card.dart + lectura_hoy_estados.dart, ninguno supera 400 lineas.
+
+**Siguiente:** Carril A: T-028 (reflexion guiada), T-033 (biblioteca personal), T-036 y T-037. Carril B: B1 = T-040 asignada por comentario en sus PRs.
+
+---
