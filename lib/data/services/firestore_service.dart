@@ -58,11 +58,11 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> _bibleNotes(String userId) =>
       _usuarios.doc(userId).collection('bible_notes');
 
-  // ── Reflexiones ──────────────────────────────────────────────────────────
+  // ââ Reflexiones ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
-  /// Tamaño de página del feed. Sin límite, cada apertura del feed leía TODA
-  /// la colección (coste y latencia lineales con el número de reflexiones).
-  /// TODO(roadmap-fase-1): paginación real con startAfterDocument.
+  /// TamaÃ±o de pÃ¡gina del feed. Sin lÃ­mite, cada apertura del feed leÃ­a TODA
+  /// la colecciÃ³n (coste y latencia lineales con el nÃºmero de reflexiones).
+  /// TODO(roadmap-fase-1): paginaciÃ³n real con startAfterDocument.
   static const int feedPageSize = 100;
   static const int userReflectionsPageSize = 50;
   static const int commentsPageSize = 100;
@@ -140,7 +140,7 @@ class FirestoreService {
         .toList();
   }
 
-  // ── Comentarios ──────────────────────────────────────────────────────────
+  // ââ Comentarios ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<List<Comment>> comentariosStream(String reflexionId) {
     if (!_available) return Stream.value([]);
@@ -174,7 +174,7 @@ class FirestoreService {
           userId: authorId,
           type: 'new_comment',
           title: 'Nuevo comentario',
-          body: '${comment.userName} comentó en tu reflexión.',
+          body: '${comment.userName} comentÃ³ en tu reflexiÃ³n.',
           actorId: comment.userId,
           actorName: comment.userName,
           actorFotoUrl: comment.userFotoUrl,
@@ -208,7 +208,7 @@ class FirestoreService {
     }
   }
 
-  // ── Debates Bíblicos ─────────────────────────────────────────────────────
+  // ââ Debates BÃ­blicos âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<List<Debate>> debatesStream({String? libroId}) {
     if (!_available) return Stream.value([]);
@@ -244,7 +244,19 @@ class FirestoreService {
     }
   }
 
-  // ── Respuestas de Debates ────────────────────────────────────────────────
+  /// Cierra un debate (solo el autor).
+  Future<void> cerrarDebate(String debateId) async {
+    if (!_available) return;
+    await _debates.doc(debateId).update({'cerrado': true});
+  }
+
+  /// Oculta un debate (moderación).
+  Future<void> ocultarDebate(String debateId) async {
+    if (!_available) return;
+    await _debates.doc(debateId).update({'oculto': true});
+  }
+
+  // ââ Respuestas de Debates ââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<List<DebateReply>> debateRepliesStream(String debateId) {
     if (!_available) return Stream.value([]);
@@ -273,7 +285,7 @@ class FirestoreService {
           userId: authorId,
           type: 'debate_reply',
           title: 'Nueva respuesta',
-          body: '${reply.userName} respondió a tu debate.',
+          body: '${reply.userName} respondiÃ³ a tu debate.',
           actorId: reply.userId,
           actorName: reply.userName,
           data: {'debateId': reply.debateId},
@@ -298,7 +310,7 @@ class FirestoreService {
     }
   }
 
-  // ── Reacciones ───────────────────────────────────────────────────────────
+  // ââ Reacciones âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Future<void> toggleReaction(String reflexionId, String userId, String? emoji,
       String? currentEmoji) async {
@@ -314,7 +326,7 @@ class FirestoreService {
     }
   }
 
-  // ── Usuarios ─────────────────────────────────────────────────────────────
+  // ââ Usuarios âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<Usuario?> getUsuario(String uid) {
     if (!_available) return Stream.value(null);
@@ -481,7 +493,7 @@ class FirestoreService {
         .set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
   }
 
-  /// Crea una notificación en la subcolección del usuario (para Cloud Functions).
+  /// Crea una notificaciÃ³n en la subcolecciÃ³n del usuario (para Cloud Functions).
   Future<void> createNotification({
     required String userId,
     required String type,
@@ -537,7 +549,7 @@ class FirestoreService {
     }).asyncExpand((s) => s);
   }
 
-  /// Marca una notificación como leída.
+  /// Marca una notificaciÃ³n como leÃ­da.
   Future<void> markNotificationAsRead(String uid, String notificationId) async {
     if (!_available) return;
     await _usuarios
@@ -547,7 +559,7 @@ class FirestoreService {
         .update({'read': true});
   }
 
-  /// Marca todas las notificaciones como leídas.
+  /// Marca todas las notificaciones como leÃ­das.
   Future<void> markAllNotificationsAsRead(String uid) async {
     if (!_available) return;
     final snapshot = await _usuarios
@@ -556,7 +568,7 @@ class FirestoreService {
         .where('read', isEqualTo: false)
         .get();
     if (snapshot.docs.isEmpty) {
-      return; // No hay notificaciones sin leer, no crear batch vacío
+      return; // No hay notificaciones sin leer, no crear batch vacÃ­o
     }
     final batch = _firestore!.batch();
     for (final doc in snapshot.docs) {
@@ -565,7 +577,7 @@ class FirestoreService {
     await batch.commit();
   }
 
-  // ── Biblia: Subrayados y Notas ──────────────────────────────────────────────
+  // ââ Biblia: Subrayados y Notas ââââââââââââââââââââââââââââââââââââââââââââââ
 
   Future<void> syncBibleHighlight(
     String userId,
@@ -647,7 +659,7 @@ class FirestoreService {
     await _bibleNotes(userId).doc(noteId).delete();
   }
 
-  // ── Peticiones de Oración ────────────────────────────────────────────────
+  // ââ Peticiones de OraciÃ³n ââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<List<PeticionOracion>> peticionesStream() {
     if (!_available) return Stream.value([]);
@@ -689,8 +701,8 @@ class FirestoreService {
         .update({'oracionesCount': FieldValue.increment(1)});
   }
 
-  /// Marca una petición de oración como respondida.
-  /// Solo el autor puede marcar su propia petición como respondida.
+  /// Marca una peticiÃ³n de oraciÃ³n como respondida.
+  /// Solo el autor puede marcar su propia peticiÃ³n como respondida.
   Future<void> marcarPeticionComoRespondida(
       String peticionId, String userId) async {
     if (!_available) return;
@@ -701,7 +713,7 @@ class FirestoreService {
     final data = doc.data()!;
     if (data['userId'] != userId) {
       throw StateError(
-          'Solo el autor puede marcar la petición como respondida');
+          'Solo el autor puede marcar la peticiÃ³n como respondida');
     }
 
     await docRef.update({
@@ -710,7 +722,7 @@ class FirestoreService {
     });
   }
 
-  // ── Feedback ─────────────────────────────────────────────────────────────
+  // ââ Feedback âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Future<void> sendFeedback({
     required String userId,
@@ -729,7 +741,7 @@ class FirestoreService {
     });
   }
 
-  // ── Notas generales ──────────────────────────────────────────────────────
+  // ââ Notas generales ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Future<void> syncNote(String userId, Note note) async {
     if (!_available) return;
@@ -745,7 +757,7 @@ class FirestoreService {
     await _usuarios.doc(userId).collection('notes').doc(noteId).delete();
   }
 
-  // ── Chat ─────────────────────────────────────────────────────────────────
+  // ââ Chat âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<List<Message>> getMessages(String chatId) {
     if (!_available) return Stream.value([]);
@@ -760,7 +772,7 @@ class FirestoreService {
             .toList());
   }
 
-  /// Envía un mensaje al chat [chatId].
+  /// EnvÃ­a un mensaje al chat [chatId].
   ///
   /// `participantIds`/`participantNames` son SOLO para crear el chat; en un
   /// chat existente se ignoran (solo se actualizan los metadatos). Si no se
@@ -773,7 +785,7 @@ class FirestoreService {
     Map<String, String>? participantNames,
   }) async {
     if (!_available) {
-      throw StateError('sendMessage: Firestore no está disponible');
+      throw StateError('sendMessage: Firestore no estÃ¡ disponible');
     }
     final chatRef = _chats.doc(chatId);
     final metadata = <String, dynamic>{
@@ -784,7 +796,7 @@ class FirestoreService {
 
     if (participantIds == null && participantNames == null) {
       // Camino caliente: chat existente (la UI solo abre chats ya creados).
-      // Sin `get()`: 0 lecturas y ninguna posibilidad de reescribir quiénes
+      // Sin `get()`: 0 lecturas y ninguna posibilidad de reescribir quiÃ©nes
       // participan.
       await chatRef.update(metadata);
     } else {
@@ -799,16 +811,16 @@ class FirestoreService {
         exists = (await chatRef.get()).exists;
       } on FirebaseException catch (e) {
         // Las reglas actuales (`allow read: if isParticipant(resource.data)`)
-        // devuelven permission-denied cuando el documento aún no existe
+        // devuelven permission-denied cuando el documento aÃºn no existe
         // (resource == null). Se interpreta como "no existe": si el chat
         // existiera y el llamador no fuera participante, el `set` de abajo
-        // también sería denegado por la regla de create.
+        // tambiÃ©n serÃ­a denegado por la regla de create.
         if (e.code != 'permission-denied') rethrow;
         exists = false;
       }
       if (exists) {
         // Chat existente: solo metadatos. participantIds/participantNames se
-        // ignoran a propósito (era el bug de T-014: se reescribían).
+        // ignoran a propÃ³sito (era el bug de T-014: se reescribÃ­an).
         await chatRef.update(metadata);
       } else {
         await chatRef.set({
@@ -837,7 +849,7 @@ class FirestoreService {
   }
 
   /// Stream de chats filtrando usuarios bloqueados (excluye chats donde
-  /// el otro participante está bloqueado por [userId]).
+  /// el otro participante estÃ¡ bloqueado por [userId]).
   Stream<List<Map<String, dynamic>>> getUserChatsFiltrados(String userId) {
     if (!_available) return Stream.value([]);
     return getUsuariosBloqueados(userId).asyncMap((bloqueados) {
@@ -856,7 +868,7 @@ class FirestoreService {
                   }).toList());
     }).asyncExpand((s) => s);
   }
-  // ── Bloqueos de usuarios ───────────────────────────────────────────────────
+  // ââ Bloqueos de usuarios âââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   /// Bloquea a [blockedUid] desde la perspectiva de [uid].
   /// Guarda el documento en `usuarios/{uid}/blocked/{blockedUid}`.
@@ -885,7 +897,7 @@ class FirestoreService {
         .map((s) => s.docs.map((d) => d.id).toList());
   }
 
-  /// Envía un reporte para revisión por la función de moderación.
+  /// EnvÃ­a un reporte para revisiÃ³n por la funciÃ³n de moderaciÃ³n.
   Future<void> reportarContenido({
     required String reporterId,
     required String targetType,
@@ -893,7 +905,7 @@ class FirestoreService {
     required String reason,
   }) async {
     if (!_available) {
-      throw StateError('Firestore no está disponible para enviar el reporte.');
+      throw StateError('Firestore no estÃ¡ disponible para enviar el reporte.');
     }
     await _firestore!.collection('reports').add({
       'reporterId': reporterId,
