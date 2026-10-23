@@ -1,9 +1,11 @@
+import 'package:altar_diario/features/oracion/presentation/oracion_screen.dart'
+    as oracion_feature show OracionScreen;
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import 'calendario_view.dart';
 import 'feed_screen.dart';
 import 'home_screen.dart';
-import 'oracion_screen.dart';
 import 'perfil_screen.dart';
 
 class MainNavigationView extends StatefulWidget {
@@ -25,7 +27,7 @@ class _MainNavigationViewState extends State<MainNavigationView> {
       HomeScreen(onNavigateTo: _goToTab),
       const CalendarioView(),
       const FeedScreen(),
-      const OracionScreen(),
+      const oracion_feature.OracionScreen(),
       const PerfilScreen(),
     ];
   }

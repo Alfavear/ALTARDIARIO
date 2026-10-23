@@ -16,6 +16,23 @@ import '../../data/services/bible_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/storage_service.dart';
 
+/// ──────────────────────────────────────────────────────────────────────────────
+/// Re-exports de la feature oracion (ADR-0001: feature-first architecture).
+/// Mantienen compatibilidad con código existente que importe desde app_providers.dart.
+/// ──────────────────────────────────────────────────────────────────────────────
+
+/// Re-export del repositorio de oración.
+export 'package:altar_diario/features/oracion/data/oracion_repository.dart'
+    show OracionRepository, oracionRepositoryProvider;
+
+/// Re-export de providers de peticiones de oración.
+export 'package:altar_diario/features/oracion/providers/oracion_providers.dart'
+    show
+        PeticionesFiltroNotifier,
+        peticionesFiltroProvider,
+        peticionesStreamProvider,
+        peticionesFiltradasProvider;
+
 /// StorageService — se inicializa con override en main.dart
 final storageProvider = Provider<StorageService>((ref) {
   throw UnimplementedError(
