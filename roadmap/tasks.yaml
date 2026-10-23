@@ -381,7 +381,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: in_progress
+    status: done
     depends_on: []
     acceptance:
       - el metodo hace return sin commit si la query de notificaciones no leidas devuelve cero documentos
@@ -394,3 +394,12 @@ tasks:
     created_at: 2026-10-20T23:43:23.669Z
     started_cycle: 5
     started_at: 2026-10-23T03:38:30.829Z
+    done_at: 2026-10-23T03:42:21.815Z
+    evidence: |-
+      scripts/check.sh --fast (commit 8ff6dca):
+      Formatted 82 files (0 changed)
+      No issues found!
+      00:11 +125: All tests passed!
+      (--fast) saltando tests de reglas de Firestore
+      ✔ Todo en verde.
+    commit: 8ff6dca
