@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { copyFileSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import * as R from './roadmap.mjs';
+
+const temporal = (nombre) => join(tmpdir(), `roadmap-${nombre}-${process.pid}.yaml`);
 
 const fixture = () => ({
   meta: { current_phase: 1, cycle_counter: 0, phases: { 1: 'uno' } },
@@ -61,4 +66,32 @@ test('ultimos_ciclos: recorta los ciclos largos y marca el corte', () => {
   const out = R.ultimosCiclos(`## Ciclo 1 - d\n${largo}`, 3, 5);
   assert.ok(out.includes('…'));
   assert.ok(!out.includes('linea 29'));
+});
+
+test('save es idempotente sobre el tasks.yaml real (no reformatea en masa)', () => {
+  const tmp = temporal('idem');
+  copyFileSync(R.PATHS.tasks, tmp);
+  try {
+    const store = R.load(tmp);
+    R.save(store, tmp);
+    assert.equal(readFileSync(tmp, 'utf8'), readFileSync(R.PATHS.tasks, 'utf8'));
+  } finally {
+    rmSync(tmp, { force: true });
+  }
+});
+
+test('save solo toca las claves que cambian', () => {
+  const tmp = temporal('minimo');
+  copyFileSync(R.PATHS.tasks, tmp);
+  try {
+    const store = R.load(tmp);
+    store.data.tasks[0].status = 'in_progress';
+    R.save(store, tmp);
+    const antes = readFileSync(R.PATHS.tasks, 'utf8').split('\n');
+    const despues = readFileSync(tmp, 'utf8').split('\n');
+    const distintas = antes.filter((linea, i) => linea !== despues[i]);
+    assert.equal(distintas.length, 1, 'solo debe cambiar la línea del status');
+  } finally {
+    rmSync(tmp, { force: true });
+  }
 });
