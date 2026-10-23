@@ -10,6 +10,10 @@
 > git show origin/ops/estado:roadmap/ESTADO-B.md   # en qué está el carril B
 > git show origin/ops/estado:roadmap/ESTADO-A.md   # en qué está la orquestadora
 > ```
+>
+> **Coordinación entre sesiones**: `docs/SESIONES.md` (un worktree por sesión, un solo
+> merger, máximo 2 PRs abiertos, validar siempre contra `origin/main` citando SHA).
+> Orientación en 30 segundos: `scripts/session-check.sh`. Registro: `roadmap/sesiones/`.
 
 ## Reglas comunes (obligatorias)
 
@@ -29,14 +33,6 @@
 10. **Nunca se para**: si la cola propia se agota, se deriva una tarea del backlog cuyos `files` no
     toque el otro carril; si de verdad no hay ninguna, se revisan los PRs abiertos del propio carril
     y se vuelve a mirar la bandeja cada 10 minutos.
-11. **Antes de abrir un PR: `git fetch origin && git merge origin/main`.** Un PR construido sobre un
-    `main` viejo, aunque sus 4 checks salgan verdes, **revierte** lo que se mergeó entretanto. Pasó con
-    #47: habría vuelto a dejar `firestore.indexes.json` inválido (deploy en rojo) y habría borrado
-    `product_events.dart` y los bullets del CHANGELOG de #35/#37/#40.
-12. **Máximo 2 PRs abiertos a la vez** (uno en cola y uno en revisión). Cada merge deja `BEHIND` a
-    todos los demás y cada uno necesita `update-branch` + otra ronda de checks. Con 9 abiertos la cola
-    crece más rápido de lo que drena y se multiplican los conflictos (`app_providers`, el diálogo de
-    reportar, el CHANGELOG). Si tienes trabajo listo, déjalo en la rama sin PR y ábrelo cuando toque.
 
 ## Reparto de ficheros
 
@@ -54,7 +50,6 @@
 
 | # | Tarea | Ficheros | Notas |
 |---|---|---|---|
-| ★ | **T-047 (P1)** topes del cliente alineados con las reglas | `feed_screen`, `debate_detail_screen`, `publicar_reflexion_screen` | **antes que B12**: un título de debate >200 o un texto largo hoy recibe `permission-denied`, porque las reglas ya limitan y la UI no |
 | B0 | **Port de privacidad sobre T-015** (PR #21) | reglas + tests + `firestore_service.dart` + `app_providers.dart` | en curso; spec en el prompt de la sesión |
 | B1 | T-040 `noPrivateFields()` en todo el contenido público | reglas + tests | aplicar en los call sites, no dentro de `ownerEditOk()` |
 | B2 | T-041 documento privado con allowlist de campos, tipos y tamaños | reglas + tests | email ≤ 320, fcmToken ≤ 4096 |
@@ -72,7 +67,7 @@
 | B14 | T-004 UI de reportar contenido y bloquear usuario (App Store 1.2) | `feed_screen` + `public_profile_screen` + `firestore_service` | |
 | B15 | T-005 tests de FirestoreService (likes, reacciones, seguir, amén) | `test/services/firestore_service_test.dart` | |
 | B16 | T-017 `markAllNotificationsAsRead` sin batch vacío | `firestore_service.dart` + test | S, rápido |
-| B17 | T-020 paginación por cursor en comentarios, debates y chats | `firestore_service.dart` | **#47 abierto, NO mergeable todavía**: base vieja (revertiría #44), índice de chats duplicado e inválido, cero tests y ningún consumidor de los providers. Detalle en la revisión del PR |
+| B17 | T-020 paginación por cursor en comentarios, debates y chats | `firestore_service.dart` | |
 | B18 | T-029 oración con seguimiento: estado respondida y filtros | `oracion_screen.dart` + reglas | el aviso a quienes apoyaron es opcional |
 | B19 | T-030 búsqueda y temas seguidos en la comunidad | `app_providers.dart` | P3, al final |
 | B20 | T-031 debate bíblico de calidad: etiquetas y respuestas anidadas | `debate_detail_screen.dart` | P3 |
@@ -83,7 +78,7 @@
 | B25 | T-007 paginación real del feed con `startAfterDocument` | `firestore_service.dart` + `feed_screen` | |
 | B26 | T-016 partir `firestore-tests/rules.test.mjs` (>400 líneas) | tests de reglas | **al final**: mueve código que tocan B0-B4 |
 | B27 | T-008 partir `perfil_screen.dart` (1956 líneas) | `perfil_screen` | L → dividir antes de empezar |
-| B28 | T-045 job de functions en la CI | `.github/workflows/ci.yml` | **requiere OK humano**. Además #48 ya cambia el job de Android: cualquier edición de `ci.yml` va por el carril A para no chocar |
+| B28 | T-045 job de functions en la CI | `.github/workflows/ci.yml` | **requiere OK humano**: el ciclo no toca workflows |
 
 ## Carril A — orquestadora
 
@@ -93,7 +88,7 @@
 | A1 | T-012 el MCP roadmap no debe reformatear `tasks.yaml` entero | `tools/roadmap-mcp/roadmap.mjs` |
 | A2 | T-046 `scripts/loop.sh` sin exit 1 por SIGPIPE | `scripts/loop.sh` |
 | A3 | T-027 Inicio "Hoy": pendiente, completado y sin conexión | `home_screen.dart` |
-| A4 | T-028 reflexión guiada y privada por defecto | `publicar_reflexion_screen.dart` — **cerrada en #35**; queda cablear `reflexionPublicada` (T-036 solo envió lectura y nota) |
+| A4 | T-028 reflexión guiada y privada por defecto | `publicar_reflexion_screen.dart` |
 | A5 | T-033 biblioteca personal: resaltados, notas y reflexiones privadas | `notes_screen.dart` |
 | A6 | T-036 observabilidad accionable sin datos sensibles | `lib/core/observability/` |
 | A7 | T-037 rendimiento: métricas, caché offline de Biblia y reintentos | `bible_service.dart` |
@@ -106,13 +101,3 @@
 - PRs abiertos por carril con el estado de sus checks.
 - Qué falta para el despliegue de la privacidad (app publicada + `minVersion` + migración con 0).
 - Decisiones pendientes de producto o de despliegue.
-
-### Decisiones pendientes (actualizado en el ciclo 9)
-
-| Tema | Qué hace falta decidir |
-|---|---|
-| **PR #46** (grafo de conocimiento) | Usa `OPENAI_API_KEY` y manda el diff de `lib/**` a OpenAI, con `contents: write` y `git push --force`. **En espera**: o se aprueba el secret, o se reescribe sin LLM (extracción determinista con reglas). |
-| **PR #47** (paginación, B17) | No mergeable todavía: pide tests y una base al día. Nada que decidir, solo trabajo. |
-| **Dependabot #6–#18** | 13 PRs del 21-10. Cinco son *major* con breaking real (`google_sign_in` 7, `sign_in_with_apple` 8, `cupertino_icons` 2, `flutter_lints` 6, `firebase-tools` 15): necesitan su propia sesión de dependencias, no un merge a ciegas. |
-| **PRs #21, #22, #24, #25** (stack Codex viejo) | #21 está superado por #29; #22/#24/#25 siguen apilados sobre ramas `codex/*`. Cerrar #21 y reapuntar los otros a `main`, o descartarlos. |
-
