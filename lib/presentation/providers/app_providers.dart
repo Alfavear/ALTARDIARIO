@@ -411,6 +411,31 @@ final debateRepliesStreamProvider =
   return ref.watch(firestoreServiceProvider).debateRepliesStream(debateId);
 });
 
+/// Stream de respuestas de un debate con paginación por cursor.
+final debateRepliesStreamCursorProvider = StreamProvider.family<
+    List<DebateReply>,
+    ({String debateId, DocumentSnapshot? lastDocument})>((ref, params) {
+  return ref.watch(firestoreServiceProvider).debateRepliesStreamCursor(
+      params.debateId,
+      lastDocument: params.lastDocument);
+});
+
+/// Comentarios de una reflexión con paginación por cursor.
+final comentariosStreamCursorProvider = StreamProvider.family<List<Comment>,
+    ({String reflexionId, DocumentSnapshot? lastDocument})>((ref, params) {
+  return ref.watch(firestoreServiceProvider).comentariosStreamCursor(
+      params.reflexionId,
+      lastDocument: params.lastDocument);
+});
+
+/// Stream de mensajes de un chat con paginación por cursor.
+final chatMessagesCursorProvider = StreamProvider.family<List<Message>,
+    ({String chatId, DocumentSnapshot? lastDocument})>((ref, params) {
+  return ref
+      .watch(firestoreServiceProvider)
+      .getMessagesCursor(params.chatId, lastDocument: params.lastDocument);
+});
+
 /// Sugerencias de amistad (usuarios que no sigues).
 final sugerenciasAmistadProvider = FutureProvider<List<Usuario>>((ref) async {
   final uid = ref.watch(effectiveUserUidProvider);
