@@ -192,4 +192,60 @@ void main() {
       expect(doc.exists, isFalse);
     });
   });
+
+  group('FirestoreService.bloqueos', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('bloquearUsuario guarda el documento en blocked', () async {
+      await service.bloquearUsuario('u1', 'u2');
+
+      final doc = await fake.doc('usuarios/u1/blocked/u2').get();
+      expect(doc.exists, isTrue);
+      expect(doc.data()?['uid'], 'u1');
+      expect(doc.data()?['blockedUid'], 'u2');
+    });
+
+    test('bloquearUsuario no se bloquea a sí mismo', () async {
+      await service.bloquearUsuario('u1', 'u1');
+
+      final doc = await fake.doc('usuarios/u1/blocked/u1').get();
+      expect(doc.exists, isFalse);
+    });
+
+    test('desbloquearUsuario borra el documento de blocked', () async {
+      await fake.doc('usuarios/u1/blocked/u2').set({
+        'uid': 'u1',
+        'blockedUid': 'u2',
+        'fecha': DateTime.now(),
+      });
+
+      await service.desbloquearUsuario('u1', 'u2');
+
+      final doc = await fake.doc('usuarios/u1/blocked/u2').get();
+      expect(doc.exists, isFalse);
+    });
+
+    test('getUsuariosBloqueados retorna la lista de uids bloqueados', () async {
+      await fake.doc('usuarios/u1/blocked/u2').set({
+        'uid': 'u1',
+        'blockedUid': 'u2',
+        'fecha': DateTime.now(),
+      });
+      await fake.doc('usuarios/u1/blocked/u3').set({
+        'uid': 'u1',
+        'blockedUid': 'u3',
+        'fecha': DateTime.now(),
+      });
+
+      final bloqueados = await service.getUsuariosBloqueados('u1').first;
+      expect(bloqueados, containsAll(['u2', 'u3']));
+      expect(bloqueados, hasLength(2));
+    });
+  });
 }
