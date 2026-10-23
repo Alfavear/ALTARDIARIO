@@ -535,7 +535,8 @@ class FirestoreService {
           .map((s) =>
               s.docs.map((d) => {'id': d.id, ...d.data()}).where((notif) {
                 final actorId = notif['actorId'] as String?;
-                return actorId != null && !bloqueados.contains(actorId);
+                if (actorId == null) return true;
+                return !bloqueados.contains(actorId);
               }).toList());
     }).asyncExpand((s) => s);
   }
@@ -853,9 +854,17 @@ class FirestoreService {
               (s) => s.docs.map((d) => {'id': d.id, ...d.data()}).where((chat) {
                     final participants =
                         List<String>.from(chat['participantIds'] ?? []);
-                    final otro = participants.firstWhere((p) => p != userId,
-                        orElse: () => '');
-                    return otro.isNotEmpty && !bloqueados.contains(otro);
+                    // Solo ocultar si TODOS los otros participantes estan bloqueados
+                    // (chat de 2 personas donde el otro esta bloqueado)
+                    final otros =
+                        participants.where((p) => p != userId).toList();
+                    if (otros.isEmpty) return false;
+                    // En chats de 2, ocultar si el otro esta bloqueado
+                    if (otros.length == 1) {
+                      return !bloqueados.contains(otros.first);
+                    }
+                    // En chats grupales, mostrar siempre
+                    return true;
                   }).toList());
     }).asyncExpand((s) => s);
   }
@@ -884,6 +893,7 @@ class FirestoreService {
     return _usuarios
         .doc(uid)
         .collection('blocked')
+        .limit(100)
         .snapshots()
         .map((s) => s.docs.map((d) => d.id).toList());
   }

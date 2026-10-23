@@ -16,16 +16,16 @@ import '../../data/services/bible_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/storage_service.dart';
 
-/// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+/// ──────────────────────────────────────────────────────────────────────────────
 /// Re-exports de la feature oracion (ADR-0001: feature-first architecture).
-/// Mantienen compatibilidad con cÃ³digo existente que importe desde app_providers.dart.
-/// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+/// Mantienen compatibilidad con código existente que importe desde app_providers.dart.
+/// ──────────────────────────────────────────────────────────────────────────────
 
-/// Re-export del repositorio de oraciÃ³n.
+/// Re-export del repositorio de oración.
 export 'package:altar_diario/features/oracion/data/oracion_repository.dart'
     show OracionRepository, oracionRepositoryProvider;
 
-/// Re-export de providers de peticiones de oraciÃ³n.
+/// Re-export de providers de peticiones de oración.
 export 'package:altar_diario/features/oracion/providers/oracion_providers.dart'
     show
         PeticionesFiltroNotifier,
@@ -33,16 +33,16 @@ export 'package:altar_diario/features/oracion/providers/oracion_providers.dart'
         peticionesStreamProvider,
         peticionesFiltradasProvider;
 
-/// StorageService â se inicializa con override en main.dart
+/// StorageService — se inicializa con override en main.dart
 final storageProvider = Provider<StorageService>((ref) {
   throw UnimplementedError(
       'storageProvider no ha sido inicializado en el ProviderScope');
 });
 
-/// Servicio de autenticaciÃ³n.
+/// Servicio de autenticación.
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
-/// Stream de cambios en el estado de autenticaciÃ³n (Firebase Auth).
+/// Stream de cambios en el estado de autenticación (Firebase Auth).
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).userChanges;
 });
@@ -138,14 +138,14 @@ final userProfileProvider = StreamProvider<Usuario?>((ref) {
   });
 });
 
-/// Perfil de un usuario especÃ­fico por su ID.
+/// Perfil de un usuario específico por su ID.
 final userProfileByIdProvider =
     StreamProvider.family<Usuario?, String>((ref, userId) {
   if (userId.isEmpty) return Stream.value(null);
   return ref.watch(firestoreServiceProvider).getUsuario(userId);
 });
 
-/// Provider que determina si el usuario actual es un Invitado / AnÃ³nimo.
+/// Provider que determina si el usuario actual es un Invitado / Anónimo.
 final isGuestUserProvider = Provider<bool>((ref) {
   final authUser = ref.watch(authStateProvider).value;
   if (authUser == null) return true;
@@ -157,13 +157,13 @@ final reflexionesStreamProvider = StreamProvider<List<Reflexion>>((ref) {
   return ref.watch(firestoreServiceProvider).reflexionesStream();
 });
 
-/// Reflexiones de un usuario especÃ­fico (para su perfil).
+/// Reflexiones de un usuario específico (para su perfil).
 final userReflexionesProvider =
     StreamProvider.family<List<Reflexion>, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserReflexiones(userId);
 });
 
-/// Peticiones de oraciÃ³n de la comunidad.
+/// Peticiones de oración de la comunidad.
 final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
   return ref.watch(firestoreServiceProvider).peticionesStream();
 });
@@ -180,7 +180,7 @@ final peticionesFiltroProvider =
     NotifierProvider<PeticionesFiltroNotifier, bool?>(
         PeticionesFiltroNotifier.new);
 
-/// Peticiones de oraciÃ³n filtradas por estado (respondida/pendiente).
+/// Peticiones de oración filtradas por estado (respondida/pendiente).
 final peticionesFiltradasProvider =
     StreamProvider<List<PeticionOracion>>((ref) {
   final filtro = ref.watch(peticionesFiltroProvider);
@@ -189,7 +189,7 @@ final peticionesFiltradasProvider =
       );
 });
 
-/// Mensajes de un chat especÃ­fico.
+/// Mensajes de un chat específico.
 final messagesStreamProvider =
     StreamProvider.family<List<Message>, String>((ref, chatId) {
   return ref.watch(firestoreServiceProvider).getMessages(chatId);
@@ -201,19 +201,13 @@ final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
   return uid == authorId;
 });
 
-/// Lista de chats del usuario.
-final chatListProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUserChats(userId);
-});
-
 /// Lista de chats filtrando usuarios bloqueados.
 final chatListFiltradoProvider =
     StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
   return ref.watch(firestoreServiceProvider).getUserChatsFiltrados(userId);
 });
 
-/// Perfil de otro usuario (pÃºblico). Retorna null si el usuario actual lo
+/// Perfil de otro usuario (público). Retorna null si el usuario actual lo
 /// ha bloqueado.
 final otherUserProfileProvider =
     StreamProvider.family<Usuario?, String>((ref, userId) {
@@ -274,7 +268,7 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
     final maxS = data != null ? (data['maxStreak'] as int? ?? 0) : 0;
     String deriveName(String n, String e) {
       var trimmed = n.trim();
-      if (trimmed.isNotEmpty && trimmed.toLowerCase() != 'anÃ³nimo') {
+      if (trimmed.isNotEmpty && trimmed.toLowerCase() != 'anónimo') {
         if (trimmed.endsWith(' (Invitado)')) {
           trimmed = trimmed.substring(0, trimmed.length - 11);
         }
@@ -288,7 +282,7 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
 
     final rawName = data != null ? (data['nombre'] as String? ?? '') : '';
     final email = data != null ? (data['email'] as String? ?? '') : '';
-    final nombre = data != null ? deriveName(rawName, email) : 'TÃº';
+    final nombre = data != null ? deriveName(rawName, email) : 'Tú';
     final fotoUrl = data != null ? (data['fotoUrl'] as String? ?? '') : '';
     if (id == uid) {
       final localRacha = storage.calcularRacha();
@@ -297,7 +291,7 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
           0,
           FriendStreak(
             userId: id,
-            nombre: 'TÃº',
+            nombre: 'Tú',
             fotoUrl: '',
             rachaActual: localRacha,
             maxStreak: storage.getMaxStreak(),
@@ -367,13 +361,13 @@ final globalLeaderboardProvider =
 
     final displayName = user.displayName;
 
-    // Para el usuario actual, usar datos locales si son mÃ¡s altos o si es la entrada principal
+    // Para el usuario actual, usar datos locales si son más altos o si es la entrada principal
     if (user.id == uid) {
       final localRacha = storage.calcularRacha();
       final localTotal = storage.getTotalCompletadas();
       results.add(LeaderboardEntry(
         userId: user.id,
-        nombre: 'TÃº',
+        nombre: 'Tú',
         fotoUrl: user.fotoUrl,
         rachaActual: localRacha > racha ? localRacha : racha,
         maxStreak:
@@ -425,7 +419,7 @@ final isFollowingProvider =
   });
 });
 
-/// Comentarios de una reflexiÃ³n.
+/// Comentarios de una reflexión.
 final comentariosStreamProvider =
     StreamProvider.family<List<Comment>, String>((ref, reflexionId) {
   return ref.watch(firestoreServiceProvider).comentariosStream(reflexionId);
@@ -443,7 +437,7 @@ final seguidoresUsuariosProvider =
   return ref.read(firestoreServiceProvider).getSeguidoresUsuarios(uid);
 });
 
-/// Stream de debates bÃ­blicos.
+/// Stream de debates bíblicos.
 final debatesStreamProvider =
     StreamProvider.family<List<Debate>, String?>((ref, libroId) {
   return ref.watch(firestoreServiceProvider).debatesStream(libroId: libroId);
@@ -500,7 +494,7 @@ final sugerenciasAmistadProvider = FutureProvider<List<Usuario>>((ref) async {
   return mappedUsers.take(10).toList();
 });
 
-/// Modo Enfoque â sincronizado con Firestore (nivel usuario) y local.
+/// Modo Enfoque — sincronizado con Firestore (nivel usuario) y local.
 class FocusModeNotifier extends Notifier<bool> {
   bool _initialSyncDone = false;
   @override
@@ -624,78 +618,12 @@ final notificationsFiltradasProvider =
   });
 });
 
-/// Contador de notificaciones no leÃ­das.
+/// Contador de notificaciones no leídas (sobre el stream filtrado).
 final unreadNotificationsCountProvider = Provider<int>((ref) {
-  final notificationsAsync = ref.watch(notificationsStreamProvider);
+  final notificationsAsync = ref.watch(notificationsFiltradasProvider);
   return notificationsAsync.when(
     data: (notifications) => notifications.where((n) => !n.read).length,
     loading: () => 0,
     error: (_, __) => 0,
   );
 });
-
-/// Estado de paginación del feed.
-class FeedPaginationState {
-  final List<Reflexion> items;
-  final DocumentSnapshot? lastDoc;
-  final bool hasMore;
-  final bool isLoading;
-
-  const FeedPaginationState({
-    this.items = const [],
-    this.lastDoc,
-    this.hasMore = true,
-    this.isLoading = false,
-  });
-
-  FeedPaginationState copyWith({
-    List<Reflexion>? items,
-    DocumentSnapshot? lastDoc,
-    bool? hasMore,
-    bool? isLoading,
-  }) {
-    return FeedPaginationState(
-      items: items ?? this.items,
-      lastDoc: lastDoc ?? this.lastDoc,
-      hasMore: hasMore ?? this.hasMore,
-      isLoading: isLoading ?? this.isLoading,
-    );
-  }
-}
-
-/// Notifier para paginación del feed.
-class FeedPaginationNotifier extends Notifier<FeedPaginationState> {
-  @override
-  FeedPaginationState build() => const FeedPaginationState();
-
-  Future<void> loadInitial() async {
-    state = state.copyWith(isLoading: true);
-    final result =
-        await ref.read(firestoreServiceProvider).getReflexionesPage();
-    state = FeedPaginationState(
-      items: result.items,
-      lastDoc: result.lastDoc,
-      hasMore: result.hasMore,
-      isLoading: false,
-    );
-  }
-
-  Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
-    state = state.copyWith(isLoading: true);
-    final result = await ref.read(firestoreServiceProvider).getReflexionesPage(
-          lastDoc: state.lastDoc,
-        );
-    state = state.copyWith(
-      items: [...state.items, ...result.items],
-      lastDoc: result.lastDoc,
-      hasMore: result.hasMore,
-      isLoading: false,
-    );
-  }
-}
-
-final feedPaginationProvider =
-    NotifierProvider<FeedPaginationNotifier, FeedPaginationState>(
-  FeedPaginationNotifier.new,
-);
