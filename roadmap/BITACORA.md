@@ -196,3 +196,23 @@ Tanda de merges de la noche. La otra sesion (carril B) produce rama+PR y esta se
 **Siguiente:** T-023, T-024, T-038, T-028, T-033, T-036 en cola de merge; despues carril A: T-037 y T-035.
 
 ---
+## Ciclo 9 — 2026-10-23T02:22:27.129Z
+- **Tarea:** T-028, T-033, T-036, T-038 · Reflexion guiada, biblioteca personal, eventos sin datos y indice de chats
+- **Resultado:** mergeado en main (PRs #35, #37, #40, #39)
+- **Rama/commit:** auto/T-028-reflexion-guiada, auto/T-033-biblioteca-personal, auto/T-036-eventos-producto, fix/lane-b-11-chats-indice @ 4471a39, 3586e4b, 227604e, 6faec67
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Se encontraron y corrigieron dos fallos de integracion que los tests no cubrian: reports no permitia targetType comentario y firestore.indexes.json era invalido (rompia el deploy de main).
+
+Segunda tanda de merges. Ademas del codigo de cada tarea: (1) #38 necesitaba tests y una regla que no existia (targetType comentario) y se resolvio en su propia rama; (2) el indice de chats se subio con JSON invalido y tumbo el deploy de main, detectado al verificar los workflows y corregido en #44 con un test que valida el fichero en cada PR; (3) se detecto el desajuste entre los limites de las reglas y los topes del cliente (T-047).
+
+**Problemas:**
+- Cada merge deja BEHIND a los demas PRs y obliga a update-branch + otra ronda de checks (~7,6 min con el build de Android en la ruta critica).
+- El build de APK se ejecuta en todos los PRs aunque un PR de Dart/UI no pueda romper Android.
+
+**Decisiones:**
+- El job Build APK se ejecuta siempre pero solo compila si el PR toca android/, pubspec.* o .github/workflows/; se anade cache de Gradle y una sola ABI (PR #48).
+- Los conflictos se resuelven en la rama del PR, sin reescribir historia y sin tocar main por otra via.
+
+**Siguiente:** T-023 (#36), T-024 (#38), T-025 (#42), T-005 (#43), #45 y #46 en cola de merge; despues #41 cierra el ciclo.
+
+---

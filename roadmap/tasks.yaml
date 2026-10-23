@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 8
+  cycle_counter: 9
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -625,7 +625,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - borrador local recuperable tras cerrar la app
@@ -636,6 +636,13 @@ tasks:
       - lib/presentation/screens/publicar_reflexion_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.127Z
+    done_at: 2026-10-23T02:22:27.127Z
+    evidence: "PR #35 mergeado en main (4471a39). Borrador de reflexion recuperable tras cerrar la app, vista
+      previa obligatoria con confirmacion explicita y notas convertidas en reflexion sin copiar texto. 6 tests
+      nuevos; check.sh --fast 139/139 y CI 4/4."
+    commit: 4471a39
   - id: T-029
     title: "Oracion con seguimiento: estado respondida, actualizacion y filtros del feed"
     type: feature
@@ -707,7 +714,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - los datos siguen siendo privados en Firestore y en el almacenamiento local
@@ -717,6 +724,13 @@ tasks:
       - lib/presentation/screens/notes_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 4.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.129Z
+    done_at: 2026-10-23T02:22:27.129Z
+    evidence: 'PR #37 mergeado en main (3586e4b). Biblioteca personal: exportacion bajo demanda al portapapeles,
+      aviso de privacidad veraz (solo el dueno ve las notas, no "solo en este dispositivo") y estado de error
+      con reintento que no bloquea la lectura. 7 tests; CI 4/4.'
+    commit: 3586e4b
   - id: T-034
     title: "Notificaciones con intencion: preferencias por categoria y horario tranquilo"
     type: feature
@@ -755,7 +769,7 @@ tasks:
     phase: 3
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - eventos para completar lectura, guardar nota, publicar reflexion, reportar y bloquear
@@ -765,6 +779,13 @@ tasks:
       - lib/core/observability/observability.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 5.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.129Z
+    done_at: 2026-10-23T02:22:27.129Z
+    evidence: "PR #40 mergeado en main (227604e). Capa tipada de eventos de producto que descarta textos, correos,
+      tokens y motivos libres; solo numeros, booleanos y categorias cerradas llegan a Analytics. Cableados
+      lectura_completada y nota_guardada. 7 tests; CI 4/4."
+    commit: 227604e
   - id: T-037
     title: "Rendimiento y resiliencia: metricas, cache offline de Biblia y reintentos"
     type: infra
@@ -787,7 +808,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - "firestore.indexes.json declara el indice chats: participantIds (arrayContains) + lastUpdate
@@ -798,6 +819,13 @@ tasks:
       - firestore.indexes.json
     source: "revision T-015 (PR #23): la lista de chats falla en produccion por falta de indice"
     created_at: 2026-10-21T02:56:57.769Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.129Z
+    done_at: 2026-10-23T02:22:27.129Z
+    evidence: "PR #39 mergeado en main (6faec67) con el indice compuesto de chats. El JSON venia invalido (objeto
+      fuera del array) y dejo el deploy de main en rojo; corregido en #44 (86ab8d4) con arrayConfig CONTAINS y
+      cubierto por test/infra/firestore_indexes_test.dart. 34/34 tests de reglas."
+    commit: 6faec67
   - id: T-039
     title: "Chats: impedir chats no solicitados (el otro participante puede ser cualquiera)"
     type: security
