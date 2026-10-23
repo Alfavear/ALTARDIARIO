@@ -503,6 +503,24 @@ class FirestoreService {
         .handleError((_) => <Map<String, dynamic>>[]);
   }
 
+  /// Stream de notificaciones filtrando las que provienen de usuarios bloqueados.
+  Stream<List<Map<String, dynamic>>> notificationsStreamFiltrado(String uid) {
+    if (!_available) return Stream.value([]);
+    return getUsuariosBloqueados(uid).asyncMap((bloqueados) {
+      return _usuarios
+          .doc(uid)
+          .collection('notifications')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .map((s) =>
+              s.docs.map((d) => {'id': d.id, ...d.data()}).where((notif) {
+                final actorId = notif['actorId'] as String?;
+                return actorId != null && !bloqueados.contains(actorId);
+              }).toList());
+    }).asyncExpand((s) => s);
+  }
+
   /// Marca una notificación como leída.
   Future<void> markNotificationAsRead(String uid, String notificationId) async {
     if (!_available) return;
@@ -764,6 +782,26 @@ class FirestoreService {
         .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
   }
 
+  /// Stream de chats filtrando usuarios bloqueados (excluye chats donde
+  /// el otro participante está bloqueado por [userId]).
+  Stream<List<Map<String, dynamic>>> getUserChatsFiltrados(String userId) {
+    if (!_available) return Stream.value([]);
+    return getUsuariosBloqueados(userId).asyncMap((bloqueados) {
+      return _chats
+          .where('participantIds', arrayContains: userId)
+          .orderBy('lastUpdate', descending: true)
+          .limit(chatsPageSize)
+          .snapshots()
+          .map(
+              (s) => s.docs.map((d) => {'id': d.id, ...d.data()}).where((chat) {
+                    final participants =
+                        List<String>.from(chat['participantIds'] ?? []);
+                    final otro = participants.firstWhere((p) => p != userId,
+                        orElse: () => '');
+                    return otro.isNotEmpty && !bloqueados.contains(otro);
+                  }).toList());
+    }).asyncExpand((s) => s);
+  }
   // ── Bloqueos de usuarios ───────────────────────────────────────────────────
 
   /// Bloquea a [blockedUid] desde la perspectiva de [uid].
