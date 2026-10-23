@@ -8,16 +8,17 @@
 
 ## Tarea en curso
 
-- **id**: —
-- **qué**: —
-- **rama**: —
+- **id**: B10
+- **qué**: T-024 reportar reflexiones y comentarios (feed_screen + widgets, reutiliza diálogo de #22)
+- **rama**: — (a crear sobre origin/main)
 - **PR**: —
 
 ## Terminado (empieza por la más reciente)
 
 | fecha | tarea | rama / PR | verificación | qué cambió |
 |---|---|---|---|---|
-| 2026-10-21 | B8 Filtrar usuarios bloqueados en proveedores sociales (T-022) | `fix/lane-b-08-filtrar-bloqueados` → PR #33 | 123/123 Dart, format+analyze limpios | `usuariosBloqueadosProvider`; `otherUserProfileProvider` retorna null si bloqueado; `friendStreaksProvider`, `sugerenciasAmistadProvider`, `globalLeaderboardProvider` excluyen bloqueados; `getUsuariosBloqueados(uid)` en FirestoreService |
+| 2026-10-22 | B9 Filtrar bloqueos en chats, notificaciones + UI desbloqueo (T-023) | `fix/lane-b-09-filtrar-chats-notif` → PR #36 | 123/123 Dart, 34/34 reglas, format+analyze limpios | getUserChatsFiltrados, notificationsStreamFiltrado, providers filtrados, _showBloqueadosDialog con desbloquear, getUsuariosBloqueados/desbloquearUsuario |
+| 2026-10-21 | B8 Filtrar usuarios bloqueados en proveedores sociales (T-022) | `fix/lane-b-08-filtrar-bloqueados` → PR #33 | 123/123 Dart, format+analyze limpios | usuariosBloqueadosProvider; otherUserProfileProvider retorna null si bloqueado; friendStreaksProvider, sugerenciasAmistadProvider, globalLeaderboardProvider excluyen bloqueados; getUsuariosBloqueados(uid) en FirestoreService |
 | 2026-10-21 | B7 Bloquear usuarios: documento y reglas (T-019) | `fix/lane-b-07-bloquear-usuarios` → PR #32 | 127/127 Dart, 34/34 reglas, format+analyze limpios | Match `/usuarios/{userId}/blocked/{blockedUid}`; modelo `Bloqueo`; métodos `bloquearUsuario`/`desbloquearUsuario`/`getUsuariosBloqueados`; tests de reglas y de servicio |
 | 2026-10-21 | B6 Límites de tamaño en debates, respuestas, comentarios, notificaciones (T-044) | `fix/lane-b-06-tamano-limites` → PR #31 | 123/123 Dart, 34/34 reglas, format+analyze limpios | Reglas: límites en debates (título ≤200, contenido ≤5000), respuestas (contenido ≤2000), comentarios de petición (texto ≤2000), notificaciones (title ≤200, body ≤1000), aplicados también en edición del dueño |
 | 2026-10-21 | B5 Borrar cuenta también borra documento privado (T-043) | `fix/lane-b-05-privado-borrado` → PR #30 | 125/125 Dart, 35/35 reglas, format+analyze limpios | `FirestoreService.borrarCuenta(uid)`, match `/usuarios/{userId}/private/{privateId}` con read/create/update/delete, allowlist email ≤320 / fcmToken ≤4096, tests de reglas y de servicio |
@@ -30,6 +31,6 @@
 
 ## Notas para la orquestadora
 
-- Tareas completadas: B0, B5, B6, B7, B8 (5 PRs: #29, #30, #31, #32, #33).
-- Siguiente tarea libre: B9 (T-023 filtrar bloqueos en chats y notificaciones + desbloqueo en Ajustes).
+- Tareas completadas: B0, B5, B6, B7, B8, B9 (6 PRs: #29, #30, #31, #32, #33, #36).
+- Siguiente tarea libre: B10 (T-024 reportar reflexiones y comentarios).
 - Todas las ramas están basadas en origin/main; ninguna está mergeada a main.
