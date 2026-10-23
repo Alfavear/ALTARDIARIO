@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../features/moderation/presentation/report_content_dialog.dart';
 import '../../core/services/community_policy_service.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -355,6 +356,26 @@ class _PeticionCard extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ReportContentDialog(
+                      targetType: 'peticion',
+                      targetId: peticion.id,
+                      targetTitle: peticion.motivo.length > 50
+                          ? '${peticion.motivo.substring(0, 50)}...'
+                          : peticion.motivo,
+                      targetAuthor: authorName,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flag_outlined,
+                    size: 20, color: Colors.grey),
+                tooltip: 'Reportar',
+              ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () {
                   HapticFeedback.mediumImpact();
