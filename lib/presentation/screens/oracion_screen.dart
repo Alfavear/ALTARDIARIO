@@ -7,6 +7,7 @@ import '../../core/services/community_policy_service.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/peticion_oracion.dart';
+import '../../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
 import '../widgets/guest_access_restricted_widget.dart';
 import '../widgets/shimmer_loading_widget.dart';
@@ -355,6 +356,26 @@ class _PeticionCard extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ReportContentDialog(
+                      targetType: 'peticion',
+                      targetId: peticion.id,
+                      targetTitle: peticion.motivo.length > 50
+                          ? '${peticion.motivo.substring(0, 50)}...'
+                          : peticion.motivo,
+                      targetAuthor: authorName,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flag_outlined,
+                    size: 20, color: Colors.grey),
+                tooltip: 'Reportar',
+              ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () {
                   HapticFeedback.mediumImpact();
