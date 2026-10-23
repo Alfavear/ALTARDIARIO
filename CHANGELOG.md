@@ -19,7 +19,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - CI/CD en GitHub Actions: format/analyze/test, reglas, builds Android/Web, deploy de Firebase, release Android por tag, Dependabot.
 - `scripts/check.sh`, `scripts/rules_test.sh`, `scripts/bootstrap.sh`.
 - Documentación: ROADMAP, ADR-0001/0002/0003, AI_WORKFLOW, SECURITY, RELEASE.
+- Inicio: tarjeta de la lectura de hoy con cuatro estados (cargando con skeleton, sin conexión, pendiente y completado). Se abre con un solo toque, al completar el día muestra una celebración discreta y la siguiente lectura del plan, y respeta el escalado de texto del sistema.
+
+
 - Publicar reflexión: el borrador sobrevive al cierre de la app y se recupera al volver; publicar exige una vista previa con confirmación explícita; y las notas se convierten en reflexión con un toque, sin copiar texto.
+- Biblioteca personal (Notas): aviso de que las notas son privadas (solo el dueño puede verlas), exportación bajo demanda al portapapeles (nada se envía a otros usuarios ni a terceros) y estado de error con reintento que no bloquea la lectura.
+- Observabilidad: los eventos de producto pasan por una capa que descarta textos, correos, tokens y motivos libres; solo números, booleanos y categorías cerradas llegan a Analytics. Cableados `lectura_completada` y `nota_guardada`.
 
 ### Cambiado
 - Feed de reflexiones limitado a 100 documentos por lectura (antes: colección completa).
