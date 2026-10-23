@@ -682,6 +682,21 @@ test('reportes: se crean con el uid propio y nadie los lee desde el cliente', as
   await assertFails(getDoc(doc(as(BOB), 'reports', 'rep1')));
 });
 
+// T-049: reports exige keys().hasOnly con exactamente los 5 campos permitidos
+test('reportes: rechaza campos extra (status, severity, etc.)', async () => {
+  const base = { reporterId: BOB, targetType: 'reflexion', targetId: 'r1', reason: 'spam', createdAt: new Date() };
+  // Campo extra 'status': denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_status'), { ...base, status: 'pending' }));
+  // Campo extra 'severity': denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_sev'), { ...base, severity: 'high' }));
+  // Campo extra 'basura': denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_basura'), { ...base, basura: 'cualquier cosa' }));
+  // Falta createdAt: denegado (keys().hasOnly exige todos los campos)
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_no_ts'), { reporterId: BOB, targetType: 'reflexion', targetId: 'r1', reason: 'spam' }));
+  // createdAt no es timestamp: denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_bad_ts'), { ...base, createdAt: 'no-es-timestamp' }));
+});
+
 // ───────────────────────── Config / catch-all ─────────────────────────
 
 test('config es solo lectura; colecciones desconocidas están cerradas', async () => {

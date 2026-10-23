@@ -331,11 +331,13 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if false;
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['reporterId', 'targetType', 'targetId', 'reason', 'createdAt'])
         && request.resource.data.reporterId == uid()
         && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario', 'comentario']
         && request.resource.data.targetId is string
         && request.resource.data.reason is string
-        && request.resource.data.reason.size() <= 500;
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
 
