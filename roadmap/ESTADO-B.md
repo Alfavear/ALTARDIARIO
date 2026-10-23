@@ -8,8 +8,8 @@
 
 ## Tarea en curso
 
-- **id**: B13
-- **qué**: T-039 impedir chats no solicitados (reglas)
+- **id**: B16
+- **qué**: T-017 `markAllNotificationsAsRead` sin batch vacío
 - **rama**: — (a crear sobre origin/main)
 - **PR**: —
 
@@ -17,6 +17,7 @@
 
 | fecha | tarea | rama / PR | verificación | qué cambió |
 |---|---|---|---|---|
+| 2026-10-22 | B15 Tests FirestoreService (T-005) | `fix/lane-b-15-tests-firestore-service` → PR #43 | 140/140 Dart, format+analyze limpios | Tests para toggleLike, toggleReaction, toggleFollow, apoyarPeticion |
 | 2026-10-22 | B12 Reportar peticiones de oración (T-025) | `fix/lane-b-12-reportar-peticiones-debates` → PR #42 | 127/127 Dart, format+analyze limpios | Botón 'Reportar' en _PeticionCard (oracion_screen) usando ReportContentDialog reutilizable, targetType='peticion' |
 | 2026-10-22 | B11 Índice compuesto chats (T-038) | `fix/lane-b-11-chats-indice` → PR #39 | 127/127 Dart, format+analyze limpios | Índice compuesto `participantIds` + `lastUpdate` en `firestore.indexes.json` para colección `chats` |
 | 2026-10-22 | B10 Reportar reflexiones y comentarios (T-024) | `fix/lane-b-10-reportar-reflexiones` → PR #38 | 127/127 Dart, format+analyze limpios | `reportarContenido` en FirestoreService; `ReportContentDialog` reutilizable; botones 'Reportar' en _ReflexionCard y _CommentTile |
@@ -35,7 +36,6 @@
 
 ## Notas para la orquestadora
 
-- Tareas completadas: B0, B5, B6, B7, B8, B9, B10, B11, B12 (9 PRs: #29, #30, #31, #32, #33, #36, #38, #39, #42).
-- Siguiente tarea libre: B13 (T-039 impedir chats no solicitados) - bloqueada por decisión de producto.
-- Luego: B14 (T-014 UI de reportar/bloquear usuario), B15 (T-005 tests FirestoreService), B16 (T-017 markAllNotificationsAsRead), B17 (T-020 paginación), B18 (T-029 oración con seguimiento), B19 (T-030 búsqueda y temas), B20 (T-031 debate), B21 (T-032 ajustes), B22 (T-034 notificaciones con intención), B23 (T-021 eliminación cuenta), B24 (T-006 migrar oración), B25 (T-007 paginación feed), B26 (T-004 partir rules.test.mjs), B27 (T-008 partir perfil_screen), B28 (T-045 job functions CI).
+- Tareas completadas: B0, B5, B6, B7, B8, B9, B10, B11, B12, B15 (10 PRs: #29, #30, #31, #32, #33, #36, #38, #39, #42, #43).
+- Siguiente tarea libre: B16 (T-017 markAllNotificationsAsRead sin batch vacío).
 - Todas las ramas están basadas en origin/main; ninguna está mergeada a main.
