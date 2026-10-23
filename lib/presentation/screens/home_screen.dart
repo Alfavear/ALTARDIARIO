@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/observability/product_events.dart';
 import '../../core/services/update_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/lectura_dia.dart';
@@ -689,6 +690,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final maxStreak = storage.getMaxStreak();
       await syncProgressGuarded(ref, uid, completed, maxStreak);
     }
+    // Métrica sin datos personales: solo cuántas lecturas lleva y desde dónde.
+    unawaited(
+      ProductoAnalytics.registrar(
+        EventoProducto.lecturaCompletada,
+        parametros: {
+          'origen': 'inicio',
+          'total_lecturas': storage.getCompletedDatesSync().length,
+        },
+      ),
+    );
     if (mounted) setState(() {});
   }
 
