@@ -194,11 +194,39 @@ export function state(data) {
   };
 }
 
+/**
+ * Extrae los últimos ciclos de la bitácora.
+ *
+ * No troceamos por cadenas: se buscan las cabeceras "## Ciclo N" y se toma el
+ * cuerpo de cada una hasta la siguiente. Así el encabezado sale siempre una
+ * sola vez (nada de "## ## Ciclo N") y ningún ciclo se queda sin cabecera.
+ * Tolera bitácoras ya ensuciadas con "## ## Ciclo N" y las normaliza.
+ */
+export function ultimosCiclos(texto, max = 3, lineasPorCiclo = 10) {
+  if (!texto) return '';
+  const cabeceras = [...texto.matchAll(/^#{2,}[ \t]*(?:#[ \t]*)*Ciclo[ \t]+\d+.*$/gm)];
+  const inicio = Math.max(0, cabeceras.length - max);
+  const bloques = [];
+  for (let i = inicio; i < cabeceras.length; i++) {
+    const desde = cabeceras[i].index;
+    const hasta = i + 1 < cabeceras.length ? cabeceras[i + 1].index : texto.length;
+    const bruto = texto.slice(desde, hasta).trimEnd().replace(/\n+---[ \t]*$/, '').trimEnd();
+    const lineas = bruto.split('\n');
+    // Normaliza la cabecera: quita todos los '#' iniciales y deja "## Ciclo N".
+    lineas[0] = `## ${lineas[0].replace(/^#{2,}[ \t]*(?:#[ \t]*)*/, '')}`;
+    const recortado = lineas.length > lineasPorCiclo
+      ? [...lineas.slice(0, lineasPorCiclo), '…'].join('\n')
+      : lineas.join('\n');
+    bloques.push(recortado);
+  }
+  return bloques.join('\n\n');
+}
+
 export function renderState(data) {
   const s = state(data);
   const bar = (d, t) => `${'█'.repeat(Math.round((t ? d / t : 0) * 20)).padEnd(20, '░')} ${d}/${t}`;
   const lastLog = existsSync(PATHS.bitacora)
-    ? readFileSync(PATHS.bitacora, 'utf8').split('\n## ').slice(-3).map((x) => (x.startsWith('Ciclo') ? `## ${x}` : x)).join('\n## ').replace(/^## ## /, '## ')
+    ? ultimosCiclos(readFileSync(PATHS.bitacora, 'utf8'))
     : '';
   return `# Estado del roadmap (autogenerado — no editar)
 
@@ -216,7 +244,7 @@ ${s.phases.map((p) => `| ${p.phase}. ${p.name} | ${bar(p.done, p.total)} |`).joi
 ${s.blocked.length ? `**Bloqueadas:**\n${s.blocked.map((b) => `- ${b.id} ${b.title} — ${b.reason}`).join('\n')}\n` : ''}
 ${s.validation_errors.length ? `⚠️ **Errores de validación:**\n${s.validation_errors.map((e) => `- ${e}`).join('\n')}\n` : ''}
 ## Últimos ciclos
-${lastLog.split('\n').slice(-40).join('\n')}
+${lastLog}
 `;
 }
 

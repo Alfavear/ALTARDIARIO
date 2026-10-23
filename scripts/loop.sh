@@ -62,7 +62,10 @@ done
 git checkout -q "$BASE_BRANCH"
 echo
 echo "═══════════════ Resumen ═══════════════"
-node tools/roadmap-mcp/cli.mjs state | head -25
+STATE_TMP="$(mktemp -t roadmap-state.XXXXXX)"
+node tools/roadmap-mcp/cli.mjs state > "$STATE_TMP" 2>/dev/null || true
+head -25 "$STATE_TMP"
+rm -f "$STATE_TMP"
 echo
 echo "Ramas producidas:"; git branch --list 'auto/*' | sed 's/^/  /'
 echo
