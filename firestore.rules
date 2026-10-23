@@ -273,6 +273,30 @@ service cloud.firestore {
         allow read, write: if signedIn() && uid() == userId;
       }
 
+      // Documento privado con allowlist estricta (T-041):
+      // Solo 'account' es un ID v�lido. Campos permitidos:
+      //   email: string <= 320 chars
+      //   fcmToken: string <= 4096 chars
+      // Ning�n otro campo (role, verified, basura) se permite.
+      match /private/{privateId} {
+        allow read: if signedIn() && uid() == userId && privateId == 'account';
+        allow create: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (request.resource.data.get('email', '') == ''
+              || (request.resource.data.email is string && request.resource.data.email.size() <= 320))
+          && (request.resource.data.get('fcmToken', '') == ''
+              || (request.resource.data.fcmToken is string && request.resource.data.fcmToken.size() <= 4096));
+        allow update: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (request.resource.data.get('email', '') == ''
+              || (request.resource.data.email is string && request.resource.data.email.size() <= 320))
+          && (request.resource.data.get('fcmToken', '') == ''
+              || (request.resource.data.fcmToken is string && request.resource.data.fcmToken.size() <= 4096));
+        allow delete: if signedIn() && uid() == userId && privateId == 'account';
+      }
+
       // Notificaciones: el receptor las lee/marca/borra; cualquier usuario
       // puede CREAR una, pero solo firmada con su propio uid como actor.
       match /notifications/{notificationId} {

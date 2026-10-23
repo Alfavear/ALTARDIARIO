@@ -11,6 +11,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Bloqueo real: si un usuario te bloqueó (o tú a él), ninguno de los dos puede comentar, responder, escribir en el chat, notificar ni seguir al otro; las reglas lo comprueban con `exists()` sobre `usuarios/{uid}/blocked/{uid}`. Dejar de seguir sigue permitido para que el bloqueado pueda limpiar su rastro. 6 tests de reglas nuevos (41/41).
 
 ### Añadido
+- Privacidad: documento privado con allowlist (T-041): /usuarios/{uid}/private/account solo admite email (≤320) y fcmToken (≤4096); tests de reglas que rechazan campos arbitrarios.
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).
 - Observabilidad: Crashlytics, Analytics (`lib/core/observability`).
 - Base de i18n (ARB es/en) y `flutter_localizations`.
