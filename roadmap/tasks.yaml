@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 6
+  cycle_counter: 7
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -267,7 +267,7 @@ tasks:
     phase: 1
     priority: P3
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - start_task/complete_task/log_cycle producen un diff de tasks.yaml limitado a las claves que cambian
@@ -278,13 +278,20 @@ tasks:
       - tools/roadmap-mcp/roadmap.mjs
     source: audit
     created_at: 2026-10-20T23:05:56.523Z
+    started_cycle: 7
+    started_at: 2026-10-23T00:52:11.900Z
+    done_at: 2026-10-23T00:52:11.900Z
+    evidence: 'scripts/check.sh --fast: 128/128 tests, format y analyze limpios, "Todo en verde"; node --test
+      tools/roadmap-mcp/roadmap.test.mjs: 11/11 con los tests nuevos. save() es idempotente sobre el
+      tasks.yaml real y cambiar un campo altera exactamente una linea.'
+    commit: 1f85a74
   - id: T-013
     title: Corregir 'Últimos ciclos' de STATE.md cuando la bitácora aún no tiene entradas
     type: bug
     phase: 1
     priority: P3
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - 'el generador de STATE.md no duplica el encabezado ("## ## Ciclo N") ni deja un ciclo sin encabezado
@@ -295,6 +302,13 @@ tasks:
       - roadmap/STATE.md
     source: audit
     created_at: 2026-10-20T23:05:56.534Z
+    started_cycle: 7
+    started_at: 2026-10-23T00:52:11.900Z
+    done_at: 2026-10-23T00:52:11.900Z
+    evidence: 'scripts/check.sh --fast: 128/128 tests, format y analyze limpios, "Todo en verde"; node --test
+      tools/roadmap-mcp/roadmap.test.mjs: 11/11 con los tests nuevos. STATE.md regenerado con 0 encabezados
+      duplicados y cada ciclo conserva su cabecera.'
+    commit: 1f85a74
   - id: T-014
     title: "Chat: sendMessage no debe reenviar participantIds en chats existentes y la UI no debe perder el texto
       si falla"
@@ -573,7 +587,7 @@ tasks:
     phase: 4
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - en menos de dos toques se abre la lectura pendiente
@@ -584,6 +598,13 @@ tasks:
       - lib/presentation/screens/home_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.1 (secuencia 10)
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 7
+    started_at: 2026-10-23T00:52:11.900Z
+    done_at: 2026-10-23T00:52:11.900Z
+    evidence: 'scripts/check.sh --fast: 128/128 tests, format y analyze limpios, "Todo en verde"; node --test
+      tools/roadmap-mcp/roadmap.test.mjs: 11/11 con los tests nuevos. 5 widget tests nuevos de la tarjeta:
+      pendiente, cargando, sin conexion, completado con siguiente lectura y escala de texto 2x sin desbordes.'
+    commit: 8357e8c
   - id: T-028
     title: Reflexion guiada y privada por defecto
     type: feature
@@ -887,3 +908,26 @@ tasks:
       - functions/package.json
     source: "rules-auditor + revision del stack Codex: functions/ no corre en CI"
     created_at: 2026-10-21T02:56:57.771Z
+  - id: T-046
+    title: scripts/loop.sh termina con exit 1 por SIGPIPE del resumen
+    type: bug
+    phase: 1
+    priority: P2
+    effort: S
+    status: done
+    depends_on: []
+    acceptance:
+      - scripts/loop.sh termina con exit 0 cuando los ciclos se completan
+      - el resumen final se sigue mostrando igual
+      - no cambia el comportamiento de los ciclos
+    files:
+      - scripts/loop.sh
+    source: auditoria del ciclo 6 (fallo observado en ejecucion real)
+    created_at: 2026-10-23T00:52:11.897Z
+    started_cycle: 7
+    started_at: 2026-10-23T00:52:11.900Z
+    done_at: 2026-10-23T00:52:11.900Z
+    evidence: 'scripts/check.sh --fast: 128/128 tests, format y analyze limpios, "Todo en verde"; node --test
+      tools/roadmap-mcp/roadmap.test.mjs: 11/11 con los tests nuevos. El resumen escribe a un fichero temporal
+      en vez de canalizar con head.'
+    commit: 1f85a74

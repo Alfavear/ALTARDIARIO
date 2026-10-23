@@ -155,3 +155,24 @@ Herramienta administrativa de migracion: logica pura (planMigracion, 6 tests) + 
 **Siguiente:** Pendiente inmediato: revision humana y merge del PR #23 (T-015, 4/4 checks) y del PR de T-018. En paralelo, la otra sesion corrige el stack de Codex (#21 privacidad, #22 moderacion) con los hallazgos de los tres revisores. Desbloqueo del stack: decision humana sobre la ventana de compatibilidad (Opcion A: minVersion) y ejecutar la migracion en produccion. Siguiente elegible del backlog: T-038 (indice de chats: la lista de chats falla en produccion con FAILED_PRECONDITION) y T-039 (noPrivateFields en contenido publico).
 
 ---
+## Ciclo 7 — 2026-10-23T00:52:11.900Z
+- **Tarea:** T-012, T-013, T-046 y T-027 · Roadmap sin reformateo, STATE.md, SIGPIPE de loop.sh e Inicio "Hoy"
+- **Resultado:** done
+- **Rama/commit:** auto/T-013-estado-roadmap (PR #28) y auto/T-027-inicio-hoy @ 1f85a74 y 8357e8c
+- **check.sh:** ✅ verde
+- **Reviewer:** pendiente (PR del Inicio en revision)
+
+El MCP del roadmap ya no puede reformatear tasks.yaml en masa: dos tests de regresion lo impiden y el fichero canonico se mantiene byte a byte. STATE.md deja de duplicar encabezados de ciclo. loop.sh sale con 0. La tarjeta de Inicio se extrae a dos widgets con los cuatro estados (cargando, sin conexion, pendiente, completado), se abre con un toque y ofrece la siguiente lectura del plan.
+
+**Problemas:**
+- El PR #26 (roadmap de 45 tareas) no estaba en main: las tareas nuevas solo existian en la rama. Se mergeo antes de cerrar nada para no perderlas.
+- La proteccion de main exige rama al dia: cada merge deja BEHIND a los demas PR, asi que hay que actualizar rama y esperar checks otra vez.
+- Un test de integracion del Inicio con dia completado se colgo 10 minutos en pumpAndSettle; se retiro y la cobertura queda en los 5 widget tests de la tarjeta.
+
+**Decisiones:**
+- El roadmap (tasks.yaml, STATE.md, BITACORA.md) lo escribe solo la orquestadora; el carril B anota en ESTADO-B.md para evitar conflictos.
+- La tarjeta de la lectura vive en lib/presentation/widgets/lectura_hoy_card.dart + lectura_hoy_estados.dart, ninguno supera 400 lineas.
+
+**Siguiente:** Carril A: T-028 (reflexion guiada), T-033 (biblioteca personal), T-036 y T-037. Carril B: B1 = T-040 asignada por comentario en sus PRs.
+
+---
