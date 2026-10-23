@@ -25,6 +25,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Publicar reflexión: el borrador sobrevive al cierre de la app y se recupera al volver; publicar exige una vista previa con confirmación explícita; y las notas se convierten en reflexión con un toque, sin copiar texto.
 - Biblioteca personal (Notas): aviso de que las notas son privadas (solo el dueño puede verlas), exportación bajo demanda al portapapeles (nada se envía a otros usuarios ni a terceros) y estado de error con reintento que no bloquea la lectura.
 - Observabilidad: los eventos de producto pasan por una capa que descarta textos, correos, tokens y motivos libres; solo números, booleanos y categorías cerradas llegan a Analytics. Cableados `lectura_completada` y `nota_guardada`.
+- Observabilidad: al publicar una reflexión se envía `reflexion_publicada` con la longitud del texto y si lleva pasaje; el texto en sí nunca sale del dispositivo.
 
 ### Cambiado
 - CI: el job `Build APK (debug)` solo compila cuando el PR toca `android/`, `pubspec.*` o `.github/workflows/` (y siempre en `main`); añade caché de Gradle y compila una sola ABI. Los PRs de Dart/UI bajan de ~7,6 a ~1,5 min de checks; el nombre del check requerido no cambia.
