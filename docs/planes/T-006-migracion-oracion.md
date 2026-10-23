@@ -2,6 +2,12 @@
 
 **Estado:** plan listo · **Rama:** `lane-a/T-006` · **Rol:** carril A (arquitectura y core)
 
+> **Progreso (andamiaje hecho):** `lib/features/oracion/data/oracion_repository.dart`
+> y `test/features/oracion/oracion_repository_test.dart` existen y están verdes
+> (rojo → verde, 4 tests). Falta lo que colisiona con #54: delegación desde
+> `FirestoreService`, providers, mover pantalla y partirla.
+
+
 Refactor puro: **sin cambios de comportamiento**. Si aparece un bug durante la
 migración, se anota y no se arregla aquí (receta de `/migrate-feature`).
 

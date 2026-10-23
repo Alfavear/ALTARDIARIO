@@ -6,7 +6,7 @@
 - **rama**: `lane-a/T-006`
 - **PR**: #56 (`chore/t-053-cierre`) abierto a la espera de merge ajeno; 0 PRs propios de T-006.
 - **validado en**: `360f7af` (`origin/main`)
-- **último latido**: `2026-10-23T03:58Z`
+- **último latido**: `2026-10-23T11:08Z`
 - **tarea**: T-006 en `in_progress`, `assigned: lane-a`, ciclo 10.
 - **siguiente paso**: esperar el merge de **#54**; después ejecutar el plan y abrir
   PR con `[CARRIL A] T-006 LISTO PARA INTEGRACIÓN | SHA: <commit>`.
@@ -26,6 +26,7 @@
 
 - [x] T-006 planificado en `docs/planes/T-006-migracion-oracion.md`.
 - [x] T-006 marcada `in_progress` + `assigned: lane-a`.
+- [x] Andamiaje: `OracionRepository` + 4 tests (rojo → verde), sin tocar ficheros de #54.
 - [x] Cierre de T-053 publicado en el PR #56 (a la espera de merge).
 - [ ] Ejecutar T-006 (bloqueado por #54).
 
