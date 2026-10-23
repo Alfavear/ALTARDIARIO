@@ -477,3 +477,28 @@ tasks:
       - lib/presentation/screens/perfil_screen.dart
     source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 4 (cumplimiento de tiendas)
     created_at: 2026-10-21T02:36:45.757Z
+  - id: T-022
+    title: "Formatear oracion_screen.dart: scripts/check.sh aborta en dart format"
+    type: refactor
+    phase: 1
+    priority: P1
+    effort: S
+    status: done
+    depends_on: []
+    acceptance:
+      - dart format --output=none --set-exit-if-changed lib test termina con codigo 0
+      - scripts/check.sh --fast deja de abortar en el paso dart format y llega a analyze y test
+      - el diff de oracion_screen.dart contiene solo cambios de formato y flutter test sigue en verde
+    files:
+      - lib/presentation/screens/oracion_screen.dart
+    source: "Sesion design system: dart format reporto 785 lineas de reformateo pendientes en un archivo ajeno a
+      la tarea; no se toco para no meter ruido en el diff"
+    created_at: 2026-10-23T02:36:28.676Z
+    started_cycle: 5
+    started_at: 2026-10-23T02:40:26.508Z
+    done_at: 2026-10-23T02:40:26.538Z
+    evidence: "scripts/check.sh --fast EN VERDE: dart format sin pendientes, flutter analyze --no-pub 'No issues
+      found!', flutter test '+123 All tests passed!', cierre 'Todo en verde'. El pendiente real era una linea
+      en blanco final (1 linea), no 785: ese conteo fue un artefacto de Compare-Object -SyncWindow 0. Commit
+      f3f37b0."
+    commit: f3f37b0

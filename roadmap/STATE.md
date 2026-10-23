@@ -1,10 +1,10 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 5 · **Fase actual:** 1 · **Progreso global:** █████░░░░░░░░░░░░░░░ 5/21 (24%)
+**Ciclo:** 5 · **Fase actual:** 1 · **Progreso global:** █████░░░░░░░░░░░░░░░ 6/22 (27%)
 
 | Fase | Progreso |
 |---|---|
-| 1. Estabilizar (seguridad, observabilidad, CI) | █████████░░░░░░░░░░░ 5/11 |
+| 1. Estabilizar (seguridad, observabilidad, CI) | ██████████░░░░░░░░░░ 6/12 |
 | 2. Andamiaje IA y tests | ░░░░░░░░░░░░░░░░░░░░ 0/2 |
 | 3. Arquitectura feature-first y backend | ░░░░░░░░░░░░░░░░░░░░ 0/5 |
 | 4. Producto | ░░░░░░░░░░░░░░░░░░░░ 0/3 |
@@ -12,7 +12,7 @@
 **En curso:** —
 **Siguiente:** T-018 · Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos (P0, M)
 
-**Conteo:** backlog=15 · ready=0 · in_progress=0 · review=0 · done=5 · blocked=1 · dropped=0
+**Conteo:** backlog=15 · ready=0 · in_progress=0 · review=0 · done=6 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
