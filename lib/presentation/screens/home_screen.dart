@@ -12,7 +12,9 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/lectura_dia.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
+import '../../data/services/storage_service.dart';
 import '../providers/app_providers.dart';
+import '../widgets/lectura_hoy_card.dart';
 import 'amigos_rachas_screen.dart';
 import 'bible_reader_screen.dart';
 import 'foro_screen.dart';
@@ -36,6 +38,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _verseRef;
   String? _passageTitle;
   bool _loadingVerse = true;
+  bool _sinConexion = false;
 
   @override
   void initState() {
@@ -69,13 +72,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _verseText = v.text;
             _verseRef = '${v.bookName} ${v.chapter}:${v.verse}';
             _loadingVerse = false;
+            _sinConexion = false;
           });
         }
       } else {
-        if (mounted) setState(() => _loadingVerse = false);
+        // Sin datos de la Biblia: el plan local sigue disponible, pero avisamos
+        // de que no pudimos traer el versículo.
+        if (mounted) {
+          setState(() {
+            _loadingVerse = false;
+            _sinConexion = true;
+          });
+        }
       }
     } catch (_) {
-      if (mounted) setState(() => _loadingVerse = false);
+      if (mounted) {
+        setState(() {
+          _loadingVerse = false;
+          _sinConexion = true;
+        });
+      }
     }
   }
 
@@ -90,6 +106,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isCompleted = storage.isDiaCompletado(dateKey);
     final racha = storage.calcularRacha();
     final total = storage.getTotalCompletadas();
+    // En el estado completado ofrecemos la lectura de mañana (si el plan la
+    // tiene cargada) para que el usuario sepa qué viene después.
+    final siguientePasaje = isCompleted ? _siguientePasaje(storage) : null;
 
     return PopScope(
       canPop: !focusMode || isCompleted,
@@ -242,7 +261,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              _buildReadingCard(isCompleted),
+              LecturaHoyCard(
+                pasaje: _passageTitle ?? 'Salmo 1',
+                versiculo: _verseText,
+                referencia: _verseRef,
+                cargando: _loadingVerse,
+                sinConexion: _sinConexion,
+                completado: isCompleted,
+                siguientePasaje: siguientePasaje,
+                onAbrir: () => _abrirLectura(_passageTitle ?? 'Salmo 1'),
+                onMarcarCompletado: _marcarCompletado,
+                onAbrirSiguiente: siguientePasaje == null
+                    ? null
+                    : () => _abrirLectura(siguientePasaje),
+              ),
               const SizedBox(height: 16),
               _buildStreakCard(racha),
               const SizedBox(height: 24),
@@ -633,209 +665,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildReadingCard(bool isCompleted) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.softShadow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(Icons.auto_stories,
-                      size: 48,
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.15)),
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text('Plan Anual',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _passageTitle ?? 'Salmo 1',
-                  style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryBlue),
-                ),
-                const SizedBox(height: 8),
-                if (_loadingVerse)
-                  const SizedBox(
-                    height: 40,
-                    child: Center(
-                        child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))),
-                  )
-                else if (_verseText != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$_verseText',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontStyle: FontStyle.italic,
-                            height: 1.4,
-                            color: AppTheme.textSecondary),
-                      ),
-                      if (_verseRef != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            _verseRef!,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryBlue),
-                          ),
-                        ),
-                    ],
-                  ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Text('Progreso del capítulo',
-                        style: TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary)),
-                    const Spacer(),
-                    Text(
-                      isCompleted ? '100%' : '0%',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isCompleted
-                              ? AppTheme.completedGreen
-                              : AppTheme.textSecondary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: isCompleted ? 1.0 : 0.0,
-                    backgroundColor:
-                        AppTheme.primaryBlue.withValues(alpha: 0.1),
-                    color: AppTheme.completedGreen,
-                    minHeight: 6,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BibleReaderScreen(
-                                pasajes: _passageTitle ?? 'Salmo 1',
-                                fechaClave: DateFormat('yyyy-MM-dd')
-                                    .format(DateTime.now()),
-                                readOnly: true,
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.menu_book,
-                            size: 18, color: Colors.white),
-                        label: const Text('Leer pasaje',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () async {
-                        unawaited(HapticFeedback.mediumImpact());
-                        final storage = ref.read(storageProvider);
-                        final now = DateTime.now();
-                        final dateKey = DateFormat('yyyy-MM-dd').format(now);
-                        await storage.toggleLectura(dateKey);
-                        final uid = ref.read(effectiveUserUidProvider);
-                        if (uid != null) {
-                          final completed = storage.getCompletedDatesSync();
-                          final maxStreak = storage.getMaxStreak();
-                          await syncProgressGuarded(
-                              ref, uid, completed, maxStreak);
-                        }
-                        if (mounted) setState(() {});
-                      },
-                      child: Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: isCompleted
-                              ? AppTheme.completedGreenLight
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isCompleted
-                                ? AppTheme.completedGreen
-                                : AppTheme.pendingGrayDark,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          color: isCompleted
-                              ? AppTheme.completedGreen
-                              : AppTheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+  void _abrirLectura(String pasaje) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BibleReaderScreen(
+          pasajes: pasaje,
+          fechaClave: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+          readOnly: true,
+        ),
       ),
     );
+  }
+
+  Future<void> _marcarCompletado() async {
+    unawaited(HapticFeedback.mediumImpact());
+    final storage = ref.read(storageProvider);
+    final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    await storage.toggleLectura(dateKey);
+    final uid = ref.read(effectiveUserUidProvider);
+    if (uid != null) {
+      final completed = storage.getCompletedDatesSync();
+      final maxStreak = storage.getMaxStreak();
+      await syncProgressGuarded(ref, uid, completed, maxStreak);
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Pasaje del día siguiente según el plan local. Devuelve null si el plan
+  /// no lo tiene cargado (por ejemplo, el último día del año).
+  String? _siguientePasaje(StorageService storage) {
+    final manana = DateTime.now().add(const Duration(days: 1));
+    for (final lectura in storage.getLecturasMes(manana.month)) {
+      if (lectura.dia == manana.day) {
+        return lectura.pasajes.split(';').first.trim();
+      }
+    }
+    return null;
   }
 
   Widget _buildStreakCard(int racha) {
