@@ -1,31 +1,42 @@
 # Estado del carril A (orquestadora)
 
-> Lo escribe **solo** la orquestadora. El carril B lo lee con:
-> `git fetch origin ops/estado && git show origin/ops/estado:roadmap/ESTADO-A.md`
+Actualizado: ciclo 7 del roadmap.
 
-## Tarea en curso
+## Ahora
 
-- **id**: —
-- **qué**: —
-- **rama**: —
-- **PR**: —
+- **T-027 · Inicio "Hoy"** implementado en `auto/T-027-inicio-hoy`: la tarjeta de la
+  lectura se extrae a `lib/presentation/widgets/lectura_hoy_card.dart` y
+  `lectura_hoy_estados.dart` (ninguno supera 400 líneas). Cuatro estados:
+  cargando (skeleton), sin conexión, pendiente y completado con celebración
+  discreta y siguiente lectura del plan. Se abre con un solo toque y respeta el
+  escalado de texto. 5 widget tests nuevos.
 
-## Terminado
+## Mergeado en `main`
 
-| fecha | tarea | rama / PR | verificación | qué cambió |
-|---|---|---|---|---|
-| 2026-10-21 | T-015 allowlist de campos en /chats | `auto/T-015-rules-chats-allowlist` → PR #23, mergeado (`085a20a`) | 33/33 reglas, 123/123 Dart, 4/4 CI | reglas endurecidas en `/chats`, desplegadas |
-| 2026-10-21 | T-018 migración de datos privados | `auto/T-018-migracion-privacidad` → PR #26 | check.sh completo verde, functions 9/9 | script de migración + orden de operaciones |
+| PR | Qué | Commit |
+|---|---|---|
+| #26 | Herramienta de migración de datos privados del perfil (T-018) | `e6a3ea5` |
+| #27 | Bandeja compartida y reparto de carriles | `b741499` |
+| #28 | Roadmap sin reformateo, `STATE.md` sin encabezados duplicados y `loop.sh` sin SIGPIPE (T-012, T-013, T-046) | `1f85a74` |
 
-## Decisiones tomadas por el humano
+## Siguiente (carril A)
 
-- **Ventana de compatibilidad**: Opción A — bloqueo por `config/app_info.minVersion` (el diálogo
-  bloqueante de `update_service.dart`). Sin reglas transitorias. Orden: publicar app → `minVersion`
-  → migrar → endurecer reglas.
+1. T-028 · Reflexión guiada y privada por defecto
+2. T-033 · Biblioteca personal (resaltados, notas y reflexiones privadas)
+3. T-036 · Observabilidad accionable sin datos sensibles
+4. T-037 · Rendimiento: métricas, caché offline de Biblia y reintentos
+5. T-035 · Migrar la feature de moderación a `lib/features/moderation/`
 
-## Bloqueos / pendientes de decisión humana
+## Reglas del carril A
 
-- Desplegar las reglas de privacidad requiere: app nueva publicada, `minVersion` subido y migración
-  aplicada con 0 perfiles con datos privados.
-- `config/app_info.minVersion` (valor) lo cambia el humano, no los agentes.
-- T-010 (compartir versículo) implica una dependencia nueva: si no está justificada, se aplaza.
+- El roadmap (`tasks.yaml`, `STATE.md`, `BITACORA.md`) lo escribe **solo** el carril A.
+- El carril B no mergea a `main`: publica rama + PR y anota en `ESTADO-B.md`.
+- Ningún merge sin los 4 checks en verde y la rama al día con `main`.
+- Nada de deploys, tags ni `config/app_info.minVersion` sin humano.
+
+## Pendiente humano (despliegue de privacidad)
+
+1. Publicar la app nueva.
+2. Subir `config/app_info.minVersion` para forzar la actualización.
+3. Ejecutar la migración (`npm run migrate:private-account`) hasta 0 campos privados.
+4. **Solo entonces** desplegar las reglas de privacidad.

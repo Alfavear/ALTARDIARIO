@@ -19,6 +19,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - CI/CD en GitHub Actions: format/analyze/test, reglas, builds Android/Web, deploy de Firebase, release Android por tag, Dependabot.
 - `scripts/check.sh`, `scripts/rules_test.sh`, `scripts/bootstrap.sh`.
 - Documentación: ROADMAP, ADR-0001/0002/0003, AI_WORKFLOW, SECURITY, RELEASE.
+- Inicio: tarjeta de la lectura de hoy con cuatro estados (cargando con skeleton, sin conexión, pendiente y completado). Se abre con un solo toque, al completar el día muestra una celebración discreta y la siguiente lectura del plan, y respeta el escalado de texto del sistema.
+
+- Publicar reflexión: el borrador sobrevive al cierre de la app y se recupera al volver; publicar exige una vista previa con confirmación explícita; y las notas se convierten en reflexión con un toque, sin copiar texto.
+- Biblioteca personal (Notas): aviso de que las notas son privadas (solo el dueño puede verlas), exportación bajo demanda al portapapeles (nada se envía a otros usuarios ni a terceros) y estado de error con reintento que no bloquea la lectura.
+- Observabilidad: los eventos de producto pasan por una capa que descarta textos, correos, tokens y motivos libres; solo números, booleanos y categorías cerradas llegan a Analytics. Cableados `lectura_completada` y `nota_guardada`.
 
 ### Cambiado
 - Feed de reflexiones limitado a 100 documentos por lectura (antes: colección completa).
@@ -33,6 +38,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Chats: las reglas aceptan el reordenamiento de `participantIds` al enviar mensajes (antes solo podía escribir quien creó el chat). Tests de reglas para todas las escrituras del cliente.
 - Build Android en CI: Gradle 8.14.3, AGP 8.11.1 y Kotlin 2.2.20 (mínimos de Flutter stable); `google-services.json` restaurado desde secret; archivos generados (`local.properties`, `GeneratedPluginRegistrant.java`, logs de Kotlin) fuera del control de versiones.
 - Firestore: eliminado el índice redundante de un solo campo en `respuestas` que impedía el deploy de índices; Firestore ya cubre `fecha` con el índice de campo único.
+- Reglas: límites de tamaño en debates (título ≤200, contenido ≤5000), respuestas (contenido ≤2000), comentarios de petición (texto ≤2000) y notificaciones (title ≤200, body ≤1000), aplicados también en la edición del dueño.
 - Roadmap: `STATE.md` ya no duplica el encabezado de los ciclos (`## ## Ciclo N`) ni deja ciclos sin cabecera, y `scripts/loop.sh` termina con exit 0 (el `head` ya no rompe el pipe con SIGPIPE).
 - Roadmap: tests de regresión que garantizan que guardar `tasks.yaml` solo reescribe las claves que cambian (guardar sin cambios no altera ni un byte).
 
