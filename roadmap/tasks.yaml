@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 9
+  cycle_counter: 10
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -186,12 +186,18 @@ tasks:
     phase: 2
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-003
     acceptance:
       - test/services/firestore_service_test.dart cubre toggleLike, toggleReaction, follow/unfollow, amen
       - cobertura de firestore_service.dart > 50%
+    started_cycle: 10
+    started_at: 2026-10-23T02:46:41.371Z
+    done_at: 2026-10-23T02:46:41.371Z
+    evidence: "PR #43 mergeado en main (0a568f2). Tests de toggleLike, toggleReaction, toggleFollow y toggleAmen
+      sobre fake_cloud_firestore: cubren doble toque y usuario inexistente."
+    commit: 0a568f2
   - id: T-006
     title: Migrar feature oracion a lib/features/oracion/ (ADR-0001)
     type: refactor
@@ -402,7 +408,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - el metodo hace return sin commit si la query de notificaciones no leidas devuelve cero documentos
@@ -413,6 +419,13 @@ tasks:
       - test/services/firestore_service_test.dart
     source: T-002 planner
     created_at: 2026-10-20T23:43:23.669Z
+    started_cycle: 10
+    started_at: 2026-10-23T02:46:41.406Z
+    done_at: 2026-10-23T02:46:41.406Z
+    evidence: "PR #45 mergeado en main (15d4cb8). markAllNotificationsAsRead ya no crea un batch vacío cuando no
+      hay notificaciones sin leer (Firestore lanzaba al hacer commit sin operaciones). Sin test propio
+      todavía: queda anotado para el arnés de #43."
+    commit: 15d4cb8
   - id: T-018
     title: "Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos"
     type: security
@@ -533,7 +546,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - no se puede iniciar ni continuar un chat con una cuenta bloqueada
@@ -545,13 +558,20 @@ tasks:
       - lib/presentation/screens/notificaciones_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1 (secuencia 4)
     created_at: 2026-10-21T02:44:52.915Z
+    started_cycle: 10
+    started_at: 2026-10-23T02:47:01.325Z
+    done_at: 2026-10-23T02:47:01.326Z
+    evidence: "PR #36 mergeado en main (7559028). Los bloqueos filtran chats y notificaciones y se pueden
+      desbloquear desde Ajustes; el filtro vive en el proveedor (getUserChatsFiltrados y el de
+      notificaciones), no en la vista, así que no quedan filas huérfanas al desbloquear."
+    commit: "7559028"
   - id: T-024
     title: Reportar reflexiones y comentarios
     type: feature
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - reflexiones y comentarios tienen menu de reporte con los motivos validos
@@ -562,6 +582,13 @@ tasks:
       - lib/presentation/widgets/
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 5)
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 10
+    started_at: 2026-10-23T02:46:41.297Z
+    done_at: 2026-10-23T02:46:41.298Z
+    evidence: "PR #38 mergeado en main (31b6610). Reportar reflexiones y comentarios con el diálogo reutilizable:
+      motivo con tope de 200 y \"Otro\" obliga a explicar. Reglas: 'comentario' añadido al allowlist de
+      targetType. 4 widget tests + 3 tests de reglas (34/34)."
+    commit: 31b6610
   - id: T-025
     title: Reportar peticiones, debates y respuestas, y probar la Function de moderacion
     type: feature
@@ -1001,3 +1028,39 @@ tasks:
       - lib/presentation/screens/chat_screen.dart
     source: "detectado al verificar el deploy de #31 (limites ya en produccion)"
     created_at: 2026-10-23T01:42:09.183Z
+  - id: T-048
+    title: "Moderación: la Function ignora los reportes de comentarios y de perfiles"
+    type: bug
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Un reporte con targetType "comentario" resuelve su ruta real
+        (reflexiones/{reflexionId}/comentarios/{id}) y aplica el auto-ocultado.
+      - Un reporte con targetType "usuario" resuelve usuarios/{uid} y aplica el ocultado del perfil.
+      - Tests de la Function cubren los 5 targetType y el caso de target inexistente (no debe lanzar).
+    files:
+      - functions/src/moderation.ts
+      - functions/src/index.ts
+    source: audit
+    created_at: 2026-10-23T02:46:41.406Z
+  - id: T-049
+    title: "Reglas: reports acepta campos arbitrarios (falta keys().hasOnly)"
+    type: security
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - La creación en reports exige keys().hasAll y keys().hasOnly con reporterId, targetType, targetId,
+        reason y timestamp.
+      - Test que rechaza un campo extra (p. ej. status) y test que acepta exactamente el payload que envía el
+        cliente.
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: audit
+    created_at: 2026-10-23T02:46:41.406Z

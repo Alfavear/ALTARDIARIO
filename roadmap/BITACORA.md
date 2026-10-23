@@ -216,3 +216,26 @@ Segunda tanda de merges. Ademas del codigo de cada tarea: (1) #38 necesitaba tes
 **Siguiente:** T-023 (#36), T-024 (#38), T-025 (#42), T-005 (#43), #45 y #46 en cola de merge; despues #41 cierra el ciclo.
 
 ---
+## Ciclo 10 — 2026-10-23T02:46:41.406Z
+- **Tarea:** T-024, T-005, T-017 · Tanda 3: reportar, filtrar bloqueos, tests de interacción y batch vacío
+- **Resultado:** mergeado en main
+- **Rama/commit:** fix/lane-b-10-reportar-reflexiones, fix/lane-b-09-filtrar-chats-notif, fix/lane-b-15-tests-firestore-service, fix/lane-b-16-notificaciones-batch @ 31b6610, 0a568f2, 15d4cb8
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. La revisión de la orquestadora encontró dos fallos que los tests no cubrían: el add/add del diálogo de reportar (resuelto quedándose con la versión con tests) y que #47 estaba sobre una base vieja que habría revertido el arreglo del índice.
+
+Tercera tanda de merges. Entró el CI nuevo (#48): el job Build APK pasó de ~6 min a 6 s en los PRs que no tocan Android ni dependencias, así que un PR de Dart/UI queda en ~1,5 min. Se publicó en ops/estado la regla de mergear main antes de abrir PR y el tope de 2 PRs abiertos. Una auditoría externa sobre un checkout atrasado acertó en dos puntos que sí están en main y se convierten en T-048 (P1) y T-049 (P2).
+
+**Problemas:**
+- Se acumularon 9 PRs abiertos y cada merge invalidaba los checks de los demás: la cola crecía más rápido de lo que drenaba.
+- #47 se construyó sobre un main viejo y habría revertido #44 y borrado product_events.dart.
+- La Function de moderación solo mapea reflexion, peticion y debate: los reportes de comentarios (#38) y de perfiles se guardan y nadie los procesa. Detectado al revisar un informe externo.
+
+**Decisiones:**
+- Tope de 2 PRs abiertos por carril y merge obligatorio de main antes de abrir PR (roadmap/BANDEJA.md).
+- Los conflictos se resuelven en la rama del PR tomando la versión de main que tenga tests.
+- Un PR que revierte un arreglo reciente no se mergea aunque sus checks estén verdes.
+- No se cierra una tarea cuyo PR solo cubre la UI (T-025 sigue abierta: falta la Function).
+
+**Siguiente:** #42 (conflicto resuelto), #49 (evento reflexion_publicada) y #41 (este cierre). En espera: #46 (requiere decisión humana) y #47 (tests + base al día).
+
+---
