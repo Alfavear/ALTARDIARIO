@@ -277,7 +277,7 @@ service cloud.firestore {
       allow read: if false;
       allow create: if signedIn()
         && request.resource.data.reporterId == uid()
-        && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario']
+        && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario', 'comentario']
         && request.resource.data.targetId is string
         && request.resource.data.reason is string
         && request.resource.data.reason.size() <= 500;
