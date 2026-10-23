@@ -37,6 +37,29 @@ romper algo que alguien usa hoy.
 - [ ] CHANGELOG actualizado
 - [ ] Ningún archivo nuevo supera 400 líneas; ningún widget privado supera 150
 
+### 1c. Varias sesiones a la vez (obligatorio)
+
+Si hay más de una sesión en el repo (lo normal: orquestadora + implementadora + auditora):
+
+1. **Un worktree por sesión.** Dos sesiones en el mismo directorio acaban en un
+   `reset --hard`, un `checkout -B` o un `stash` cruzado, y el trabajo de una
+   desaparece sin que nadie se entere. `git worktree list` antes de empezar.
+2. **`git fetch origin` y cita el SHA de `origin/main`** en todo informe
+   ("validado en `<sha>`"). Nunca valides ni decidas sobre un `main` local desfasado.
+3. **Se trabaja desde `origin/main`, no desde `main` local.** Rama nueva:
+   `git checkout -B mi-rama origin/main`. El `main` local no lo mantiene nadie y por
+   eso envejece: si lo necesitas al día, `scripts/sync-main.sh` (solo fast-forward).
+4. **Un solo merger.** Solo la sesión orquestadora mergea y escribe el roadmap.
+5. **Máximo 2 PRs abiertos por sesión**; antes de abrirlos, `git merge origin/main`
+   y mira `git diff --stat origin/main` (si aparecen ficheros que no tocaste, estás
+   desfasado y ese PR revertiría trabajo ajeno).
+6. **Todo lo no empujado no existe**: push de la rama aunque sea WIP y tu fichero
+   `roadmap/sesiones/<id>.md` al día.
+7. Prohibido `push --force`, `reset --hard` y rebase de ramas con PR abierto.
+
+Protocolo completo, plantillas y casos reales: `docs/SESIONES.md`.
+Orientación en 30 segundos: `scripts/session-check.sh`.
+
 ## 2. Stack
 
 | Capa | Tecnología | Notas |
