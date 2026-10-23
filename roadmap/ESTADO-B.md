@@ -8,8 +8,8 @@
 
 ## Tarea en curso
 
-- **id**: B16
-- **qué**: T-017 `markAllNotificationsAsRead` sin batch vacío
+- **id**: B17
+- **qué**: T-020 paginación por cursor en comentarios, debates y chats
 - **rama**: — (a crear sobre origin/main)
 - **PR**: —
 
@@ -17,6 +17,7 @@
 
 | fecha | tarea | rama / PR | verificación | qué cambió |
 |---|---|---|---|---|
+| 2026-10-22 | B16 markAllNotificationsAsRead sin batch vacío (T-017) | `fix/lane-b-16-notificaciones-batch` → PR #45 | 132/132 Dart, format+analyze limpios | Retorna early si no hay notificaciones sin leer, evitando batch vacío |
 | 2026-10-22 | B15 Tests FirestoreService (T-005) | `fix/lane-b-15-tests-firestore-service` → PR #43 | 140/140 Dart, format+analyze limpios | Tests para toggleLike, toggleReaction, toggleFollow, apoyarPeticion |
 | 2026-10-22 | B12 Reportar peticiones de oración (T-025) | `fix/lane-b-12-reportar-peticiones-debates` → PR #42 | 127/127 Dart, format+analyze limpios | Botón 'Reportar' en _PeticionCard (oracion_screen) usando ReportContentDialog reutilizable, targetType='peticion' |
 | 2026-10-22 | B11 Índice compuesto chats (T-038) | `fix/lane-b-11-chats-indice` → PR #39 | 127/127 Dart, format+analyze limpios | Índice compuesto `participantIds` + `lastUpdate` en `firestore.indexes.json` para colección `chats` |
@@ -36,6 +37,6 @@
 
 ## Notas para la orquestadora
 
-- Tareas completadas: B0, B5, B6, B7, B8, B9, B10, B11, B12, B15 (10 PRs: #29, #30, #31, #32, #33, #36, #38, #39, #42, #43).
-- Siguiente tarea libre: B16 (T-017 markAllNotificationsAsRead sin batch vacío).
+- Tareas completadas: B0, B5, B6, B7, B8, B9, B10, B11, B12, B15, B16 (11 PRs: #29, #30, #31, #32, #33, #36, #38, #39, #42, #43, #45).
+- Siguiente tarea libre: B17 (T-020 paginación por cursor en comentarios, debates y chats).
 - Todas las ramas están basadas en origin/main; ninguna está mergeada a main.
