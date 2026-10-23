@@ -8,6 +8,7 @@ import '../../features/biblioteca/data/exportador_biblioteca.dart';
 import '../../features/biblioteca/presentation/hoja_exportar_biblioteca.dart';
 import '../providers/app_providers.dart';
 import 'note_editor_screen.dart';
+import 'publicar_reflexion_screen.dart';
 
 class NotesScreen extends ConsumerWidget {
   const NotesScreen({super.key});
@@ -382,13 +383,24 @@ class _NoteCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.favorite_outline,
+                  const Icon(Icons.favorite_outline,
                       size: 18, color: AppTheme.textSecondary),
-                  SizedBox(width: 12),
-                  Icon(Icons.share_outlined,
-                      size: 18, color: AppTheme.textSecondary),
+                  const SizedBox(width: 12),
+                  Semantics(
+                    button: true,
+                    label: 'Convertir esta nota en una reflexión para publicar',
+                    child: InkWell(
+                      onTap: () => _convertirEnReflexion(context, note),
+                      borderRadius: BorderRadius.circular(8),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(Icons.ios_share,
+                            size: 18, color: AppTheme.primaryBlue),
+                      ),
+                    ),
+                  ),
                 ],
               ),
               GestureDetector(
@@ -409,6 +421,25 @@ class _NoteCard extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Lleva la nota a la pantalla de publicar con el texto ya puesto: el usuario
+  /// convierte su nota en publicación sin copiar y pegar.
+  void _convertirEnReflexion(BuildContext context, Note note) {
+    final partes = [
+      if (note.title.trim().isNotEmpty) note.title.trim(),
+      if (note.content.trim().isNotEmpty) note.content.trim(),
+    ];
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicarReflexionScreen(
+          pasajeDia:
+              note.title.trim().isEmpty ? 'Reflexión personal' : note.title,
+          textoInicial: partes.join('\n\n'),
+        ),
       ),
     );
   }
