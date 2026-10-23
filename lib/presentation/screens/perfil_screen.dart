@@ -1629,6 +1629,72 @@ void _showPrivacyDialog(BuildContext context) {
   );
 }
 
+void _showBloqueadosDialog(BuildContext context, WidgetRef ref) {
+  final uid = ref.read(effectiveUserUidProvider);
+  if (uid == null) return;
+  final firestore = ref.read(firestoreServiceProvider);
+
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => StreamBuilder<List<String>>(
+      stream: firestore.getUsuariosBloqueados(uid),
+      builder: (context, snapshot) {
+        final List<String> bloqueados = snapshot.data ?? <String>[];
+        return AlertDialog(
+          title: const Text('Usuarios bloqueados'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: bloqueados.isEmpty
+                ? const Text('No tienes usuarios bloqueados.')
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      for (final String bloqueadoUid in bloqueados)
+                        FutureBuilder<Usuario?>(
+                          future: firestore.getUsuarioOnce(bloqueadoUid),
+                          builder: (context, userSnapshot) {
+                            final Usuario? usuario = userSnapshot.data;
+                            if (usuario == null || usuario.fotoUrl.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundImage: NetworkImage(usuario.fotoUrl),
+                                child: null,
+                              ),
+                              title: Text(usuario.nombre),
+                              subtitle: Text(usuario.bio),
+                              trailing: TextButton(
+                                onPressed: () async {
+                                  await firestore.desbloquearUsuario(
+                                      uid, bloqueadoUid);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Usuario desbloqueado')));
+                                  }
+                                },
+                                child: const Text('Desbloquear'),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
 class _MenuOptions extends ConsumerWidget {
   final AsyncValue<User?> authState;
   final WidgetRef ref;
@@ -1673,6 +1739,12 @@ class _MenuOptions extends ConsumerWidget {
             icon: Icons.lock_person,
             label: 'Privacidad',
             onTap: () => _showPrivacyDialog(context),
+          ),
+          const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
+          _MenuTile(
+            icon: Icons.block,
+            label: 'Usuarios bloqueados',
+            onTap: () => _showBloqueadosDialog(context, ref),
           ),
           const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
           _MenuTile(
