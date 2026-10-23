@@ -676,7 +676,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - solo el autor marca una peticion como respondida y anade la actualizacion
@@ -686,6 +686,11 @@ tasks:
       - lib/presentation/screens/oracion_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.3
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 11
+    started_at: 2026-10-23T03:57:42.169Z
+    done_at: 2026-10-23T03:57:42.193Z
+    evidence: "PR #54 mergeado en main (feat: oracion seguimiento). Tests 168/168 passing, analyze limpio."
+    commit: pending
   - id: T-030
     title: Busqueda y temas seguidos en la comunidad
     type: feature
