@@ -12,6 +12,8 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 
 ### Añadido
 - Paginacion real del feed con startAfterDocument e infinite scroll: feedPageSize=30, getReflexionesPage con cursor, FeedPaginationNotifier. (T-007)
+- Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel, reglas comunitarias visibles, cerrar debate por autor, reportar debate. (T-031)
+- Búsqueda y temas seguidos en la comunidad: campo temasSeguidos en Usuario, método toggleTemaSeguido en FirestoreService, provider temasSeguidosProvider, y sección Mis temas seguidos en FeedScreen para seguir/dejar de seguir temas.
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).
 - Observabilidad: Crashlytics, Analytics (`lib/core/observability`).
 - Base de i18n (ARB es/en) y `flutter_localizations`.
