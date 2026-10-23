@@ -523,8 +523,12 @@ test('T-015: el update de /chats valida los valores de los metadatos', async () 
 test('reportes: se crean con el uid propio y nadie los lee desde el cliente', async () => {
   const r = { reporterId: BOB, targetType: 'reflexion', targetId: 'r1', reason: 'spam', createdAt: new Date() };
   await assertSucceeds(setDoc(doc(as(BOB), 'reports', 'rep1'), r));
+  // T-024: reportar un comentario usa targetType 'comentario'; la regla debe permitirlo.
+  await assertSucceeds(setDoc(doc(as(BOB), 'reports', 'rep4'), { ...r, targetType: 'comentario' }));
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep2'), { ...r, reporterId: ALICE }));
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep3'), { ...r, targetType: 'otro' }));
+  // Un motivo gigante se rechaza (coste y spam).
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep5'), { ...r, reason: 'x'.repeat(501) }));
   await assertFails(getDoc(doc(as(BOB), 'reports', 'rep1')));
 });
 
