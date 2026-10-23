@@ -10,11 +10,22 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/bible_models.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/services/bible_service.dart';
+import '../../features/reflexion/data/borrador_reflexion_store.dart';
+import '../../features/reflexion/presentation/vista_previa_reflexion.dart';
 import '../providers/app_providers.dart';
 
 class PublicarReflexionScreen extends ConsumerStatefulWidget {
   final String pasajeDia;
-  const PublicarReflexionScreen({super.key, required this.pasajeDia});
+
+  /// Texto de partida. Lo usa Notas para convertir una nota en publicación sin
+  /// que el usuario tenga que copiar y pegar nada.
+  final String? textoInicial;
+
+  const PublicarReflexionScreen({
+    super.key,
+    required this.pasajeDia,
+    this.textoInicial,
+  });
 
   @override
   ConsumerState<PublicarReflexionScreen> createState() =>
@@ -25,6 +36,8 @@ class _PublicarReflexionScreenState
     extends ConsumerState<PublicarReflexionScreen> {
   final _textController = TextEditingController();
   final _titleController = TextEditingController();
+  final _borrador = BorradorReflexionStore();
+  Timer? _guardadoTimer;
   bool _isPublishing = false;
   bool _showPassage = true;
   String? _previewVerseText;
@@ -34,6 +47,9 @@ class _PublicarReflexionScreenState
   void initState() {
     super.initState();
     _titleController.text = widget.pasajeDia;
+    _textController.addListener(_programarGuardado);
+    _titleController.addListener(_programarGuardado);
+    unawaited(_restaurarBorrador());
     _fetchVersePreview();
   }
 
@@ -75,8 +91,65 @@ class _PublicarReflexionScreenState
     }
   }
 
+  /// Recupera el borrador guardado o el texto que llega desde Notas.
+  Future<void> _restaurarBorrador() async {
+    final inicial = widget.textoInicial?.trim();
+    if (inicial != null && inicial.isNotEmpty) {
+      if (mounted) setState(() => _textController.text = inicial);
+      return;
+    }
+    final borrador = await _borrador.leer();
+    if (borrador == null || borrador.vacio || !mounted) return;
+    setState(() {
+      _textController.text = borrador.texto;
+      if (borrador.pasaje.trim().isNotEmpty) {
+        _titleController.text = borrador.pasaje;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Borrador recuperado')),
+    );
+  }
+
+  /// Guarda con retardo: no escribimos en disco en cada pulsación.
+  void _programarGuardado() {
+    _guardadoTimer?.cancel();
+    _guardadoTimer = Timer(const Duration(milliseconds: 600), () {
+      unawaited(_borrador.guardar(BorradorReflexion(
+        texto: _textController.text,
+        pasaje: _titleController.text,
+      )));
+    });
+  }
+
+  /// Vista previa con confirmación explícita: publicar no se deshace.
+  Future<bool> _confirmarPublicacion() async {
+    final confirmado = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => VistaPreviaReflexion(
+        pasaje: _titleController.text,
+        texto: _textController.text,
+      ),
+    );
+    return confirmado == true;
+  }
+
   @override
   void dispose() {
+    _guardadoTimer?.cancel();
+    // Guardado final: si el usuario sale con la X o el sistema cierra la app,
+    // el texto sigue ahí la próxima vez.
+    if (_textController.text.trim().isNotEmpty) {
+      unawaited(_borrador.guardar(BorradorReflexion(
+        texto: _textController.text,
+        pasaje: _titleController.text,
+      )));
+    }
     _textController.dispose();
     _titleController.dispose();
     super.dispose();
@@ -117,6 +190,11 @@ class _PublicarReflexionScreenState
       return;
     }
 
+    // Vista previa y confirmación explícita: publicar deja la reflexión en el
+    // feed de la comunidad y no se deshace.
+    if (!await _confirmarPublicacion()) return;
+    if (!mounted) return;
+
     setState(() => _isPublishing = true);
 
     final uid = ref.read(effectiveUserUidProvider) ?? 'anonimo';
@@ -139,6 +217,8 @@ class _PublicarReflexionScreenState
 
     try {
       await firestoreService.publicarReflexion(nuevaReflexion);
+      // Publicada: el borrador ya no hace falta.
+      await _borrador.borrar();
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       await storage.markDateAsCompleted(todayStr);
       final completed = storage.getCompletedDatesSync();
