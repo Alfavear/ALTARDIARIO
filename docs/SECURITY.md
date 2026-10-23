@@ -9,7 +9,38 @@
 | Spam de notificaciones / suplantación | `actorId == uid`, `read == false`, solo receptor lee |
 | Abuso de cuota desde scripts | App Check (monitor → enforce) |
 | Contenido inapropiado | `reports` + function de moderación + revisión humana |
+| Acoso tras bloquear (comentar, escribir en el chat, notificar, seguir) | `blockBetween()` en reglas: si A bloqueó a B, ninguno de los dos escribe en el contenido del otro |
 | Secretos en el repo | `.gitignore`, permisos `deny` en OpenCode, CODEOWNERS |
+
+## Bloqueo real (T-053)
+
+Bloquear no solo oculta contenido en el cliente: **impide escribir**. Si Alice
+bloqueó a Bob, el bloqueo es **simétrico** a efectos de escritura: Bob no puede
+comentar la reflexión o la petición de Alice, responder su debate, escribirle en
+el chat, crearle notificaciones ni seguirla; y Alice tampoco puede hacerlo sobre
+el contenido de Bob (el cliente ya se lo oculta, así que no hay camino legítimo).
+
+Qué **sí** sigue permitido:
+
+- Leer contenido público. El bloqueo no es una regla de lectura: ocultar es
+  cliente (T-022, T-023). Convertirlo en regla costaría lecturas en cada `list`.
+- Escribir en el **propio** contenido (Bob comenta su propia reflexión).
+- **Dejar de seguir**: `addsFollower()` distingue añadirse de quitarse, para que
+  el bloqueado pueda limpiar su rastro de la lista de seguidores del otro.
+
+Coste: cada `blockBetween()` son **2 lecturas** de `usuarios/{uid}/blocked/{uid}`
+(una por dirección). El límite de Firestore es 10 lecturas por request de un
+solo documento; el peor caso aquí es un mensaje de chat: `get` del chat + 4
+`exists` = 5. Se acepta el coste porque solo lo pagan las escrituras.
+
+Límite conocido: las reglas no recorren listas, así que el chequeo de chat
+comprueba solo los dos primeros `participantIds`. Es suficiente porque `/chats`
+exige exactamente 2 participantes en `create` y `update`; un chat antiguo de
+grupo quedaría parcialmente cubierto. Los likes, reacciones y votos no se
+bloquean (camino caliente y daño bajo: el cliente ya oculta el contenido).
+
+Cobertura: 6 tests en `firestore-tests/rules.test.mjs` (bloqueo → `permission-denied`,
+tercero sin bloqueo → permitido, simetría, chat, notificaciones y seguimiento).
 
 ## Secretos y dónde van
 | Secreto | Dónde | Nunca |
