@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/reflexion.dart';
 import '../../data/models/usuario.dart';
+import '../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
 import 'followers_screen.dart';
 
@@ -20,6 +21,7 @@ class PublicProfileScreen extends ConsumerWidget {
     final reflexionesAsync = ref.watch(userReflexionesProvider(userId));
     final uid = ref.watch(effectiveUserUidProvider);
     final isSelf = uid == userId;
+    final isGuest = ref.watch(isGuestUserProvider);
     final isFollowingAsync = ref.watch(isFollowingProvider(userId));
 
     return Scaffold(
@@ -34,6 +36,22 @@ class PublicProfileScreen extends ConsumerWidget {
         ),
         title:
             const Text('Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          if (!isSelf && uid != null && !isGuest)
+            IconButton(
+              tooltip: 'Reportar usuario',
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => ReportContentDialog(
+                  targetType: 'usuario',
+                  targetId: userId,
+                  targetTitle: fallbackName ?? 'este usuario',
+                  targetAuthor: fallbackName ?? '',
+                ),
+              ),
+            ),
+        ],
       ),
       body: userAsync.when(
         data: (user) {
