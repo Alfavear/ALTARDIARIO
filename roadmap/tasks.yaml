@@ -1256,7 +1256,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - Opción visible en Perfil con confirmación y reautenticación
@@ -1267,6 +1267,11 @@ tasks:
       - lib/data/services/firestore_service.dart
     source: auditoria:2026-10-24
     created_at: 2026-10-24T01:52:21.122Z
+    started_at: 2026-10-24T13:13:17.014Z
+    done_at: 2026-10-24T13:13:17.016Z
+    evidence: "Mergeado en main por el PR #93 (rama b/T-054-borrado-de-cuenta) con el CI en verde: format,
+      analyze, tests y los demás checks obligatorios. Cierre automático (.github/workflows/cerrar-tarea.yml)."
+    commit: 36bf880
   - id: T-055
     title: Cerrar la regla transitoria de email/fcmToken en el perfil público y migrar datos
     type: security
@@ -1309,7 +1314,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - Job en ci.yml que hace npm install y npm test en functions/
@@ -1319,6 +1324,11 @@ tasks:
       - functions/package.json
     source: auditoria:2026-10-24
     created_at: 2026-10-24T01:52:21.122Z
+    started_at: 2026-10-24T13:13:17.165Z
+    done_at: 2026-10-24T13:13:17.166Z
+    evidence: "Mergeado en main por el PR #92 (rama a/T-057-ci-functions) con el CI en verde: format, analyze,
+      tests y los demás checks obligatorios. Cierre automático (.github/workflows/cerrar-tarea.yml)."
+    commit: e51dc40
   - id: T-058
     title: Compartir versículo como imagen (WhatsApp/Instagram)
     type: feature
@@ -1340,7 +1350,7 @@ tasks:
     phase: 1
     priority: P3
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - Feed, oración y debates usan AsyncStateBuilder o los widgets de estados
@@ -1349,6 +1359,11 @@ tasks:
       - lib/presentation/widgets/estados/
     source: auditoria:2026-10-24
     created_at: 2026-10-24T01:52:21.122Z
+    started_at: 2026-10-24T13:13:17.483Z
+    done_at: 2026-10-24T13:13:17.484Z
+    evidence: "Mergeado en main por el PR #100 (rama b/T-059-adoptar) con el CI en verde: format, analyze, tests y
+      los demás checks obligatorios. Cierre automático (.github/workflows/cerrar-tarea.yml)."
+    commit: bd0ed88
   - id: T-060
     title: Migrar dependencias de Flutter con saltos mayores (share_plus, flutter_local_notifications,
       google_fonts, grupo minor)
@@ -1423,7 +1438,7 @@ tasks:
     phase: 4
     priority: P2
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - Abrir PublicarReflexionScreen con textoInicial muestra SnackBar 'Borrador recuperado' y precarga el
@@ -1437,6 +1452,11 @@ tasks:
       - lib/presentation/screens/publicar_reflexion_screen.dart
     source: auditoria-auto:2026-10-23
     created_at: 2026-10-24T04:39:15.912Z
+    started_at: 2026-10-24T13:13:17.330Z
+    done_at: 2026-10-24T13:13:17.330Z
+    evidence: "Mergeado en main por el PR #104 (rama b/T-064-widget-test) con el CI en verde: format, analyze,
+      tests y los demás checks obligatorios. Cierre automático (.github/workflows/cerrar-tarea.yml)."
+    commit: 3f604ed
   - id: T-065
     title: "Oración: índice compuesto de Firestore para peticiones_oracion"
     type: infra
