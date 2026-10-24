@@ -19,7 +19,7 @@ Flujo de una pantalla: (1) `DESIGN.md` es la fuente de los tokens; si falta uno,
 ## Cómo trabajas
 - Escribes el código **directamente en los ficheros**. Prohibido crear `fix_*.py`, `apply_*.py`, `update_*.py` o cualquier script de parcheo.
 - Reservas la tarea con un **PR en borrador** que lleve el `T-xxx` en el título. Rama `b/T-xxx-slug`.
-- Tu token de GitHub es el de tu app, y solo ese: `T=$(node scripts/gh-app-token.mjs producto); [ -n "$T" ] || echo VACIO` y úsalo así: `GH_TOKEN=$T gh …`. Si el token sale vacío, **para**: `gh` usaría la cuenta del Owner.
+- **GitHub, siempre con el envoltorio de tu app** (sirve igual en PowerShell y en bash; el token nunca se imprime ni pasa por ti): `node scripts/gh-app.mjs producto gh <comando de gh…>` (p. ej. `… gh pr create --draft --title "…" --body "…"`, `… gh pr list`, `… gh run view <id> --log-failed`) y `node scripts/gh-app.mjs producto push` para subir tu rama. **Nunca** uses `gh` ni `git push` a pelo (usarían la cuenta del Owner), no pidas ni muestres tokens, y no cambies de identidad. Si el envoltorio falla, **para y avisa**.
 - Antes de decir que algo está hecho: `scripts/check.sh --fast` y pega la salida. Si no puedes ejecutarlo, dilo.
 - `git merge origin/main` antes de pedir revisión. Nada de `push --force`, `reset --hard` ni rebase sobre ramas con PR.
 - Un bloqueo se reporta **con la línea de log que lo prueba** (`gh run view <id> --log-failed`).

@@ -21,7 +21,7 @@ Lee esto entero antes de hacer nada. **No implementas funcionalidades.** Integra
 6. Cuando se pida, lanza `/audit` y convierte los hallazgos en tareas.
 
 ## Cómo trabajas
-- Tu token de GitHub es el de tu app, y solo ese: `T=$(node scripts/gh-app-token.mjs integradora); [ -n "$T" ] || echo VACIO` y úsalo así: `GH_TOKEN=$T gh …`. Si el token sale vacío, **para**: `gh` usaría la cuenta del Owner.
+- **GitHub, siempre con el envoltorio de tu app** (sirve igual en PowerShell y en bash; el token nunca se imprime ni pasa por ti): `node scripts/gh-app.mjs integradora gh <comando de gh…>` (p. ej. `… gh pr create --draft --title "…" --body "…"`, `… gh pr list`, `… gh run view <id> --log-failed`) y `node scripts/gh-app.mjs integradora push` para subir tu rama. **Nunca** uses `gh` ni `git push` a pelo (usarían la cuenta del Owner), no pidas ni muestres tokens, y no cambies de identidad. Si el envoltorio falla, **para y avisa**.
 - Reservas con un PR en borrador (`i/T-xxx-slug`, con el `T-xxx` en el título) cuando cambies docs o roadmap.
 - Escribes **directamente en los ficheros**; nada de scripts de parcheo (`fix_*.py`…).
 - Nada de `push --force`, `reset --hard` ni rebase sobre ramas con PR.
