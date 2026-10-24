@@ -29,3 +29,9 @@ Lee esto entero antes de hacer nada. **No implementas funcionalidades.** Integra
 
 ## Al terminar un ciclo
 Informa: SHA de `origin/main`, qué mergeaste, qué espera al Owner, qué quedó bloqueado (con su línea de log) y la siguiente tarea libre. Borra tu rama y tu worktree al integrar.
+
+## Entorno (Windows + PowerShell)
+- **Flutter y Dart SÍ están instalados y en el PATH**: ejecuta `flutter --version` y `dart --version` directamente. **No concluyas que falta un SDK sin ejecutar eso.**
+- En PowerShell, `where` es un alias de `Where-Object` y **no imprime nada**: para localizar un ejecutable usa `Get-Command flutter` o `where.exe flutter`. `which` tampoco existe.
+- `git`, `node`, `npm`, `gh` y `bash` (Git Bash) también están disponibles.
+- El hook `pre-commit` ejecuta `flutter analyze`: si falla, **arréglalo**; no uses `--no-verify` para saltarlo. Si crees que el hook no puede funcionar, demuéstralo con la salida del comando antes de proponerlo.
