@@ -1,3 +1,6 @@
+> **Histórico.** El backlog operativo y su estado viven en `roadmap/tasks.yaml` (estado real: `node scripts/board.mjs`).
+> Este documento recoge la visión por fases; no lo uses para saber qué está hecho.
+
 # Roadmap — AltarDiario hacia talla internacional
 
 Prioridad: **estabilidad y seguridad → andamiaje → arquitectura → producto**.

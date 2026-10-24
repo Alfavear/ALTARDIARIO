@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 10
+  cycle_counter: 11
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -166,7 +166,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: ready
+    status: done
     depends_on:
       - T-002
       - T-003
@@ -180,6 +180,12 @@ tasks:
       - lib/presentation/screens/feed_screen.dart
       - lib/presentation/screens/public_profile_screen.dart
       - lib/data/services/firestore_service.dart
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #71, #72, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Reportar y bloquear en feed y debates (#71); reportar perfiles (#72). Cierre reconciliado el 2026-10-24
+      contra los PRs de GitHub (scripts/board.mjs)."
   - id: T-005
     title: Tests de FirestoreService con fake_cloud_firestore (likes, reacciones, seguir, amén)
     type: test
@@ -260,10 +266,16 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: ready
+    status: done
     acceptance:
       - botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario
       - usa share_plus; funciona en Android/iOS/Web
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #69, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Entregado como texto compartible; la variante imagen queda en una tarea nueva. Cierre reconciliado el
+      2026-10-24 contra los PRs de GitHub (scripts/board.mjs)."
   - id: T-011
     title: Planes de lectura flexibles (empezar cualquier día, ponerse al día, planes de 7/21 días)
     type: feature
@@ -494,7 +506,7 @@ tasks:
     phase: 3
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - comentarios, respuestas de debate y mensajes de chat se paginan con cursor (startAfterDocument) e
@@ -505,6 +517,12 @@ tasks:
       - lib/data/services/firestore_service.dart
     source: audit docs/AUDIT_REMEDIATION_PLAN.md seccion 5 (extiende T-007)
     created_at: 2026-10-21T02:36:45.757Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #47, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Paginación por cursor en comentarios, debates y chats. Cierre reconciliado el 2026-10-24 contra los PRs
+      de GitHub (scripts/board.mjs)."
   - id: T-021
     title: Flujo de eliminacion de cuenta (Auth, perfil, datos privados y contenido)
     type: feature
@@ -602,7 +620,7 @@ tasks:
     phase: 1
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - cada targetType de la Function tiene test propio
@@ -613,13 +631,19 @@ tasks:
       - lib/presentation/screens/debate_detail_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 6)
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #42, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Reportar peticiones de oración. Cierre reconciliado el 2026-10-24 contra los PRs de GitHub
+      (scripts/board.mjs)."
   - id: T-026
     title: Filtrar contenido oculto (hidden) en providers y pantallas
     type: security
     phase: 1
     priority: P1
     effort: M
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - ningun provider devuelve contenido con hidden true
@@ -629,6 +653,13 @@ tasks:
       - lib/presentation/providers/app_providers.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 7)
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #68, #73, #72, con CI verde (format, analyze, tests, reglas con emulador,
+      builds). Filtrado de oculto en streams (#68); el autor no puede eludir el ocultamiento (#73); functions
+      usa la misma clave oculto (#72). Cierre reconciliado el 2026-10-24 contra los PRs de GitHub
+      (scripts/board.mjs)."
   - id: T-027
     title: 'Inicio "Hoy": lectura pendiente, dia completado y sin conexion'
     type: feature
@@ -683,7 +714,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - solo el autor marca una peticion como respondida y anade la actualizacion
@@ -693,13 +724,19 @@ tasks:
       - lib/presentation/screens/oracion_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.3
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #54, #57, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Seguimiento de peticiones: estado respondida y filtros. Cierre reconciliado el 2026-10-24 contra los PRs
+      de GitHub (scripts/board.mjs)."
   - id: T-030
     title: Busqueda y temas seguidos en la comunidad
     type: feature
     phase: 4
     priority: P3
     effort: M
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - la busqueda tiene minimo de caracteres, debounce y limites de consulta
@@ -709,13 +746,19 @@ tasks:
       - lib/presentation/providers/app_providers.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 3.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #60, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Búsqueda y temas seguidos en la comunidad. Cierre reconciliado el 2026-10-24 contra los PRs de GitHub
+      (scripts/board.mjs)."
   - id: T-031
     title: "Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel y reportar/bloquear visibles"
     type: feature
     phase: 4
     priority: P3
     effort: M
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - cada consulta esta indexada, limitada y paginada
@@ -725,6 +768,12 @@ tasks:
       - lib/presentation/screens/debate_detail_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 3.3
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #61, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Debate de calidad (etiquetas, respuestas anidadas, cerrar). Cierre reconciliado el 2026-10-24 contra los
+      PRs de GitHub (scripts/board.mjs)."
   - id: T-032
     title: "Ajustes de lectura: traduccion, tamano, espaciado y alto contraste"
     type: feature
@@ -884,7 +933,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - ningun documento publico (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones,
@@ -896,13 +945,19 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: hoy los create usan hasAll y aceptan campos extra"
     created_at: 2026-10-21T02:56:57.770Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #65, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Helper noPrivateFields aplicado a creates y a ownerEditOk. Cierre reconciliado el 2026-10-24 contra los
+      PRs de GitHub (scripts/board.mjs)."
   - id: T-041
     title: "Privacidad: documento privado con allowlist de campos, tipos y tamanos"
     type: security
     phase: 1
     priority: P1
     effort: S
-    status: in_progress
+    status: done
     depends_on: []
     acceptance:
       - usuarios/{uid}/private/account solo admite email y fcmToken
@@ -915,13 +970,17 @@ tasks:
     created_at: 2026-10-21T02:56:57.770Z
     started_cycle: 11
     started_at: 2026-10-23T16:06:36.714Z
+    done_at: 2026-10-24T01:52:21.118Z
+    evidence: "Mergeado en main por #65, #74, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Reglas con allowlist de private/account (#65) y cliente que escribe email/fcmToken ahí (#74). Cierre
+      reconciliado el 2026-10-24 contra los PRs de GitHub (scripts/board.mjs)."
   - id: T-042
     title: "Privacidad: permitir borrar email/fcmToken del perfil publico sin bloqueo"
     type: security
     phase: 1
     priority: P1
     effort: S
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - el helper privateOnlyRemoved permite borrar los campos privados del perfil publico
@@ -933,13 +992,19 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: deadlock de limpieza del token FCM"
     created_at: 2026-10-21T02:56:57.770Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #65, con CI verde (format, analyze, tests, reglas con emulador, builds). El
+      dueño puede borrar email/fcmToken de su perfil; un tercero no (rama sobrante eliminada). Cierre
+      reconciliado el 2026-10-24 contra los PRs de GitHub (scripts/board.mjs)."
   - id: T-043
     title: "Privacidad: el borrado del perfil borra tambien el documento privado"
     type: security
     phase: 1
     priority: P2
     effort: S
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - eliminar la cuenta borra tambien usuarios/{uid}/private/account (Firestore no cascada)
@@ -950,6 +1015,12 @@ tasks:
       - functions/
     source: "rules-auditor: el subdocumento privado queda huerfano tras borrar el perfil"
     created_at: 2026-10-21T02:56:57.771Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #30, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Borrado de la cuenta incluye el documento privado (helper borrarCuenta; falta la UI, ver tarea nueva).
+      Cierre reconciliado el 2026-10-24 contra los PRs de GitHub (scripts/board.mjs)."
   - id: T-044
     title: Limites de tamano en debates, respuestas, notificaciones y comentarios de peticion
     type: security
@@ -1022,7 +1093,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - "ningun campo escrito por el usuario puede superar el limite de las reglas: debates (titulo<=200,
@@ -1037,6 +1108,12 @@ tasks:
       - lib/presentation/screens/chat_screen.dart
     source: "detectado al verificar el deploy de #31 (limites ya en produccion)"
     created_at: 2026-10-23T01:42:09.183Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #41, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Límites de reglas alineados con los topes del cliente. Cierre reconciliado el 2026-10-24 contra los PRs
+      de GitHub (scripts/board.mjs)."
   - id: T-048
     title: "Moderación: la Function ignora los reportes de comentarios y de perfiles"
     type: bug
@@ -1061,7 +1138,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - La creación en reports exige keys().hasAll y keys().hasOnly con reporterId, targetType, targetId,
@@ -1073,13 +1150,19 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: audit
     created_at: 2026-10-23T02:46:41.406Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #65, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      reports valida keys().hasOnly y createdAt. Cierre reconciliado el 2026-10-24 contra los PRs de GitHub
+      (scripts/board.mjs)."
   - id: T-050
     title: "Bloqueados: un usuario sin foto desaparece del diálogo y no se puede desbloquear"
     type: bug
     phase: 1
     priority: P1
     effort: S
-    status: ready
+    status: done
     depends_on: []
     acceptance:
       - "Un usuario bloqueado con fotoUrl vacía se pinta con el icono por defecto: su nombre y el botón de
@@ -1089,6 +1172,12 @@ tasks:
       - lib/presentation/screens/perfil_screen.dart
     source: audit
     created_at: 2026-10-23T03:00:12.535Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #63, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Usuario bloqueado sin foto se muestra con icono por defecto. Cierre reconciliado el 2026-10-24 contra
+      los PRs de GitHub (scripts/board.mjs)."
   - id: T-051
     title: 'Bloqueados: el diálogo confunde carga y error con "no tienes bloqueados" y desborda con texto grande'
     type: bug
@@ -1113,7 +1202,7 @@ tasks:
     phase: 1
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - "unreadNotificationsCountProvider cuenta sobre el stream filtrado: el badge y la lista muestran el
@@ -1128,6 +1217,12 @@ tasks:
       - lib/data/services/firestore_service.dart
     source: audit
     created_at: 2026-10-23T03:00:12.536Z
+    started_cycle: 11
+    started_at: 2026-10-24T01:52:21.121Z
+    done_at: 2026-10-24T01:52:21.121Z
+    evidence: "Mergeado en main por #64, con CI verde (format, analyze, tests, reglas con emulador, builds).
+      Filtros de bloqueo: badge, actorId nulo, limit y multi-participante. Cierre reconciliado el 2026-10-24
+      contra los PRs de GitHub (scripts/board.mjs)."
   - id: T-053
     title: "Bloqueo real: quien te bloqueó no puede seguir escribiéndote"
     type: security
@@ -1155,3 +1250,133 @@ tasks:
       bloqueo permitido; simetria; dejar de seguir permitido). check.sh --fast 168/168. Coste documentado en
       docs/SECURITY.md."
     commit: 360f7af
+  - id: T-054
+    title: Borrado de cuenta desde la app (App Store 5.1.1(v))
+    type: feature
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Opción visible en Perfil con confirmación y reautenticación
+      - Borra perfil público, private/account y datos propios; elimina el usuario de Auth
+      - Usa FirestoreService.borrarCuenta; tests de widget y de servicio
+    files:
+      - lib/presentation/screens/perfil_screen.dart
+      - lib/data/services/firestore_service.dart
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-055
+    title: Cerrar la regla transitoria de email/fcmToken en el perfil público y migrar datos
+    type: security
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Ejecutado functions: npm run migrate:private-account con --apply en producción"
+      - "firestore.rules: el dueño ya no puede escribir email/fcmToken en usuarios/{uid}; tests que lo prueben"
+      - removeFcmToken y updateUserConfig usan private/account
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+      - lib/data/services/firestore_service.dart
+      - lib/presentation/providers/app_providers.dart
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-056
+    title: Rehacer la limpieza de T-006 (OracionRepository) sobre main con los filtros de bloqueados y ocultos
+    type: refactor
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Los filtros oculto==false y de usuarios bloqueados viven en OracionRepository
+      - Tests que fallan si se pierde alguno de los dos filtros
+      - Parte de archive/auto/T-006-limpieza
+    files:
+      - lib/features/oracion/
+      - lib/data/services/firestore_service.dart
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-057
+    title: "CI para functions: ejecutar npm test en cada PR"
+    type: infra
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Job en ci.yml que hace npm install y npm test en functions/
+      - Falla si moderation.test.js o gamification.test.js fallan
+    files:
+      - .github/workflows/ci.yml
+      - functions/package.json
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-058
+    title: Compartir versículo como imagen (WhatsApp/Instagram)
+    type: feature
+    phase: 1
+    priority: P3
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Genera PNG con versículo, referencia y marca
+      - Probado en dispositivo con share_plus
+    files:
+      - lib/presentation/screens/bible_reader_screen.dart
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-059
+    title: Adoptar los componentes de estados asíncronos en las pantallas
+    type: refactor
+    phase: 1
+    priority: P3
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Feed, oración y debates usan AsyncStateBuilder o los widgets de estados
+      - Sin regresiones en los tests de pantalla
+    files:
+      - lib/presentation/widgets/estados/
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-060
+    title: Migrar dependencias de Flutter con saltos mayores (share_plus, flutter_local_notifications,
+      google_fonts, grupo minor)
+    type: infra
+    phase: 1
+    priority: P3
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Cada salto mayor en su propio PR con migración y tests
+      - Probado el flujo de compartir y las notificaciones
+    files:
+      - pubspec.yaml
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
+  - id: T-061
+    title: Unificar la clave de moderación en datos existentes (hidden → oculto)
+    type: bug
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Comprobar en producción que no existen documentos con hidden:true
+      - Si existen, migrarlos a oculto con script idempotente
+    files:
+      - functions/src/moderation.ts
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T01:52:21.122Z
