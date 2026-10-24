@@ -1,152 +1,126 @@
 # Auditoría automática 2026-10-24
 
-> Generada por la sesión auditora del ciclo autónomo (modelos `nvidia/nvidia/nemotron-3-ultra-550b-a55b, opencode/nemotron-3-ultra-free`, revisor `opencode/glm-5.3-flash-free, nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b, nvidia/z-ai/glm-5.3`, origin/main @ 3f604ed). tareas totales: 68; libres para el carril plataforma: 0.
+> Generada por la sesión auditora del ciclo autónomo (modelos `nvidia/nvidia/nemotron-3-ultra-550b-a55b, opencode/nemotron-3-ultra-free`, revisor `nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b, nvidia/z-ai/glm-5.3, nvidia/nvidia/nemotron-3-ultra-550b-a55b`, origin/main @ 61bf7a1). tareas totales: 71; libres para el carril plataforma: 0.
 
 ## Tareas nuevas
 | ID | Prioridad/Esfuerzo | Título |
 |---|---|---|
-| T-069 | P2/M | Paginación por cursor en peticiones de oración (startAfterDocument) |
-| T-070 | P3/M | Filtro 'Por las que oro' en OracionScreen (peticiones donde usuario actual hizo Amén) |
+| T-072 | P2/S | Oración: añadir campo actualizacionAutor al modelo PeticionOracion y permitir su escritura en reglas |
+| T-073 | P2/M | Oración: notificación FCM opcional a apoyadores cuando se marca respondida (sin texto sensible en lockscreen) |
+| T-074 | P2/M | Oración: widget tests de OracionScreen (filtros, lista vacía, loading, error, marcar respondida, Amén) |
 
 ## Propuestas descartadas
-- «Cloud Function: notificación opcional a apoyadores cuando petición se »: ruta inexistente: firestore.rules (apoyos create/read)
-- «Widget tests para OracionScreen y _PeticionCard (pendiente, respondida»: mezcla carriles o no pertenece a ninguno (divídela en una tarea por carril)
-- «Reglas: allowlist explícita para campos respondida/fechaRespondida en »: revisor: Duplica T-066 de roadmap/tasks.yaml (estado backlog): 'Reglas: allowlist explícita para campos respondida/fechaRespondida en peticiones_oracion' con los mismos criterios de aceptación (ownerEditOk con changedKeys().hasOnly(['respondida','fechaRespondida']) y los 2 tests de reglas) y los mismos archivos (firestore.rules, firestore-tests/rules.test.mjs).
-- «Índice compuesto Firestore para peticiones_oracion (oculto + respondid»: revisor: Duplica T-065 de roadmap/tasks.yaml (estado backlog): 'Oración: índice compuesto de Firestore para peticiones_oracion' con los mismos criterios (índice collectionGroup='peticiones_oracion' con oculto ASC, fecha DESC, respondida ASC; deploy de índices en CI; test de reglas sin FAILED_PRECONDITION) y los mismos archivos (firestore.indexes.json, firestore-tests/rules.test.mjs).
-- «Campo actualizacionAutor en PeticionOracion + UI para autor al marcar »: revisor: No es de un solo carril: toca firestore.rules y firestore-tests/rules.test.mjs (carril a, Plataforma/Seguridad) y lib/presentation/screens/oracion_screen.dart (carril b, Producto), además de lib/data (compartido). Requeriría coordinar dos carriles; dividir en tareas por carril.
-- «Tests de reglas para subcolección apoyos y query paginada con respondi»: revisor: Duplica T-068 de roadmap/tasks.yaml (estado backlog): 'Tests de reglas para peticiones_oracion: paginación, actualizaciónAutor, apoyos subcolección' con los mismos 5 tests (query respondida=true+fecha desc+limit+startAfter, autor escribe actualizacionAutor, no-autor no puede escribirla, crear documento en apoyos/{uid} solo con uid propio, trigger de Function oracion_notifications si existe) y los mismos archivos (firestore-tests/rules.test.mjs, functions/src/oracion_notifications.test.ts).
+- «Oración: paginación por cursor en peticionesStreamFiltrado (startAfter»: revisor: Duplica T-069 (Paginación por cursor en peticiones de oración): misma fase (4), mismo esfuerzo (M), mismos archivos (lib/data/services/firestore_service.dart, lib/presentation/providers/app_providers.dart, lib/presentation/screens/oracion_screen.dart, test/services/firestore_service_test.dart) y mismos criterios de aceptación (startAfterDocument, infinite scroll / 'Cargar más', test de servicio con cursor). T-069 ya está en roadmap/tasks.yaml en estado backlog.
+- «Oración: tests de reglas para actualización de respondida/fechaRespond»: revisor: Duplica T-068 (Tests de reglas para peticiones_oracion: paginación, actualizaciónAutor, apoyos subcolección): misma fase (1), mismo esfuerzo (S), mismo archivo (firestore-tests/rules.test.mjs) y mismos criterios de aceptación (query respondida=true + fecha desc + limit(10) + startAfter, autor puede escribir respondida+actualizacionAutor, no-autor denegado, crear apoyos/{uid} solo con uid propio). T-068 ya está en roadmap/tasks.yaml en estado backlog.
 
 
 ---
 
-# Auditoría Fase 2 — Hábito devocional diario
-**Repositorio:** AltarDiario (origin/main @ 3f604ed)
-**Fecha:** 2026-10-24
+# Auditoría de la Fase 2 — Hábito devocional diario
+
+**Fecha:** 2026-10-24  
+**Repositorio:** AltarDiario (origin/main @ 61bf7a1)  
+**Objetivo:** Contrastar criterios de aceptación de T-027, T-028, T-029 (marcadas como `done`) con el código real.
 
 ---
 
 ## Resumen ejecutivo
 
-Se auditan tres tareas marcadas como `done` en `roadmap/tasks.yaml` correspondientes a la Fase 2 del `PRODUCT_EVOLUTION_ROADMAP.md`:
-
-| Tarea | Título | Estado en tasks.yaml | Resultado real |
-|-------|--------|---------------------|----------------|
-| T-027 | Inicio "Hoy": lectura pendiente, día completado y sin conexión | ✅ done | **CUMPLE** criterios |
-| T-028 | Reflexión guiada y privada por defecto | ✅ done | **CUMPLE** criterios (con observación menor) |
-| T-029 | Oración con seguimiento: estado respondida, actualización y filtros del feed | ✅ done | **NO CUMPLE** 3 de 3 criterios |
+| Tarea | Estado real | Comentario |
+|-------|-------------|------------|
+| **T-027** Inicio "Hoy" | ✅ **Cumple** | Todos los criterios verificados con tests |
+| **T-028** Reflexión guiada y privada | ✅ **Cumple** | Todos los criterios verificados con tests |
+| **T-029** Oración con seguimiento | ❌ **NO cumple** | 3 de 4 criterios fallan; reglas de Firestore bloquean la implementación actual |
 
 ---
 
-## T-027 — Inicio "Hoy" (lib/presentation/screens/home_screen.dart + widgets)
+## T-027: Inicio "Hoy" — lectura pendiente, día completado y sin conexión
 
-### Criterios de aceptación del roadmap (§2.1)
+**Archivo principal:** `lib/presentation/screens/home_screen.dart`, `lib/presentation/widgets/lectura_hoy_card.dart`, `lib/presentation/widgets/lectura_hoy_estados.dart`  
+**Tests:** `test/widgets/lectura_hoy_card_test.dart` (5 tests)
 
-| # | Criterio | Código | Test | Veredicto |
-|---|----------|--------|------|-----------|
-| 1 | En <2 toques se abre la lectura pendiente | `LecturaHoyCard.onAbrir` → `BibleReaderScreen` (1 toque) | `pendiente: muestra el pasaje y se abre con un toque` | ✅ |
-| 2 | Día completo → celebración discreta + siguiente lectura | `LecturaCelebracion` + `LecturaSiguiente` en `lectura_hoy_estados.dart` | `completado: celebración discreta y siguiente lectura` | ✅ |
-| 3 | Skeleton carga, estado offline, escalado texto accesible | `LecturaSkeleton`, `LecturaAvisoSinConexion`, test `escalaTexto: 2.0` | `cargando`, `sin conexión`, `escala de texto grande` | ✅ |
-| 4 | Widget tests pendiente, completado, sin conexión | `test/widgets/lectura_hoy_card_test.dart` (5 tests) | 5 tests pasan | ✅ |
+| Criterio | Código | Test | Resultado |
+|----------|--------|------|-----------|
+| < 2 toques abre lectura pendiente | `LecturaHoyCard` con `onTap` en toda la tarjeta + botón "Leer pasaje" | `pendiente: muestra el pasaje y se abre con un toque` (línea 48-62) | ✅ |
+| Día completo → celebración discreta + siguiente lectura | `LecturaCelebracion` + `LecturaSiguiente` en `lectura_hoy_estados.dart` | `completado: celebración discreta y siguiente lectura` (línea 87-112) | ✅ |
+| Skeleton de carga | `LecturaSkeleton` en `lectura_hoy_estados.dart:13-29` | `cargando: muestra el skeleton y no el versículo` (línea 64-73) | ✅ |
+| Estado offline | `LecturaAvisoSinConexion` en `lectura_hoy_estados.dart:52-78` | `sin conexión: avisa y mantiene el plan guardado` (línea 75-85) | ✅ |
+| Escalado de texto accesible (textScaler 2x) | `Wrap` en botones, sin alturas fijas en texto | `escala de texto grande: no desborda` (línea 114-123) | ✅ |
 
-**Evidencia:**
-- `lib/presentation/widgets/lectura_hoy_card.dart:56-126` — `InkWell(onTap: onAbrir)` abre en 1 toque
-- `lib/presentation/widgets/lectura_hoy_estados.dart:84-168` — `LecturaCelebracion` + `LecturaSiguiente`
-- `lib/presentation/widgets/lectura_hoy_estados.dart:12-48` — `LecturaSkeleton`
-- `lib/presentation/widgets/lectura_hoy_estados.dart:51-78` — `LecturaAvisoSinConexion`
-- `test/widgets/lectura_hoy_card_test.dart:48-123` — 5 widget tests cubriendo los 4 estados
-
-**Conclusión:** T-027 **cumple** todos los criterios. No se requieren tareas nuevas.
+**Evidencia:** Todos los 5 tests pasan (`flutter test test/widgets/lectura_hoy_card_test.dart`).
 
 ---
 
-## T-028 — Reflexión guiada y privada por defecto (lib/presentation/screens/publicar_reflexion_screen.dart)
+## T-028: Reflexión guiada y privada por defecto
 
-### Criterios de aceptación del roadmap (§2.2)
+**Archivo principal:** `lib/presentation/screens/publicar_reflexion_screen.dart`, `lib/features/reflexion/presentation/vista_previa_reflexion.dart`, `lib/features/reflexion/data/borrador_reflexion_store.dart`  
+**Tests:** `test/screens/publicar_reflexion_screen_test.dart` (5 tests)
 
-| # | Criterio | Código | Test | Veredicto |
-|---|----------|--------|------|-----------|
-| 1 | Borrador local recuperable tras cerrar app | `BorradorReflexionStore` (SharedPreferences) + `_restaurarBorrador()` | `un borrador guardado muestra "Borrador recuperado" y precarga el texto` | ✅ |
-| 2 | Publicar exige confirmación explícita + vista previa | `_confirmarPublicacion()` → `VistaPreviaReflexion` bottom sheet | `"Guardar" abre VistaPreviaReflexion...`, `"Publicar" navega atrás...` | ✅ |
-| 3 | Usuario convierte nota en publicación sin copiar | Parámetro `textoInicial` en constructor | `textoInicial precarga el cuerpo sin anunciar borrador recuperado` | ✅ |
-| 4 | No se eleva límite texto sin revisar coste/moderación | Límite servidor 5000 chars (regla `reflexiones.texto.size() <= 5000`); cliente **sin contador ni validación previa** | — | ⚠️ **Observación** |
+| Criterio | Código | Test | Resultado |
+|----------|--------|------|-----------|
+| Borrador local recuperable tras cerrar app | `BorradorReflexionStore` usa `SharedPreferences` (guardar/leer/borrar) | `un borrador guardado muestra "Borrador recuperado" y precarga el texto` (línea 78-100) | ✅ |
+| Publicar exige confirmación explícita + vista previa | `VistaPreviaReflexion` bottom sheet con botones "Seguir editando" / "Publicar" | `"Guardar" abre VistaPreviaReflexion con pasaje y texto exactos` (línea 102-128) | ✅ |
+| Usuario convierte nota en publicación sin copiar | Parámetro `textoInicial` en `PublicarReflexionScreen` | `textoInicial precarga el cuerpo sin anunciar borrador recuperado` (línea 63-76) | ✅ |
+| No se eleva límite de texto sin revisar coste/moderación | Límite 5000 chars en reglas (T-044), validación cliente pendiente (T-067) | N/A — verificado en reglas | ✅ |
 
-**Evidencia:**
-- `lib/features/reflexion/data/borrador_reflexion_store.dart:18-42` — Guardado/recuperación en SharedPreferences
-- `lib/presentation/screens/publicar_reflexion_screen.dart:95-113` — `_restaurarBorrador()` muestra SnackBar "Borrador recuperado"
-- `lib/presentation/screens/publicar_reflexion_screen.dart:126-141` — `_confirmarPublicacion()` muestra `VistaPreviaReflexion`
-- `lib/features/reflexion/presentation/vista_previa_reflexion.dart:90-110` — Botones "Seguir editando" / "Publicar"
-- `lib/presentation/screens/publicar_reflexion_screen.dart:18-29` — Constructor acepta `textoInicial`
-- `test/screens/publicar_reflexion_screen_test.dart:63-195` — 5 widget tests cubriendo todo el flujo
-
-**Observación (no bloqueante para T-028):** El criterio 4 dice "no se eleva el límite". El límite actual es 5000 chars (regla Firestore) y **no se ha elevado**, por tanto técnicamente se cumple. Sin embargo, **falta validación cliente** (contador, botón deshabilitado >5000) — ya existe tarea `T-067` en backlog para esto.
-
-**Conclusión:** T-028 **cumple** los 4 criterios formales. La validación cliente es mejora separada (T-067).
+**Evidencia:** Todos los 5 tests pasan (`flutter test test/screens/publicar_reflexion_screen_test.dart`).
 
 ---
 
-## T-029 — Oración con seguimiento (lib/presentation/screens/oracion_screen.dart)
+## T-029: Oración con seguimiento — estado respondida, actualización y filtros del feed
 
-### Criterios de aceptación del roadmap (§2.3)
+**Archivo principal:** `lib/presentation/screens/oracion_screen.dart`, `lib/data/services/firestore_service.dart` (métodos `peticionesStreamFiltrado`, `marcarPeticionComoRespondida`), `lib/presentation/providers/app_providers.dart` (`peticionesFiltradasProvider`, `peticionesFiltroProvider`)  
+**Tests:** **NINGUNO** para la pantalla ni para los filtros. Tests de modelo en `test/models/peticion_oracion_test.dart`, tests de servicio en `test/services/firestore_service_test.dart` (solo `apoyarPeticion`).
 
-| # | Criterio | Código | Test | Veredicto |
-|---|----------|--------|------|-----------|
-| 1 | Solo autor marca respondida + añade actualización | Cliente: `isAutor` check (`oracion_screen.dart:447-450`). Servidor: `marcarPeticionComoRespondida` valida `userId` | **Sin test de reglas** que verifique que no-autor no puede escribir `respondida`/`fechaRespondida` | ❌ **NO CUMPLE** |
-| 2 | Aviso a apoyadores opcional, sin texto sensible en lock-screen | **No existe implementación** (ni Cloud Function, ni FCM, ni preferencia usuario) | — | ❌ **NO CUMPLE** |
-| 3 | Consultas con índice, límite y paginación | `.limit(prayerPageSize)` sí; **falta índice compuesto** `oculto`+`respondida`+`fecha`; **falta paginación** (cursor) | **Sin test de reglas** para query con `respondida=true` | ❌ **NO CUMPLE** |
+| Criterio | Código | Test | Resultado |
+|----------|--------|------|-----------|
+| Solo el autor marca una petición como respondida y **añade la actualización** | `marcarPeticionComoRespondida` actualiza `respondida: true` + `fechaRespondida` **PERO**:<br>1. No existe campo `actualizacionAutor` en modelo `PeticionOracion` (`lib/data/models/peticion_oracion.dart`)<br>2. **Reglas de Firestore BLOQUEAN** la actualización: `ownerEditOk()` no permite cambiar `respondida`, `fechaRespondida` ni `actualizacionAutor` (líneas 136-143 de `firestore.rules`) | **NINGUNO** — no hay test de reglas ni de servicio para esta operación | ❌ **FALLA** |
+| Aviso a quienes apoyaron (opcional, sin texto sensible en lockscreen) | **NO IMPLEMENTADO** — no hay código de notificaciones FCM para `apoyos` subcolección | **NINGUNO** | ❌ **FALLA** |
+| Consultas tienen índice, límite y **paginación** | Índice compuesto existe (`firestore.indexes.json:86-93`), límite (`prayerPageSize`) **PERO**:<br>NO hay paginación con cursor (`startAfterDocument`) — `peticionesStreamFiltrado` no acepta `lastDocument` | **NINGUNO** | ❌ **FALLA** |
 
-**Evidencia de incumplimientos:**
+### Detalle técnico crítico: Reglas de Firestore bloquean la escritura
 
-1. **Solo autor + actualización** (`oracion_screen.dart:472-478` llama a `marcarPeticionComoRespondida` que solo pone `respondida=true` + `fechaRespondida`; **no hay campo `actualizacionAutor`** en modelo ni en escritura):
-   - `lib/data/services/firestore_service.dart:802-819` — Solo actualiza `respondida` y `fechaRespondida`
-   - `lib/data/models/peticion_oracion.dart` — No tiene campo `actualizacionAutor`
-   - `firestore.rules:193-199` — `ownerEditOk()` no prohíbe `respondida`/`fechaRespondida` (no están en `changedKeys().hasAny([...])`), pero **no hay test de reglas** que verifique que un no-autor recibe `permission-denied`
-
-2. **Notificación a apoyadores** — No existe en `functions/src/` ni en cliente. Criterio pide "opcional y sin texto sensible": **implementación ausente**.
-
-3. **Índice, límite, paginación**:
-   - `firestore.indexes.json:62-68` — Índice solo `oculto` + `fecha` (falta `respondida`)
-   - `lib/data/services/firestore_service.dart:771-786` — `peticionesStreamFiltrado` usa `.where('respondida')` cuando filtro ≠ null → **requiere índice compuesto `oculto`+`respondida`+`fecha` que no existe**
-   - Sin paginación (`startAfterDocument`); `prayerPageSize` limita pero no pagina
-
-**Tests faltantes:**
-- `test/screens/` — **No existe** `oracion_screen_test.dart` ni `peticion_card_test.dart`
-- `firestore-tests/rules.test.mjs` — **No hay tests** para:
-  - No-autor no puede escribir `respondida`/`fechaRespondida`
-  - Query con `respondida=true` + `fecha desc` + `limit` funciona en emulador
-  - Crear documento en `peticiones_oracion/{id}/apoyos/{uid}` solo con uid propio (subcolección de apoyos no verificada)
-
-**Conclusión:** T-029 **NO CUMPLE** ninguno de los 3 criterios de aceptación. Requiere tareas nuevas.
-
----
-
-## Hallazgos adicionales (fuera de T-027/028/029)
-
-1. **Filtros del feed de oración** — Roadmap §2.3 pide filtros `Recientes`, `Por las que oro`, `Respondidas`. Implementación actual: `Todas`, `Pendientes`, `Respondidas`. Falta filtro "Por las que oro" (peticiones donde el usuario actual ha hecho "Amén").
-
-2. **Subcolección `apoyos`** — No verificada en reglas ni tests. La función `apoyarPeticion` incrementa contador pero no crea documento en `peticiones_oracion/{id}/apoyos/{uid}`.
-
-3. **Tests de integración** — No hay tests que cubran el flujo completo: crear petición → apoyar → autor marca respondida → notificación (cuando exista).
-
----
-
-## Archivos clave revisados
-
+El método `FirestoreService.marcarPeticionComoRespondida` (líneas 800-819 de `firestore_service.dart`) hace:
+```dart
+await docRef.update({
+  'respondida': true,
+  'fechaRespondida': FieldValue.serverTimestamp(),
+});
 ```
-lib/presentation/screens/home_screen.dart
-lib/presentation/widgets/lectura_hoy_card.dart
-lib/presentation/widgets/lectura_hoy_estados.dart
-test/widgets/lectura_hoy_card_test.dart
 
-lib/presentation/screens/publicar_reflexion_screen.dart
-lib/features/reflexion/data/borrador_reflexion_store.dart
-lib/features/reflexion/presentation/vista_previa_reflexion.dart
-test/screens/publicar_reflexion_screen_test.dart
-
-lib/presentation/screens/oracion_screen.dart
-lib/data/services/firestore_service.dart (peticionesStreamFiltrado, marcarPeticionComoRespondida)
-lib/data/models/peticion_oracion.dart
-lib/features/oracion/data/oracion_repository.dart
-firestore.rules (peticiones_oracion, ownerEditOk)
-firestore.indexes.json (peticiones_oracion)
-functions/src/ (sin función de notificación oración respondida)
+Pero `ownerEditOk()` en `firestore.rules:136-143` **prohíbe** cambiar estos campos:
+```javascript
+function ownerEditOk() {
+  return isOwner(resource.data)
+    && !changedKeys().hasAny([
+      'userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount',
+      'oculto', 'ocultoMotivo', 'ocultoEn',
+    ])    // ← respondida, fechaRespondida, actualizacionAutor NO están permitidos
+    && noPrivateFields(request.resource.data);
+}
 ```
+
+La regla `allow update` en `peticiones_oracion` (línea 193-198) solo permite:
+- `ownerEditOk()` — no incluye los campos nuevos
+- `counterDeltaOk('oracionesCount')` — solo para "Amén"
+- `likeOnly()` — solo reacciones
+
+**Resultado:** Cualquier intento de marcar una petición como respondida **fallará con PERMISSION_DENIED** en producción.
+
+---
+
+## Qué NO se encontró
+
+1. **Tests de widget para `OracionScreen`** — no existe `test/screens/oracion_screen_test.dart`
+2. **Tests de provider para filtros** — no hay tests de `peticionesFiltroProvider` ni `peticionesFiltradasProvider`
+3. **Tests de reglas para `respondida`/`fechaRespondida`/`actualizacionAutor`** — ausencia total en `firestore-tests/rules.test.mjs`
+4. **Campo `actualizacionAutor` en modelo** — no existe en `PeticionOracion`
+5. **Paginación por cursor** — `peticionesStreamFiltrado` no acepta parámetro `lastDocument`
+6. **Notificación FCM a apoyadores** — no hay implementación en `functions/` ni en cliente
+
+---
+
+## Conclusión
+
+- **T-027 y T-028:** Correctamente implementadas y testeadas. ✅
+- **T-029:** Marcada como `done` pero **NO cumple** 3 de 4 criterios de aceptación. La implementación actual **no funciona en producción** debido a las reglas de Firestore. Requiere trabajo real para completar.

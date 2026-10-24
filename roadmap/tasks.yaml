@@ -1580,12 +1580,84 @@ tasks:
     status: backlog
     depends_on: []
     acceptance:
-      - "scripts/migrar-oculto.mjs usa firebase-admin (de functions/node_modules) con GOOGLE_APPLICATION_CREDENTIALS; por defecto solo cuenta (simulacro) y con --aplicar escribe"
-      - "Recorre reflexiones, debates y peticiones_oracion (colecciones raíz) y comentarios y respuestas (collectionGroup); pone oculto=false en los que no tienen el campo, u oculto=true si tenían hidden:true; idempotente"
-      - "Lotes de 400 escrituras; imprime cuántos documentos por colección; no toca documentos que ya tienen oculto"
-      - "Sin workflows ni secretos en el repositorio: lo ejecuta el Owner en su máquina; documentar el comando de uso en la cabecera del propio script"
-      - "Motivo: where('oculto', isEqualTo: false) excluye los documentos sin el campo y el feed puede quedar vacío"
+      - scripts/migrar-oculto.mjs usa firebase-admin (de functions/node_modules) con
+        GOOGLE_APPLICATION_CREDENTIALS; por defecto solo cuenta (simulacro) y con --aplicar escribe
+      - Recorre reflexiones, debates y peticiones_oracion (colecciones raíz) y comentarios y respuestas
+        (collectionGroup); pone oculto=false en los que no tienen el campo, u oculto=true si tenían
+        hidden:true; idempotente
+      - Lotes de 400 escrituras; imprime cuántos documentos por colección; no toca documentos que ya tienen
+        oculto
+      - "Sin workflows ni secretos en el repositorio: lo ejecuta el Owner en su máquina; documentar el comando
+        de uso en la cabecera del propio script"
+      - "Motivo: where('oculto', isEqualTo: false) excluye los documentos sin el campo y el feed puede quedar
+        vacío"
     files:
       - scripts/migrar-oculto.mjs
     source: auditoria-claude:2026-10-24
     created_at: 2026-10-24T14:20:00.000Z
+  - id: T-072
+    title: "Oración: añadir campo actualizacionAutor al modelo PeticionOracion y permitir su escritura en reglas"
+    type: feature
+    phase: 4
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "PeticionOracion incluye campo opcional actualizacionAutor: String? en fromMap/toMap/fromFirestore"
+      - ownerEditOk() o nueva helper permite changedKeys().hasOnly(['respondida', 'fechaRespondida',
+        'actualizacionAutor']) cuando isOwner
+      - "Test de reglas: autor SÍ puede escribir respondida:true + fechaRespondida: timestamp +
+        actualizacionAutor:'Dios sanó a mi madre'"
+      - "Test de reglas: usuario ajeno NO puede escribir respondida/fechaRespondida/actualizacionAutor
+        (denegado)"
+    files:
+      - lib/data/models/peticion_oracion.dart
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: auditoria-auto:2026-10-24
+    created_at: 2026-10-24T15:30:10.631Z
+  - id: T-073
+    title: "Oración: notificación FCM opcional a apoyadores cuando se marca respondida (sin texto sensible en
+      lockscreen)"
+    type: feature
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Cloud Function onUpdate en peticiones_oracion detecta cambio respondida: false → true"
+      - Lee subcolección apoyos/{uid} y envía FCM solo a tokens de usuarios que hicieron Amén
+      - Payload FCM no incluye motivo ni actualizacionAutor (solo 'Tu oración por [nombre] fue respondida')
+      - Test de Function verifica trigger y payload sanitizado
+      - Preferencia de usuario para activar/desactivar (en private/account)
+    files:
+      - functions/src/oracion_notifications.ts
+      - functions/src/index.ts
+      - lib/data/services/firestore_service.dart
+      - firestore.rules
+    source: auditoria-auto:2026-10-24
+    created_at: 2026-10-24T15:30:10.632Z
+  - id: T-074
+    title: "Oración: widget tests de OracionScreen (filtros, lista vacía, loading, error, marcar respondida, Amén)"
+    type: test
+    phase: 4
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Test: pantalla renderiza con filtro 'Todas' y muestra peticiones"
+      - "Test: filtro 'Pendientes' y 'Respondidas' cambia el stream"
+      - "Test: estado loading muestra ShimmerListLoading"
+      - "Test: estado error muestra mensaje y reintento"
+      - "Test: estado vacío muestra ilustración y CTA 'Pedir Oración'"
+      - "Test: botón Amén incrementa contador (mock firestore)"
+      - "Test: autor ve botón 'Respondida' y al confirmar llama marcarPeticionComoRespondida"
+      - "Test: no-autor NO ve botón 'Respondida'"
+    files:
+      - test/screens/oracion_screen_test.dart
+      - lib/presentation/screens/oracion_screen.dart
+    source: auditoria-auto:2026-10-24
+    created_at: 2026-10-24T15:30:10.632Z
