@@ -1577,15 +1577,27 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
-      - "scripts/migrar-oculto.mjs usa firebase-admin (de functions/node_modules) con GOOGLE_APPLICATION_CREDENTIALS; por defecto solo cuenta (simulacro) y con --aplicar escribe"
-      - "Recorre reflexiones, debates y peticiones_oracion (colecciones raíz) y comentarios y respuestas (collectionGroup); pone oculto=false en los que no tienen el campo, u oculto=true si tenían hidden:true; idempotente"
-      - "Lotes de 400 escrituras; imprime cuántos documentos por colección; no toca documentos que ya tienen oculto"
-      - "Sin workflows ni secretos en el repositorio: lo ejecuta el Owner en su máquina; documentar el comando de uso en la cabecera del propio script"
-      - "Motivo: where('oculto', isEqualTo: false) excluye los documentos sin el campo y el feed puede quedar vacío"
+      - scripts/migrar-oculto.mjs usa firebase-admin (de functions/node_modules) con
+        GOOGLE_APPLICATION_CREDENTIALS; por defecto solo cuenta (simulacro) y con --aplicar escribe
+      - Recorre reflexiones, debates y peticiones_oracion (colecciones raíz) y comentarios y respuestas
+        (collectionGroup); pone oculto=false en los que no tienen el campo, u oculto=true si tenían
+        hidden:true; idempotente
+      - Lotes de 400 escrituras; imprime cuántos documentos por colección; no toca documentos que ya tienen
+        oculto
+      - "Sin workflows ni secretos en el repositorio: lo ejecuta el Owner en su máquina; documentar el comando
+        de uso en la cabecera del propio script"
+      - "Motivo: where('oculto', isEqualTo: false) excluye los documentos sin el campo y el feed puede quedar
+        vacío"
     files:
       - scripts/migrar-oculto.mjs
     source: auditoria-claude:2026-10-24
     created_at: 2026-10-24T14:20:00.000Z
+    started_at: 2026-10-24T15:13:10.971Z
+    done_at: 2026-10-24T15:13:10.972Z
+    evidence: "Mergeado en main por el PR #110 (rama a/T-071-script-de-migracion-del-campo-oculto-en) con el CI en
+      verde: format, analyze, tests y los demás checks obligatorios. Cierre automático
+      (.github/workflows/cerrar-tarea.yml)."
+    commit: 51bde30d42979810b85a99d8b08fdad699511a9a
