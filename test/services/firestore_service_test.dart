@@ -23,6 +23,7 @@ void main() {
           batch.set(fake.collection('peticiones_oracion').doc('p$i'), {
             'userId': 'u1',
             'motivo': 'Petición $i',
+            'oculto': false,
             'fecha': DateTime.utc(2026, 1, i + 1),
           });
         }

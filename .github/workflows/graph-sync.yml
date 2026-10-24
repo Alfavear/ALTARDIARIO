@@ -1,0 +1,107 @@
+name: Knowledge Graph Sync
+
+# Sincroniza el grafo de contratos versionado a partir del diff de cada push a
+# main y abre un PR. NUNCA empuja a main: respeta branch protection y deja el
+# cambio del grafo a revisión humana.
+#
+# El grafo (`.opencode/knowledge-graph.jsonl`) es propiedad exclusiva de este
+# workflow. En local es de solo lectura: el MCP `knowledge-graph-memory` usa
+# `kg-server.mjs`, que trabaja sobre una copia temporal.
+#
+# Requiere el secret OPENAI_API_KEY. Sin él, el job avisa y termina en verde
+# (no bloquea merges).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/data/models/**'
+      - 'lib/data/services/**'
+      - 'lib/core/services/**'
+      - 'lib/features/*/data/**'
+      - 'lib/features/*/providers/**'
+      - 'functions/src/**'
+      - 'firestore.rules'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: graph-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sincronizar grafo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: "!contains(github.event.head_commit.message || '', '[skip ci]')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # necesario para resolver github.event.before
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Tests del formato del grafo
+        run: node --test scripts/tests/kg-jsonl.test.mjs
+
+      - name: Comprobar secret
+        id: secret
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::warning::Falta OPENAI_API_KEY. Se omite la sincronización del grafo; añádela en Settings > Secrets."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Actualizar grafo
+        if: steps.secret.outputs.skip != 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.GRAPH_SYNC_MODEL || 'gpt-4o-mini' }}
+          BASE_COMMIT: ${{ github.event.before }}
+          TARGET_COMMIT: ${{ github.sha }}
+          GRAPH_FILE: .opencode/knowledge-graph.jsonl
+        run: node scripts/update-knowledge-graph.mjs
+
+      - name: Abrir PR si hay cambios
+        if: steps.secret.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          GRAPH=.opencode/knowledge-graph.jsonl
+
+          if [ -z "$(git status --porcelain "$GRAPH")" ]; then
+            echo "Sin cambios en el grafo."
+            exit 0
+          fi
+
+          BRANCH=chore/knowledge-graph-sync
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add "$GRAPH"
+          git commit -m "chore(graph): sincronizar knowledge graph [skip ci]"
+          git push --force origin "$BRANCH"
+
+          if gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' | grep -q .; then
+            echo "PR ya abierto para $BRANCH: se ha actualizado."
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(graph): sincronizar knowledge graph" \
+              --body "Actualización automática del grafo de contratos tras el merge en \`main\`. Revisa el diff: solo deberían aparecer entidades y relaciones afectadas por los archivos cambiados."
+          fi

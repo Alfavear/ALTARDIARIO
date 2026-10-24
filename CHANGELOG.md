@@ -8,8 +8,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Reglas de Firestore reescritas: nadie edita contenido ajeno; chats privados solo para participantes; notificaciones no suplantables; contadores sociales acotados a ±1 con uid propio; colección `reports` para moderación.
 - Chats: allowlist de campos actualizables en `/chats` (`participantIds`, `lastMessage`, `lastSenderId`, `lastUpdate`, `participantNames`) y `create` con participantes duplicados rechazado.
 - App Check activado en cliente (monitor; pasar a enforce en consola).
+- Bloqueo real: si un usuario te bloqueó (o tú a él), ninguno de los dos puede comentar, responder, escribir en el chat, notificar ni seguir al otro; las reglas lo comprueban con `exists()` sobre `usuarios/{uid}/blocked/{uid}`. Dejar de seguir sigue permitido para que el bloqueado pueda limpiar su rastro. 6 tests de reglas nuevos (41/41).
 
 ### Añadido
+- Compartir versículo como imagen (T-010): botón Compartir en lector genera texto con versículo, referencia y marca AltarDiario; usa share_plus para Android/iOS/Web.
+- Paginacion real del feed con startAfterDocument e infinite scroll: feedPageSize=30, getReflexionesPage con cursor, FeedPaginationNotifier. (T-007)
+- Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel, reglas comunitarias visibles, cerrar debate por autor, reportar debate. (T-031)
+- Búsqueda y temas seguidos en la comunidad: campo temasSeguidos en Usuario, método toggleTemaSeguido en FirestoreService, provider temasSeguidosProvider, y sección Mis temas seguidos en FeedScreen para seguir/dejar de seguir temas.
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).
 - Observabilidad: Crashlytics, Analytics (`lib/core/observability`).
 - Base de i18n (ARB es/en) y `flutter_localizations`.
@@ -17,6 +22,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Herramienta de migración de datos privados del perfil (`functions`: `npm run migrate:private-account`; idempotente, por lotes y con `--apply` explícito) y orden de operaciones documentado en `docs/SECURITY.md`.
 - Andamiaje de IA: `AGENTS.md` v2, `opencode.jsonc` V2, agentes `planner`/`reviewer`/`rules-auditor`/`release-manager`, comandos y skills.
 - CI/CD en GitHub Actions: format/analyze/test, reglas, builds Android/Web, deploy de Firebase, release Android por tag, Dependabot.
+- Grafo de conocimiento versionado (`.opencode/knowledge-graph.jsonl`): el CI lo sincroniza desde el diff de contratos y abre un PR; en local es de solo lectura.
 - `scripts/check.sh`, `scripts/rules_test.sh`, `scripts/bootstrap.sh`.
 - Documentación: ROADMAP, ADR-0001/0002/0003, AI_WORKFLOW, SECURITY, RELEASE.
 - Inicio: tarjeta de la lectura de hoy con cuatro estados (cargando con skeleton, sin conexión, pendiente y completado). Se abre con un solo toque, al completar el día muestra una celebración discreta y la siguiente lectura del plan, y respeta el escalado de texto del sistema.
@@ -26,6 +32,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Observabilidad: los eventos de producto pasan por una capa que descarta textos, correos, tokens y motivos libres; solo números, booleanos y categorías cerradas llegan a Analytics. Cableados `lectura_completada` y `nota_guardada`.
 - Observabilidad: al publicar una reflexión se envía `reflexion_publicada` con la longitud del texto y si lleva pasaje; el texto en sí nunca sale del dispositivo.
 - `DESIGN.md` (antes `design.md`): escala espacial cerrada, CTA único por vista y estados obligatorios de vista (datos/carga/error/vacío) con microcopia UX.
+- Coordinación entre sesiones: `docs/SESIONES.md` (worktree por sesión, un solo merger, máximo 2 PRs, validar contra `origin/main` citando SHA), registro en `roadmap/sesiones/` y scripts `session-check.sh` / `sync-main.sh` (el `main` local no se usa para trabajar y solo se alinea por fast-forward).
 
 ### Cambiado
 - CI: el job `Build APK (debug)` solo compila cuando el PR toca `android/`, `pubspec.*` o `.github/workflows/` (y siempre en `main`); añade caché de Gradle y compila una sola ABI. Los PRs de Dart/UI bajan de ~7,6 a ~1,5 min de checks; el nombre del check requerido no cambia.

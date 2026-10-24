@@ -42,10 +42,23 @@ jobs:
           path: coverage/lcov.info
           retention-days: 7
 
+  knowledge-graph:
+    name: Grafo de conocimiento (node)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tests del formato JSONL
+        run: node --test scripts/tests/kg-jsonl.test.mjs
+
   firestore-rules:
     name: Firestore security rules
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

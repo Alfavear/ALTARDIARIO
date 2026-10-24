@@ -14,7 +14,7 @@
 meta:
   version: 1
   current_phase: 1
-  cycle_counter: 7
+  cycle_counter: 10
   phases:
     "1": Estabilizar (seguridad, observabilidad, CI)
     "2": Andamiaje IA y tests
@@ -166,7 +166,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on:
       - T-002
       - T-003
@@ -186,19 +186,25 @@ tasks:
     phase: 2
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-003
     acceptance:
       - test/services/firestore_service_test.dart cubre toggleLike, toggleReaction, follow/unfollow, amen
       - cobertura de firestore_service.dart > 50%
+    started_cycle: 10
+    started_at: 2026-10-23T02:46:41.371Z
+    done_at: 2026-10-23T02:46:41.371Z
+    evidence: "PR #43 mergeado en main (0a568f2). Tests de toggleLike, toggleReaction, toggleFollow y toggleAmen
+      sobre fake_cloud_firestore: cubren doble toque y usuario inexistente."
+    commit: 0a568f2
   - id: T-006
     title: Migrar feature oracion a lib/features/oracion/ (ADR-0001)
     type: refactor
     phase: 3
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-003
       - T-005
@@ -207,13 +213,20 @@ tasks:
       - oracion_screen.dart < 400 líneas
       - app_providers.dart exporta los providers migrados para compatibilidad
       - sin cambios de comportamiento (tests existentes pasan sin modificar)
+    started_cycle: 11
+    started_at: 2026-10-23T11:10:55.137Z
+    done_at: 2026-10-23T11:10:55.154Z
+    evidence: "T-006 migracion oracion completada. check.sh --fast: 168/168 tests pasan, analyze limpio. Feature
+      migrada a lib/features/oracion/ con OracionRepository, providers, presentation screen y PeticionCard
+      widget. oracion_screen.dart: 308 lineas (< 400 limite)."
+    commit: pending
   - id: T-007
     title: Paginación real del feed con startAfterDocument e infinite scroll
     type: feature
     phase: 3
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on:
       - T-003
     acceptance:
@@ -247,7 +260,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: ready
     acceptance:
       - botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario
       - usa share_plus; funciona en Android/iOS/Web
@@ -402,7 +415,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - el metodo hace return sin commit si la query de notificaciones no leidas devuelve cero documentos
@@ -413,6 +426,13 @@ tasks:
       - test/services/firestore_service_test.dart
     source: T-002 planner
     created_at: 2026-10-20T23:43:23.669Z
+    started_cycle: 10
+    started_at: 2026-10-23T02:46:41.406Z
+    done_at: 2026-10-23T02:46:41.406Z
+    evidence: "PR #45 mergeado en main (15d4cb8). markAllNotificationsAsRead ya no crea un batch vacío cuando no
+      hay notificaciones sin leer (Firestore lanzaba al hacer commit sin operaciones). Sin test propio
+      todavía: queda anotado para el arnés de #43."
+    commit: 15d4cb8
   - id: T-018
     title: "Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos"
     type: security
@@ -448,7 +468,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on:
       - T-004
     acceptance:
@@ -461,6 +481,13 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1
     created_at: 2026-10-21T02:36:45.757Z
+    started_cycle: 8
+    started_at: 2026-10-23T01:35:57.112Z
+    done_at: 2026-10-23T01:35:57.115Z
+    evidence: "PR #32 mergeado en main (fa7d0a4). Subcoleccion propietaria usuarios/{uid}/blocked con reglas y
+      tests; additivo, no cambia escrituras existentes. CI 4/4 (Format/Analyze/Test, reglas, Build Web, Build
+      APK)."
+    commit: fa7d0a4
   - id: T-020
     title: Paginacion por cursor en comentarios, debates y chats
     type: feature
@@ -503,7 +530,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - feed, peticiones, debates, comentarios y perfiles no muestran contenido de cuentas bloqueadas
@@ -513,13 +540,20 @@ tasks:
       - lib/presentation/providers/app_providers.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1 (secuencia 3)
     created_at: 2026-10-21T02:44:52.914Z
+    started_cycle: 8
+    started_at: 2026-10-23T01:35:57.115Z
+    done_at: 2026-10-23T01:35:57.115Z
+    evidence: "PR #33 mergeado en main (90ea33c). Filtrado de usuarios bloqueados en los proveedores sociales
+      (feed, oracion, debate, perfiles). La rama se rebaso sobre main y el duplicado de getUsuariosBloqueados
+      se resolvio antes de mergear. CI 4/4."
+    commit: 90ea33c
   - id: T-023
     title: Filtrar bloqueos en chats y notificaciones, y desbloqueo en Ajustes
     type: feature
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - no se puede iniciar ni continuar un chat con una cuenta bloqueada
@@ -531,13 +565,20 @@ tasks:
       - lib/presentation/screens/notificaciones_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.1 (secuencia 4)
     created_at: 2026-10-21T02:44:52.915Z
+    started_cycle: 10
+    started_at: 2026-10-23T02:47:01.325Z
+    done_at: 2026-10-23T02:47:01.326Z
+    evidence: "PR #36 mergeado en main (7559028). Los bloqueos filtran chats y notificaciones y se pueden
+      desbloquear desde Ajustes; el filtro vive en el proveedor (getUserChatsFiltrados y el de
+      notificaciones), no en la vista, así que no quedan filas huérfanas al desbloquear."
+    commit: "7559028"
   - id: T-024
     title: Reportar reflexiones y comentarios
     type: feature
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - reflexiones y comentarios tienen menu de reporte con los motivos validos
@@ -548,6 +589,13 @@ tasks:
       - lib/presentation/widgets/
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 1.2 (secuencia 5)
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 10
+    started_at: 2026-10-23T02:46:41.297Z
+    done_at: 2026-10-23T02:46:41.298Z
+    evidence: "PR #38 mergeado en main (31b6610). Reportar reflexiones y comentarios con el diálogo reutilizable:
+      motivo con tope de 200 y \"Otro\" obliga a explicar. Reglas: 'comentario' añadido al allowlist de
+      targetType. 4 widget tests + 3 tests de reglas (34/34)."
+    commit: 31b6610
   - id: T-025
     title: Reportar peticiones, debates y respuestas, y probar la Function de moderacion
     type: feature
@@ -571,7 +619,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - ningun provider devuelve contenido con hidden true
@@ -611,7 +659,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - borrador local recuperable tras cerrar la app
@@ -622,6 +670,13 @@ tasks:
       - lib/presentation/screens/publicar_reflexion_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 2.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.127Z
+    done_at: 2026-10-23T02:22:27.127Z
+    evidence: "PR #35 mergeado en main (4471a39). Borrador de reflexion recuperable tras cerrar la app, vista
+      previa obligatoria con confirmacion explicita y notas convertidas en reflexion sin copiar texto. 6 tests
+      nuevos; check.sh --fast 139/139 y CI 4/4."
+    commit: 4471a39
   - id: T-029
     title: "Oracion con seguimiento: estado respondida, actualizacion y filtros del feed"
     type: feature
@@ -644,7 +699,7 @@ tasks:
     phase: 4
     priority: P3
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - la busqueda tiene minimo de caracteres, debounce y limites de consulta
@@ -660,7 +715,7 @@ tasks:
     phase: 4
     priority: P3
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - cada consulta esta indexada, limitada y paginada
@@ -676,7 +731,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - no se anula MediaQuery.textScaler
@@ -693,7 +748,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - los datos siguen siendo privados en Firestore y en el almacenamiento local
@@ -703,13 +758,20 @@ tasks:
       - lib/presentation/screens/notes_screen.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 4.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.129Z
+    done_at: 2026-10-23T02:22:27.129Z
+    evidence: 'PR #37 mergeado en main (3586e4b). Biblioteca personal: exportacion bajo demanda al portapapeles,
+      aviso de privacidad veraz (solo el dueno ve las notas, no "solo en este dispositivo") y estado de error
+      con reintento que no bloquea la lectura. 7 tests; CI 4/4.'
+    commit: 3586e4b
   - id: T-034
     title: "Notificaciones con intencion: preferencias por categoria y horario tranquilo"
     type: feature
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - el usuario controla cada categoria y puede desactivarla sin perder datos
@@ -741,7 +803,7 @@ tasks:
     phase: 3
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - eventos para completar lectura, guardar nota, publicar reflexion, reportar y bloquear
@@ -751,6 +813,13 @@ tasks:
       - lib/core/observability/observability.dart
     source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md fase 5.2
     created_at: 2026-10-21T02:44:52.916Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.129Z
+    done_at: 2026-10-23T02:22:27.129Z
+    evidence: "PR #40 mergeado en main (227604e). Capa tipada de eventos de producto que descarta textos, correos,
+      tokens y motivos libres; solo numeros, booleanos y categorias cerradas llegan a Analytics. Cableados
+      lectura_completada y nota_guardada. 7 tests; CI 4/4."
+    commit: 227604e
   - id: T-037
     title: "Rendimiento y resiliencia: metricas, cache offline de Biblia y reintentos"
     type: infra
@@ -773,7 +842,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - "firestore.indexes.json declara el indice chats: participantIds (arrayContains) + lastUpdate
@@ -784,6 +853,13 @@ tasks:
       - firestore.indexes.json
     source: "revision T-015 (PR #23): la lista de chats falla en produccion por falta de indice"
     created_at: 2026-10-21T02:56:57.769Z
+    started_cycle: 9
+    started_at: 2026-10-23T02:22:27.129Z
+    done_at: 2026-10-23T02:22:27.129Z
+    evidence: "PR #39 mergeado en main (6faec67) con el indice compuesto de chats. El JSON venia invalido (objeto
+      fuera del array) y dejo el deploy de main en rojo; corregido en #44 (86ab8d4) con arrayConfig CONTAINS y
+      cubierto por test/infra/firestore_indexes_test.dart. 34/34 tests de reglas."
+    commit: 6faec67
   - id: T-039
     title: "Chats: impedir chats no solicitados (el otro participante puede ser cualquiera)"
     type: security
@@ -808,7 +884,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - ningun documento publico (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones,
@@ -826,7 +902,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: in_progress
     depends_on: []
     acceptance:
       - usuarios/{uid}/private/account solo admite email y fcmToken
@@ -837,13 +913,15 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: allow read, write sin restriccion de contenido"
     created_at: 2026-10-21T02:56:57.770Z
+    started_cycle: 11
+    started_at: 2026-10-23T16:06:36.714Z
   - id: T-042
     title: "Privacidad: permitir borrar email/fcmToken del perfil publico sin bloqueo"
     type: security
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - el helper privateOnlyRemoved permite borrar los campos privados del perfil publico
@@ -861,7 +939,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - eliminar la cuenta borra tambien usuarios/{uid}/private/account (Firestore no cascada)
@@ -878,7 +956,7 @@ tasks:
     phase: 1
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - debates.titulo y debates.contenido tienen tope de caracteres
@@ -890,13 +968,20 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: sin topes de tamano en contenido publico (spam y coste)"
     created_at: 2026-10-21T02:56:57.771Z
+    started_cycle: 8
+    started_at: 2026-10-23T01:35:57.115Z
+    done_at: 2026-10-23T01:35:57.115Z
+    evidence: "PR #31 mergeado en main (068f2db). Limites de tamano en reglas para debates (titulo<=200,
+      contenido<=5000), respuestas<=2000, comentarios de peticion<=2000 y notificaciones (title<=200,
+      body<=1000), tambien en la edicion del dueno. CI 4/4 con tests de reglas."
+    commit: 068f2db
   - id: T-045
     title: "CI: job de functions y correccion del glob de los tests de functions"
     type: infra
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - la CI compila functions/ y ejecuta sus tests en cada push
@@ -931,3 +1016,142 @@ tasks:
       tools/roadmap-mcp/roadmap.test.mjs: 11/11 con los tests nuevos. El resumen escribe a un fichero temporal
       en vez de canalizar con head.'
     commit: 1f85a74
+  - id: T-047
+    title: Alinear los topes del cliente con los limites de las reglas
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: ready
+    depends_on: []
+    acceptance:
+      - "ningun campo escrito por el usuario puede superar el limite de las reglas: debates (titulo<=200,
+        contenido<=5000), respuestas (contenido<=2000), comentarios de peticion (texto<=2000), notificaciones
+        (title<=200, body<=1000) y chats (text<=4000)"
+      - si el usuario llega al tope la UI lo muestra antes de enviar; nunca un error de permisos de Firestore
+      - test de widget que verifica el tope del campo de titulo al crear un debate
+    files:
+      - lib/presentation/screens/crear_debate_screen.dart
+      - lib/presentation/screens/debate_screen.dart
+      - lib/presentation/screens/foro_screen.dart
+      - lib/presentation/screens/chat_screen.dart
+    source: "detectado al verificar el deploy de #31 (limites ya en produccion)"
+    created_at: 2026-10-23T01:42:09.183Z
+  - id: T-048
+    title: "Moderación: la Function ignora los reportes de comentarios y de perfiles"
+    type: bug
+    phase: 1
+    priority: P1
+    effort: M
+    status: ready
+    depends_on: []
+    acceptance:
+      - Un reporte con targetType "comentario" resuelve su ruta real
+        (reflexiones/{reflexionId}/comentarios/{id}) y aplica el auto-ocultado.
+      - Un reporte con targetType "usuario" resuelve usuarios/{uid} y aplica el ocultado del perfil.
+      - Tests de la Function cubren los 5 targetType y el caso de target inexistente (no debe lanzar).
+    files:
+      - functions/src/moderation.ts
+      - functions/src/index.ts
+    source: audit
+    created_at: 2026-10-23T02:46:41.406Z
+  - id: T-049
+    title: "Reglas: reports acepta campos arbitrarios (falta keys().hasOnly)"
+    type: security
+    phase: 1
+    priority: P2
+    effort: S
+    status: ready
+    depends_on: []
+    acceptance:
+      - La creación en reports exige keys().hasAll y keys().hasOnly con reporterId, targetType, targetId,
+        reason y timestamp.
+      - Test que rechaza un campo extra (p. ej. status) y test que acepta exactamente el payload que envía el
+        cliente.
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: audit
+    created_at: 2026-10-23T02:46:41.406Z
+  - id: T-050
+    title: "Bloqueados: un usuario sin foto desaparece del diálogo y no se puede desbloquear"
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: ready
+    depends_on: []
+    acceptance:
+      - "Un usuario bloqueado con fotoUrl vacía se pinta con el icono por defecto: su nombre y el botón de
+        desbloquear son visibles."
+      - Widget test con un bloqueado sin foto que abre el diálogo y desbloquea correctamente.
+    files:
+      - lib/presentation/screens/perfil_screen.dart
+    source: audit
+    created_at: 2026-10-23T03:00:12.535Z
+  - id: T-051
+    title: 'Bloqueados: el diálogo confunde carga y error con "no tienes bloqueados" y desborda con texto grande'
+    type: bug
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - snapshot.hasError y connectionState.waiting tienen estado propio (mensaje y reintento), distinto de la
+        lista vacía.
+      - "El contenido va en un SingleChildScrollView: con 20 bloqueados o textScaler 2.0 no hay overflow."
+      - Widget tests para los tres estados y para el overflow con texto grande.
+    files:
+      - lib/presentation/screens/perfil_screen.dart
+    source: audit
+    created_at: 2026-10-23T03:00:12.536Z
+  - id: T-052
+    title: "Filtros de bloqueo: badge sin filtrar, actorId nulo descartado, límites antes del filtro y código
+      muerto"
+    type: bug
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "unreadNotificationsCountProvider cuenta sobre el stream filtrado: el badge y la lista muestran el
+        mismo número."
+      - Una notificación con actorId nulo se conserva; el filtro solo descarta uids bloqueados.
+      - getUsuariosBloqueados lleva .limit() y se justifica (o se corrige) el orden entre límite y filtro.
+      - "chatListProvider se elimina o se usa: no queda código muerto."
+      - Un chat con más de dos participantes no se oculta por bloquear a uno de ellos.
+      - Tests de los tres primeros puntos.
+    files:
+      - lib/presentation/providers/app_providers.dart
+      - lib/data/services/firestore_service.dart
+    source: audit
+    created_at: 2026-10-23T03:00:12.536Z
+  - id: T-053
+    title: "Bloqueo real: quien te bloqueó no puede seguir escribiéndote"
+    type: security
+    phase: 1
+    priority: P2
+    effort: M
+    status: done
+    depends_on: []
+    acceptance:
+      - Las reglas impiden crear comentarios, respuestas, mensajes y oraciones en el contenido de quien
+        bloqueó al autor (exists() sobre usuarios/{autor}/blocked/{uid}).
+      - "Dos tests de reglas: el bloqueado recibe permission-denied y un tercero sigue escribiendo."
+      - Se documenta el coste (un exists() por escritura) en docs/SECURITY.md.
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+      - docs/SECURITY.md
+    source: audit
+    created_at: 2026-10-23T03:00:12.536Z
+    started_cycle: 10
+    started_at: 2026-10-23T03:46:34.667Z
+    done_at: 2026-10-23T03:46:34.668Z
+    evidence: "Reglas desplegadas en main 360f7af (deploy Firebase: rules success). 41/41 tests de reglas (6
+      nuevos: bloqueo denegado en reflexion, peticion, debate, chat, notificacion y seguir; tercero sin
+      bloqueo permitido; simetria; dejar de seguir permitido). check.sh --fast 168/168. Coste documentado en
+      docs/SECURITY.md."
+    commit: 360f7af

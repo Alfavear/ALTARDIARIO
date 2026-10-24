@@ -176,3 +176,66 @@ El MCP del roadmap ya no puede reformatear tasks.yaml en masa: dos tests de regr
 **Siguiente:** Carril A: T-028 (reflexion guiada), T-033 (biblioteca personal), T-036 y T-037. Carril B: B1 = T-040 asignada por comentario en sus PRs.
 
 ---
+## Ciclo 8 — 2026-10-23T01:35:57.115Z
+- **Tarea:** T-019, T-044, T-022 · Bloqueo de usuarios, limites en reglas y filtrado de bloqueados
+- **Resultado:** mergeado en main (PRs #31, #32, #33; #34 T-027 en la misma tanda)
+- **Rama/commit:** fix/lane-b-06-tamano-limites, fix/lane-b-07-bloquear-usuarios, fix/lane-b-08-filtrar-bloqueados, auto/T-027-inicio-hoy @ 068f2db, fa7d0a4, 90ea33c, c0aa2b3
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Conflictos resueltos a mano: CHANGELOG (#31), firestore_service duplicado + llave perdida (#33, #36).
+
+Tanda de merges de la noche. La otra sesion (carril B) produce rama+PR y esta sesion mergea. Se resolvieron conflictos en serie sin reescribir historia y se detecto que el auto-merge de #36 rompia el fichero (metodos duplicados y una llave sin cerrar): corregido antes de pushear.
+
+**Problemas:**
+- La proteccion de main exige los 4 checks sobre el head actual: cada merge deja BEHIND a los demas y hay que update-branch + esperar otra ronda (~15 min por PR).
+- Los CHANGELOG de PRs simultaneos chocan en el mismo ancla; se estandarizo el bloque de [Unreleased] en las ramas abiertas.
+
+**Decisiones:**
+- Solo esta sesion mergea a main; el carril B nunca mergea ni toca el roadmap.
+- El stack de privacidad (#29, #30) queda abierto a proposito hasta publicar la app y subir minVersion.
+
+**Siguiente:** T-023, T-024, T-038, T-028, T-033, T-036 en cola de merge; despues carril A: T-037 y T-035.
+
+---
+## Ciclo 9 — 2026-10-23T02:22:27.129Z
+- **Tarea:** T-028, T-033, T-036, T-038 · Reflexion guiada, biblioteca personal, eventos sin datos y indice de chats
+- **Resultado:** mergeado en main (PRs #35, #37, #40, #39)
+- **Rama/commit:** auto/T-028-reflexion-guiada, auto/T-033-biblioteca-personal, auto/T-036-eventos-producto, fix/lane-b-11-chats-indice @ 4471a39, 3586e4b, 227604e, 6faec67
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Se encontraron y corrigieron dos fallos de integracion que los tests no cubrian: reports no permitia targetType comentario y firestore.indexes.json era invalido (rompia el deploy de main).
+
+Segunda tanda de merges. Ademas del codigo de cada tarea: (1) #38 necesitaba tests y una regla que no existia (targetType comentario) y se resolvio en su propia rama; (2) el indice de chats se subio con JSON invalido y tumbo el deploy de main, detectado al verificar los workflows y corregido en #44 con un test que valida el fichero en cada PR; (3) se detecto el desajuste entre los limites de las reglas y los topes del cliente (T-047).
+
+**Problemas:**
+- Cada merge deja BEHIND a los demas PRs y obliga a update-branch + otra ronda de checks (~7,6 min con el build de Android en la ruta critica).
+- El build de APK se ejecuta en todos los PRs aunque un PR de Dart/UI no pueda romper Android.
+
+**Decisiones:**
+- El job Build APK se ejecuta siempre pero solo compila si el PR toca android/, pubspec.* o .github/workflows/; se anade cache de Gradle y una sola ABI (PR #48).
+- Los conflictos se resuelven en la rama del PR, sin reescribir historia y sin tocar main por otra via.
+
+**Siguiente:** T-023 (#36), T-024 (#38), T-025 (#42), T-005 (#43), #45 y #46 en cola de merge; despues #41 cierra el ciclo.
+
+---
+## Ciclo 10 — 2026-10-23T02:46:41.406Z
+- **Tarea:** T-024, T-005, T-017 · Tanda 3: reportar, filtrar bloqueos, tests de interacción y batch vacío
+- **Resultado:** mergeado en main
+- **Rama/commit:** fix/lane-b-10-reportar-reflexiones, fix/lane-b-09-filtrar-chats-notif, fix/lane-b-15-tests-firestore-service, fix/lane-b-16-notificaciones-batch @ 31b6610, 0a568f2, 15d4cb8
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. La revisión de la orquestadora encontró dos fallos que los tests no cubrían: el add/add del diálogo de reportar (resuelto quedándose con la versión con tests) y que #47 estaba sobre una base vieja que habría revertido el arreglo del índice.
+
+Tercera tanda de merges. Entró el CI nuevo (#48): el job Build APK pasó de ~6 min a 6 s en los PRs que no tocan Android ni dependencias, así que un PR de Dart/UI queda en ~1,5 min. Se publicó en ops/estado la regla de mergear main antes de abrir PR y el tope de 2 PRs abiertos. Una auditoría externa sobre un checkout atrasado acertó en dos puntos que sí están en main y se convierten en T-048 (P1) y T-049 (P2).
+
+**Problemas:**
+- Se acumularon 9 PRs abiertos y cada merge invalidaba los checks de los demás: la cola crecía más rápido de lo que drenaba.
+- #47 se construyó sobre un main viejo y habría revertido #44 y borrado product_events.dart.
+- La Function de moderación solo mapea reflexion, peticion y debate: los reportes de comentarios (#38) y de perfiles se guardan y nadie los procesa. Detectado al revisar un informe externo.
+
+**Decisiones:**
+- Tope de 2 PRs abiertos por carril y merge obligatorio de main antes de abrir PR (roadmap/BANDEJA.md).
+- Los conflictos se resuelven en la rama del PR tomando la versión de main que tenga tests.
+- Un PR que revierte un arreglo reciente no se mergea aunque sus checks estén verdes.
+- No se cierra una tarea cuyo PR solo cubre la UI (T-025 sigue abierta: falta la Function).
+
+**Siguiente:** #42 (conflicto resuelto), #49 (evento reflexion_publicada) y #41 (este cierre). En espera: #46 (requiere decisión humana) y #47 (tests + base al día).
+
+---

@@ -246,6 +246,101 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               },
             ),
           ),
+          const SizedBox(height: 12),
+          // Sección de temas seguidos
+          Consumer(
+            builder: (context, ref, _) {
+              final temasSeguidos =
+                  ref.watch(temasSeguidosProvider).value ?? [];
+              final uid = ref.watch(effectiveUserUidProvider);
+              if (uid == null) return const SizedBox.shrink();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.bookmark_outline,
+                          size: 16, color: AppTheme.primaryBlueLight),
+                      SizedBox(width: 6),
+                      Text(
+                        'Mis temas seguidos',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryBlueLight,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 32,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _tags.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      itemBuilder: (context, i) {
+                        final tag = _tags[i];
+                        final followed = temasSeguidos.contains(tag);
+                        return GestureDetector(
+                          onTap: () {
+                            ref
+                                .read(firestoreServiceProvider)
+                                .toggleTemaSeguido(
+                                  uid,
+                                  tag,
+                                  !followed,
+                                );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: followed
+                                  ? AppTheme.primaryBlue.withValues(alpha: 0.1)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: followed
+                                    ? AppTheme.primaryBlue
+                                    : AppTheme.pendingGrayDark,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  followed
+                                      ? Icons.bookmark
+                                      : Icons.bookmark_border,
+                                  size: 14,
+                                  color: followed
+                                      ? AppTheme.primaryBlue
+                                      : AppTheme.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  tag,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: followed
+                                        ? AppTheme.primaryBlue
+                                        : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -538,6 +633,45 @@ class _ReflexionCard extends ConsumerWidget {
                   );
                 },
               ),
+              _ActionBtn(
+                icon: Icons.block_outlined,
+                label: 'Bloquear',
+                onTap: () async {
+                  final uid = ref.read(effectiveUserUidProvider);
+                  if (uid == null) return;
+                  final authorName = (authorProfile?.nombre.isNotEmpty == true)
+                      ? authorProfile!.displayName
+                      : reflexion.userName;
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Bloquear usuario'),
+                      content: Text(
+                          '¿Seguro que quieres bloquear a $authorName? No podrás ver su contenido ni interactuar con él.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancelar'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Bloquear'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await ref
+                        .read(firestoreServiceProvider)
+                        .bloquearUsuario(uid, reflexion.userId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Usuario bloqueado')),
+                      );
+                    }
+                  }
+                },
+              ),
             ],
           ),
         ],
@@ -797,6 +931,46 @@ class _CommentTile extends ConsumerWidget {
                     },
                     child: const Icon(
                       Icons.flag_outlined,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () async {
+                      final uid = ref.read(effectiveUserUidProvider);
+                      if (uid == null) return;
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Bloquear usuario'),
+                          content: Text(
+                              '¿Seguro que quieres bloquear a ${comment.userName}? No podrás ver su contenido ni interactuar con él.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Bloquear'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await ref
+                            .read(firestoreServiceProvider)
+                            .bloquearUsuario(uid, comment.userId);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Usuario bloqueado')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Icon(
+                      Icons.block_outlined,
                       size: 14,
                       color: Colors.grey,
                     ),
