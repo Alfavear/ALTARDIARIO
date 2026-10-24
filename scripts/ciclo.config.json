@@ -10,7 +10,7 @@
   "minutosPorFase": 25,
   "limites": {
     "maxFicheros": 25,
-    "maxLineas": 900
+    "maxLineas": 1500
   },
   "excluirTareas": [
     "T-009",
@@ -18,16 +18,19 @@
     "T-060",
     "T-061",
     "T-062",
-    "T-063"
+    "T-063",
+    "T-058"
   ],
-  "_excluirNota": "T-009 bloqueada (plan Blaze); T-055 y T-061 exigen credenciales de producción; T-060 son saltos mayores que se revisan a mano; T-062 y T-063 configuran el propio ciclo/OpenCode.",
+  "_excluirNota": "T-009 bloqueada (plan Blaze); T-055 y T-061 exigen credenciales de producción; T-060 son saltos mayores que se revisan a mano; T-062 y T-063 configuran el propio ciclo/OpenCode. T-058 exige probar en dispositivo (compartir imagen), algo que el ciclo no puede verificar.",
   "prohibidos": [
     "^(fix|apply|update)_[^/]*\\.(py|js|mjs|ps1|sh)$",
     "^test_output\\.txt$",
     "\\.apk$",
     "\\.pem$",
     "(^|/)\\.env$",
-    "^(TAREA|PLAN|RESULTADO|REVISION)\\.(md|json)$"
+    "^(TAREA|PLAN|RESULTADO|REVISION)\\.(md|json)$",
+    "(^|/)zz_[^/]*",
+    "(^|/)[^/]*probe[^/]*\\.(dart|js|mjs|ts)$"
   ],
   "carriles": {
     "plataforma": {
@@ -43,6 +46,7 @@
       ],
       "modeloRevisa": [
         "opencode/glm-5.3-flash-free",
+        "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
         "nvidia/z-ai/glm-5.3"
       ]
     },
@@ -59,6 +63,7 @@
       ],
       "modeloRevisa": [
         "opencode/glm-5.3-flash-free",
+        "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/z-ai/glm-5.3"
       ]
     }
@@ -78,8 +83,10 @@
     ],
     "modeloRevisa": [
       "opencode/glm-5.3-flash-free",
+      "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
       "nvidia/z-ai/glm-5.3"
-    ]
+    ],
+    "enfriamientoSinTareasHoras": 3
   },
   "_modelosNota": "Cada fase prueba los modelos en orden y pasa al siguiente si el anterior no produce lo esperado (agota el tiempo, 429, etc.): NVIDIA primero y los gratuitos de OpenCode como respaldo.",
   "minutosFaseRespaldo": 15,
