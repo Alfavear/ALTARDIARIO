@@ -32,6 +32,7 @@
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { existsSync } from 'fs';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -52,25 +53,33 @@ const COLLECTION_GROUPS = [
   'respuestas',   // subcolección de debates
 ];
 
-let adminApp, adminFirestore, adminCredential;
+let admin;
 
 async function cargarFirebaseAdmin() {
-  const functionsNodeModules = resolve(__dirname, '../functions/node_modules');
-  
+  const functionsDir = resolve(__dirname, '../functions');
+  const functionsPackageJson = resolve(functionsDir, 'package.json');
+  const functionsNodeModules = resolve(functionsDir, 'node_modules');
+
   // Verificar que functions/node_modules existe ANTES de intentar importar
   if (!existsSync(functionsNodeModules)) {
     console.error('✗ No existe functions/node_modules');
-    console.error('  Ejecuta primero: cd functions && npm install');
+    console.error('  Ejecuta primero: cd functions && npm ci');
+    console.error('  (npm ci instala las dependencias exactas del package-lock.json)');
     process.exit(1);
   }
-  
-  // Importar firebase-admin usando import() dinámico con file:// URL
-  const adminModule = await import('firebase-admin');
-  const admin = adminModule.default ?? adminModule;
-  
-  adminApp = admin.initializeApp;
-  adminFirestore = admin.getFirestore;
-  adminCredential = admin.credential;
+
+  // Verificar que firebase-admin está instalado
+  const firebaseAdminPath = resolve(functionsNodeModules, 'firebase-admin');
+  if (!existsSync(firebaseAdminPath)) {
+    console.error('✗ firebase-admin no está instalado en functions/node_modules');
+    console.error('  Ejecuta: cd functions && npm ci');
+    process.exit(1);
+  }
+
+  // Importar firebase-admin usando createRequire apuntando al package.json de functions
+  // Esto resuelve las dependencias desde functions/node_modules correctamente en ESM
+  const require = createRequire(functionsPackageJson);
+  admin = require('firebase-admin');
 }
 
 function parseArgs() {
@@ -148,6 +157,9 @@ async function procesarColeccionRaiz(db, nombreColeccion, aplicar, limiteGlobal)
       // Necesita migración: no tiene 'oculto' o tiene 'hidden: true'
       const nuevoOculto = hiddenTrue ? true : false;
 
+      // Contar documentos que requieren migración (tanto en simulacro como en escritura)
+      actualizados++;
+
       if (aplicar) {
         try {
           batch.set(doc.ref, { oculto: nuevoOculto }, { merge: true });
@@ -156,8 +168,6 @@ async function procesarColeccionRaiz(db, nombreColeccion, aplicar, limiteGlobal)
           errores++;
           console.error(`  ✗ Error en ${doc.id}: ${e.message}`);
         }
-      } else {
-        actualizados++;
       }
 
       // Commit batch si llega al límite
@@ -228,6 +238,9 @@ async function procesarCollectionGroup(db, nombreGrupo, aplicar, limiteGlobal) {
 
       const nuevoOculto = hiddenTrue ? true : false;
 
+      // Contar documentos que requieren migración (tanto en simulacro como en escritura)
+      actualizados++;
+
       if (aplicar) {
         try {
           batch.set(doc.ref, { oculto: nuevoOculto }, { merge: true });
@@ -236,8 +249,6 @@ async function procesarCollectionGroup(db, nombreGrupo, aplicar, limiteGlobal) {
           errores++;
           console.error(`  ✗ Error en ${doc.id}: ${e.message}`);
         }
-      } else {
-        actualizados++;
       }
 
       if (aplicar && batchOps >= BATCH_SIZE) {
@@ -282,12 +293,15 @@ async function main() {
 
   await cargarFirebaseAdmin();
 
-  adminApp({
+  // Inicializar firebase-admin v12+ correctamente
+  // admin.initializeApp devuelve la app, no se usa como variable global
+  admin.initializeApp({
     projectId,
-    credential: adminCredential.applicationDefault(),
+    credential: admin.credential.applicationDefault(),
   });
 
-  const db = adminFirestore();
+  // En v12+, se usa admin.firestore() (no getFirestore)
+  const db = admin.firestore();
 
   const resumen = {
     totalEscaneados: 0,
