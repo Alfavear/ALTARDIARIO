@@ -16,6 +16,23 @@ import '../../data/services/bible_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/storage_service.dart';
 
+/// ──────────────────────────────────────────────────────────────────────────────
+/// Re-exports de la feature oracion (ADR-0001: feature-first architecture).
+/// Mantienen compatibilidad con código existente que importe desde app_providers.dart.
+/// ──────────────────────────────────────────────────────────────────────────────
+
+/// Re-export del repositorio de oración.
+export 'package:altar_diario/features/oracion/data/oracion_repository.dart'
+    show OracionRepository, oracionRepositoryProvider;
+
+/// Re-export de providers de peticiones de oración.
+export 'package:altar_diario/features/oracion/providers/oracion_providers.dart'
+    show
+        PeticionesFiltroNotifier,
+        peticionesFiltroProvider,
+        peticionesStreamProvider,
+        peticionesFiltradasProvider;
+
 /// StorageService — se inicializa con override en main.dart
 final storageProvider = Provider<StorageService>((ref) {
   throw UnimplementedError(
@@ -50,6 +67,19 @@ final effectiveUserUidProvider = Provider<String?>((ref) {
 /// Servicio de Firestore.
 final firestoreServiceProvider =
     Provider<FirestoreService>((ref) => FirestoreService());
+
+/// UIDs bloqueados por el usuario actual.
+final usuariosBloqueadosProvider =
+    StreamProvider.family<List<String>, String>((ref, uid) {
+  return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
+});
+
+/// UIDs bloqueados del usuario actual (versión no-familia para uso directo).
+final usuariosBloqueadosActualProvider = StreamProvider<List<String>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
+});
 
 /// Servicio de la Biblia (SQLite local).
 final bibleServiceProvider = Provider<BibleService>((ref) => BibleService());
@@ -102,6 +132,15 @@ Future<void> pushPendingProgress(WidgetRef ref) async {
   } catch (_) {}
 }
 
+/// Provider de temas seguidos por el usuario actual.
+final temasSeguidosProvider = StreamProvider<List<String>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).getUsuario(uid).map(
+        (u) => u?.temasSeguidos ?? [],
+      );
+});
+
 /// Perfil del usuario autenticado en Firestore.
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -145,6 +184,27 @@ final peticionesStreamProvider = StreamProvider<List<PeticionOracion>>((ref) {
   return ref.watch(firestoreServiceProvider).peticionesStream();
 });
 
+class PeticionesFiltroNotifier extends Notifier<bool?> {
+  @override
+  bool? build() => null;
+
+  void setFiltro(bool? value) => state = value;
+}
+
+/// Filtro actual para las peticiones (null = todas, true = respondidas, false = pendientes).
+final peticionesFiltroProvider =
+    NotifierProvider<PeticionesFiltroNotifier, bool?>(
+        PeticionesFiltroNotifier.new);
+
+/// Peticiones de oración filtradas por estado (respondida/pendiente).
+final peticionesFiltradasProvider =
+    StreamProvider<List<PeticionOracion>>((ref) {
+  final filtro = ref.watch(peticionesFiltroProvider);
+  return ref.watch(firestoreServiceProvider).peticionesStreamFiltrado(
+        respondida: filtro,
+      );
+});
+
 /// Mensajes de un chat específico.
 final messagesStreamProvider =
     StreamProvider.family<List<Message>, String>((ref, chatId) {
@@ -157,16 +217,31 @@ final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
   return uid == authorId;
 });
 
-/// Lista de chats del usuario.
-final chatListProvider =
+/// Lista de chats filtrando usuarios bloqueados.
+final chatListFiltradoProvider =
     StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUserChats(userId);
+  return ref.watch(firestoreServiceProvider).getUserChatsFiltrados(userId);
 });
 
-/// Perfil de otro usuario (público).
+/// Perfil de otro usuario (público). Retorna null si el usuario actual lo
+/// ha bloqueado.
 final otherUserProfileProvider =
     StreamProvider.family<Usuario?, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUsuario(userId);
+  final currentUid = ref.watch(effectiveUserUidProvider);
+  if (currentUid == null) {
+    return ref.watch(firestoreServiceProvider).getUsuario(userId);
+  }
+  final bloqueadosAsync = ref.watch(usuariosBloqueadosProvider(currentUid));
+  return bloqueadosAsync.when(
+    data: (bloqueados) {
+      if (bloqueados.contains(userId)) {
+        return Stream.value(null);
+      }
+      return ref.watch(firestoreServiceProvider).getUsuario(userId);
+    },
+    loading: () => Stream.value(null),
+    error: (_, __) => Stream.value(null),
+  );
 });
 
 /// Datos de racha de un amigo para mostrar en ranking.
@@ -195,7 +270,10 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
   final storage = ref.read(storageProvider);
   final usuario = await firestore.getUsuarioOnce(uid);
   if (usuario == null) return [];
-  final allUids = [uid, ...usuario.siguiendo];
+  final bloqueados = await firestore.getUsuariosBloqueados(uid).first;
+  final allUids = [uid, ...usuario.siguiendo]
+      .where((id) => !bloqueados.contains(id))
+      .toList();
   final streaksData = await firestore.getStreaksData(allUids);
   final results = <FriendStreak>[];
   for (final id in allUids) {
@@ -204,7 +282,7 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
         data != null ? List<String>.from(data['progresoLectura']) : <String>[];
     final racha = storage.calcularRacha(progreso);
     final maxS = data != null ? (data['maxStreak'] as int? ?? 0) : 0;
-    String deriveName(String n, String e) {
+    String deriveName(String n) {
       var trimmed = n.trim();
       if (trimmed.isNotEmpty && trimmed.toLowerCase() != 'anónimo') {
         if (trimmed.endsWith(' (Invitado)')) {
@@ -212,15 +290,11 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
         }
         return trimmed;
       }
-      if (e.isNotEmpty && e != 'invitado@altardiario.app') {
-        return e.split('@').first;
-      }
       return 'Invitado';
     }
 
     final rawName = data != null ? (data['nombre'] as String? ?? '') : '';
-    final email = data != null ? (data['email'] as String? ?? '') : '';
-    final nombre = data != null ? deriveName(rawName, email) : 'Tú';
+    final nombre = data != null ? deriveName(rawName) : 'Tú';
     final fotoUrl = data != null ? (data['fotoUrl'] as String? ?? '') : '';
     if (id == uid) {
       final localRacha = storage.calcularRacha();
@@ -279,7 +353,10 @@ final globalLeaderboardProvider =
   final storage = ref.read(storageProvider);
 
   // Obtener top 100 usuarios ordenados por racha (aproximado: traer todos y ordenar localmente)
-  final allUsers = await firestore.getAllUsuarios();
+  final bloqueados = await firestore.getUsuariosBloqueados(uid).first;
+  final allUsers = (await firestore.getAllUsuarios())
+      .where((u) => !bloqueados.contains(u.id))
+      .toList();
   if (allUsers.isEmpty) return [];
 
   final allUids = allUsers.map((u) => u.id).toList();
@@ -384,19 +461,51 @@ final debateRepliesStreamProvider =
   return ref.watch(firestoreServiceProvider).debateRepliesStream(debateId);
 });
 
+/// Stream de respuestas de un debate con paginación por cursor.
+final debateRepliesStreamCursorProvider = StreamProvider.family<
+    List<DebateReply>,
+    ({String debateId, DocumentSnapshot? lastDocument})>((ref, params) {
+  return ref.watch(firestoreServiceProvider).debateRepliesStreamCursor(
+      params.debateId,
+      lastDocument: params.lastDocument);
+});
+
+/// Comentarios de una reflexión con paginación por cursor.
+final comentariosStreamCursorProvider = StreamProvider.family<List<Comment>,
+    ({String reflexionId, DocumentSnapshot? lastDocument})>((ref, params) {
+  return ref.watch(firestoreServiceProvider).comentariosStreamCursor(
+      params.reflexionId,
+      lastDocument: params.lastDocument);
+});
+
+/// Stream de mensajes de un chat con paginación por cursor.
+final chatMessagesCursorProvider = StreamProvider.family<List<Message>,
+    ({String chatId, DocumentSnapshot? lastDocument})>((ref, params) {
+  return ref
+      .watch(firestoreServiceProvider)
+      .getMessagesCursor(params.chatId, lastDocument: params.lastDocument);
+});
+
 /// Sugerencias de amistad (usuarios que no sigues).
 final sugerenciasAmistadProvider = FutureProvider<List<Usuario>>((ref) async {
   final uid = ref.watch(effectiveUserUidProvider);
   final firestore = ref.read(firestoreServiceProvider);
   final usuario = uid != null ? await firestore.getUsuarioOnce(uid) : null;
-  final excludeIds = <String>{if (uid != null) uid, ...?usuario?.siguiendo};
+  final bloqueados = uid != null
+      ? await firestore.getUsuariosBloqueados(uid).first
+      : <String>[];
+  final excludeIds = <String>{
+    if (uid != null) uid,
+    ...?usuario?.siguiendo,
+    ...bloqueados
+  };
   final allUsers = await firestore.getAllUsuarios();
 
   final mappedUsers = allUsers
       .where((u) =>
           !excludeIds.contains(u.id) &&
-          u.email.isNotEmpty &&
-          u.email != 'invitado@altardiario.app')
+          u.nombre.trim().isNotEmpty &&
+          u.nombre.toLowerCase() != 'anónimo')
       .map((u) {
     return Usuario(
       id: u.id,
@@ -531,9 +640,24 @@ final notificationsStreamProvider =
   });
 });
 
-/// Contador de notificaciones no leídas.
+/// Stream de notificaciones filtrando usuarios bloqueados.
+final notificationsFiltradasProvider =
+    StreamProvider<List<AppNotification>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref
+      .watch(firestoreServiceProvider)
+      .notificationsStreamFiltrado(uid)
+      .map((list) {
+    return list
+        .map((map) => AppNotification.fromMap(map['id'] ?? '', map))
+        .toList();
+  });
+});
+
+/// Contador de notificaciones no leídas (sobre el stream filtrado).
 final unreadNotificationsCountProvider = Provider<int>((ref) {
-  final notificationsAsync = ref.watch(notificationsStreamProvider);
+  final notificationsAsync = ref.watch(notificationsFiltradasProvider);
   return notificationsAsync.when(
     data: (notifications) => notifications.where((n) => !n.read).length,
     loading: () => 0,

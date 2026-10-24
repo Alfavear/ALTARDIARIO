@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/debate.dart';
 import '../../data/models/debate_reply.dart';
+import '../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
 import 'public_profile_screen.dart';
 
@@ -81,6 +82,26 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                       uid: uid,
                     ),
                     const SizedBox(height: 16),
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: const Text(
+                        'Reglas comunitarias: respeta a los demás, evita spam y '
+                        'contenido ofensivo. Los debates pueden ser cerrados por '
+                        'su autor o moderados.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ),
                     const Divider(),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
@@ -95,16 +116,34 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                             padding: EdgeInsets.symmetric(vertical: 32),
                             child: Center(
                               child: Text(
-                                'Sé el primero en responder.',
+                                'SÃ© el primero en responder.',
                                 style: TextStyle(color: AppTheme.textSecondary),
                               ),
                             ),
                           );
                         }
+                        final topLevel =
+                            replies.where((r) => r.parentId == null).toList();
+                        final children = <String, List<DebateReply>>{};
+                        for (final r in replies) {
+                          if (r.parentId != null) {
+                            children.putIfAbsent(r.parentId!, () => []).add(r);
+                          }
+                        }
                         return Column(
-                          children: replies
-                              .map((r) => _ReplyTile(reply: r, uid: uid))
-                              .toList(),
+                          children: topLevel.map((r) {
+                            final nested = children[r.id] ?? [];
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _ReplyTile(reply: r, uid: uid),
+                                ...nested.map((nr) => Padding(
+                                      padding: const EdgeInsets.only(left: 32),
+                                      child: _ReplyTile(reply: nr, uid: uid),
+                                    )),
+                              ],
+                            );
+                          }).toList(),
                         );
                       },
                       loading: () =>
@@ -260,6 +299,65 @@ class _DebateHeader extends ConsumerWidget {
                   style: const TextStyle(
                       fontSize: 13, color: AppTheme.textSecondary)),
               const Spacer(),
+              if (uid != null && uid != debate.userId) ...[
+                IconButton(
+                  icon: const Icon(Icons.flag_outlined,
+                      size: 18, color: AppTheme.textSecondary),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => ReportContentDialog(
+                        targetType: 'debate',
+                        targetId: debate.id,
+                        targetTitle: debate.titulo,
+                        targetAuthor: debate.userName,
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.block_outlined,
+                      size: 18, color: AppTheme.textSecondary),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Bloquear usuario'),
+                        content: Text(
+                            '¿Seguro que quieres bloquear a ${debate.userName}? No podrás ver su contenido ni interactuar con él.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Bloquear'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await ref
+                          .read(firestoreServiceProvider)
+                          .bloquearUsuario(uid!, debate.userId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Usuario bloqueado')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+              if (uid == debate.userId && !debate.cerrado)
+                TextButton(
+                  onPressed: () {
+                    ref.read(firestoreServiceProvider).cerrarDebate(debate.id);
+                  },
+                  child: const Text('Cerrar debate',
+                      style: TextStyle(fontSize: 12)),
+                ),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -378,6 +476,61 @@ class _ReplyTile extends ConsumerWidget {
                       style: const TextStyle(
                           fontSize: 10, color: AppTheme.textSecondary),
                     ),
+                    if (uid != null && uid != reply.userId) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.flag_outlined,
+                            size: 16, color: AppTheme.textSecondary),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => ReportContentDialog(
+                              targetType: 'debate',
+                              targetId: reply.id,
+                              targetTitle: reply.texto.length > 50
+                                  ? '${reply.texto.substring(0, 50)}...'
+                                  : reply.texto,
+                              targetAuthor: reply.userName,
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.block_outlined,
+                            size: 16, color: AppTheme.textSecondary),
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Bloquear usuario'),
+                              content: Text(
+                                  '¿Seguro que quieres bloquear a ${reply.userName}? No podrás ver su contenido ni interactuar con él.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Bloquear'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await ref
+                                .read(firestoreServiceProvider)
+                                .bloquearUsuario(uid!, reply.userId);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Usuario bloqueado')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 4),

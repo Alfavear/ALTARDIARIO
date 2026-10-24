@@ -42,16 +42,21 @@ Future<void> main() async {
     txt = txt.replaceAll(RegExp(r'<[^>]*>'), '');
     txt = txt.replaceAll(RegExp(r'\s+'), ' ').trim();
 
-    bookMap.putIfAbsent(bid, () => {
-      'id': bid,
-      'name': books[bid] ?? 'Book $bid',
-      'chapters': <int, Map<String, dynamic>>{},
-    });
-    final chapters = bookMap[bid]!['chapters']! as Map<int, Map<String, dynamic>>;
-    chapters.putIfAbsent(ch, () => {
-      'number': ch,
-      'verses': <Map<String, dynamic>>[],
-    });
+    bookMap.putIfAbsent(
+        bid,
+        () => {
+              'id': bid,
+              'name': books[bid] ?? 'Book $bid',
+              'chapters': <int, Map<String, dynamic>>{},
+            });
+    final chapters =
+        bookMap[bid]!['chapters']! as Map<int, Map<String, dynamic>>;
+    chapters.putIfAbsent(
+        ch,
+        () => {
+              'number': ch,
+              'verses': <Map<String, dynamic>>[],
+            });
     (chapters[ch]!['verses']! as List<Map<String, dynamic>>).add({
       'number': vs,
       'text': txt,

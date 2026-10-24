@@ -54,6 +54,20 @@ service cloud.firestore {
       return after is int && (after - before) >= -1 && (after - before) <= 1;
     }
 
+    // El documento público no puede contener email ni fcmToken (privacidad).
+    // Se usa en create y en ownerEditOk para validar payloads.
+    function noPrivateFields(data) {
+      return !data.keys().hasAny(['email', 'fcmToken']);
+    }
+
+    // Permite borrar email/fcmToken del perfil público sin bloquear la escritura
+    // si el resto del payload cumple las reglas. Se usa en allow update de usuarios.
+    function privateOnlyRemoved(campo) {
+      let before = resource.data.get(campo, '');
+      let after = request.resource.data.get(campo, '');
+      return after == '' || after == before;
+    }
+
     // El set de `field` es el mismo, sin importar el orden (el cliente reenvía
     // participantIds con el uid propio primero al enviar un mensaje).
     function sameMembers(field) {
@@ -91,11 +105,41 @@ service cloud.firestore {
         && counterDeltaOk('upvotes');
     }
 
+    // ───────────── Bloqueo real (T-053) ─────────────
+    // Si A bloqueó a B, ninguno de los dos escribe en el contenido del otro:
+    // B no puede seguir hostigando y A no interactúa con quien bloqueó.
+    // Coste: 2 lecturas de documento por escritura (el límite es 10).
+    function blockBetween(otherUid) {
+      return exists(/databases/$(database)/documents/usuarios/$(otherUid)/blocked/$(uid()))
+        || exists(/databases/$(database)/documents/usuarios/$(uid())/blocked/$(otherUid));
+    }
+
+    // En un chat 1:1 el bloqueo puede estar en cualquiera de los dos lados.
+    // Las reglas no recorren listas; el create y el update de /chats exigen
+    // exactamente 2 participantes, así que comprobar ambos cubre el caso real.
+    function chatBlocked(participants) {
+      return blockBetween(participants[0]) || blockBetween(participants[1]);
+    }
+
+    // Añadirse a los seguidores de otro (frente a quitarse). Quitarse se
+    // permite siempre: con un bloqueo de por medio, el bloqueado tiene que
+    // poder limpiar su propio rastro de la lista del otro.
+    function addsFollower() {
+      let before = resource.data.get('seguidores', []).toSet();
+      let after = request.resource.data.get('seguidores', []).toSet();
+      return after.hasAll(before);
+    }
+
     // El dueño puede editar su contenido, pero nunca reasignar autoría
-    // ni manipular contadores sociales.
+    // ni manipular contadores sociales ni los campos de moderación
+    // (oculto, ocultoMotivo, ocultoEn): solo la función de moderación (admin SDK) los fija.
     function ownerEditOk() {
       return isOwner(resource.data)
-        && !changedKeys().hasAny(['userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount']);
+        && !changedKeys().hasAny([
+          'userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount',
+          'oculto', 'ocultoMotivo', 'ocultoEn',
+        ])
+        && noPrivateFields(request.resource.data);
     }
 
     // ───────────── Reflexiones (feed) ─────────────
@@ -104,6 +148,7 @@ service cloud.firestore {
 
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.keys().hasAll(['userId', 'userName', 'texto', 'fecha', 'pasajeDia'])
         && request.resource.data.texto is string
         && request.resource.data.texto.size() > 0
@@ -126,6 +171,8 @@ service cloud.firestore {
         allow read: if true;
         allow create: if signedIn()
           && request.resource.data.userId == uid()
+          && noPrivateFields(request.resource.data)
+          && !blockBetween(get(/databases/$(database)/documents/reflexiones/$(reflexionId)).data.userId)
           && request.resource.data.texto is string
           && request.resource.data.texto.size() > 0
           && request.resource.data.texto.size() <= 2000;
@@ -139,6 +186,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.motivo is string
         && request.resource.data.motivo.size() > 0
         && request.resource.data.motivo.size() <= 3000;
@@ -152,8 +200,17 @@ service cloud.firestore {
 
       match /comentarios/{comentarioId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.userId == uid();
-        allow update: if signedIn() && (ownerEditOk() || likeOnly());
+        allow create: if signedIn() && request.resource.data.userId == uid()
+          && noPrivateFields(request.resource.data)
+          && !blockBetween(get(/databases/$(database)/documents/peticiones_oracion/$(peticionId)).data.userId)
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() > 0
+          && request.resource.data.texto.size() <= 2000;
+        allow update: if signedIn() && (
+          (ownerEditOk()
+            && (!changedKeys().hasAny(['texto'])
+                || request.resource.data.texto.size() <= 2000))
+          || likeOnly());
         allow delete: if isOwner(resource.data);
       }
     }
@@ -163,10 +220,20 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data)
         && request.resource.data.titulo is string
-        && request.resource.data.titulo.size() > 0;
+        && request.resource.data.titulo.size() > 0
+        && request.resource.data.titulo.size() <= 200
+        && request.resource.data.contenido is string
+        && request.resource.data.contenido.size() > 0
+        && request.resource.data.contenido.size() <= 5000;
       allow update: if signedIn() && (
-        (ownerEditOk() && !changedKeys().hasAny(['replyCount']))
+        // Dueño: edita título/contenido con límites, no replyCount.
+        (ownerEditOk() && !changedKeys().hasAny(['replyCount'])
+          && (!changedKeys().hasAny(['titulo'])
+              || request.resource.data.titulo.size() <= 200)
+          && (!changedKeys().hasAny(['contenido'])
+              || request.resource.data.contenido.size() <= 5000))
         || voteOnly()
         || (changedKeys().hasOnly(['replyCount']) && counterDeltaOk('replyCount'))
       );
@@ -174,8 +241,19 @@ service cloud.firestore {
 
       match /respuestas/{respuestaId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.userId == uid();
-        allow update: if signedIn() && (ownerEditOk() || voteOnly());
+        allow create: if signedIn()
+          && request.resource.data.userId == uid()
+          && noPrivateFields(request.resource.data)
+          && !blockBetween(get(/databases/$(database)/documents/debates/$(debateId)).data.userId)
+          && request.resource.data.contenido is string
+          && request.resource.data.contenido.size() > 0
+          && request.resource.data.contenido.size() <= 2000;
+        allow update: if signedIn() && (
+          (ownerEditOk()
+            && (!changedKeys().hasAny(['contenido'])
+                || request.resource.data.contenido.size() <= 2000))
+          || voteOnly()
+        );
         allow delete: if isOwner(resource.data);
       }
     }
@@ -194,32 +272,20 @@ service cloud.firestore {
       // a la rama del dueño.
       allow update: if signedIn() && (
         uid() == userId
-        || (changedKeys().hasOnly(['seguidores']) && listOnlyTouchesSelf('seguidores'))
+        || (changedKeys().hasOnly(['seguidores'])
+            && listOnlyTouchesSelf('seguidores')
+            && (!addsFollower() || !blockBetween(userId)))
       );
       allow delete: if signedIn() && uid() == userId;
 
-      match /private/{privateId} {
-        // Solo el dueño lee/escribe/borra su documento privado. NUNCA añadir
-        // `match /{path=**}/private/{doc}`: abriría un collection group
-        // que expone los datos privados de todos los usuarios.
-        allow read: if signedIn() && uid() == userId && privateId == 'account';
+      // Bloqueos de usuarios: solo el dueño puede crear/borrar sus propios
+      // bloqueos. El cliente impide el auto-bloqueo (uid == blockedUid).
+      match /blocked/{blockedUid} {
+        allow read: if signedIn() && uid() == userId;
         allow create: if signedIn() && uid() == userId
-          && privateId == 'account'
-          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
-          && (request.resource.data.get('email', '') is string
-              && request.resource.data.get('email', '').size() <= 320)
-          && (request.resource.data.get('fcmToken', '') is string
-              && request.resource.data.get('fcmToken', '').size() <= 4096);
-        allow update: if signedIn() && uid() == userId
-          && privateId == 'account'
-          && changedKeys().hasOnly(['email', 'fcmToken'])
-          && (!changedKeys().hasAny(['email'])
-              || (request.resource.data.get('email', '') is string
-                  && request.resource.data.get('email', '').size() <= 320))
-          && (!changedKeys().hasAny(['fcmToken'])
-              || (request.resource.data.get('fcmToken', '') is string
-                  && request.resource.data.get('fcmToken', '').size() <= 4096));
-        allow delete: if signedIn() && uid() == userId && privateId == 'account';
+          && request.resource.data.blockedUid is string;
+        allow delete: if signedIn() && uid() == userId;
+        allow update: if false;
       }
 
       match /bible_highlights/{highlightId} {
@@ -232,15 +298,47 @@ service cloud.firestore {
         allow read, write: if signedIn() && uid() == userId;
       }
 
+      // Documento privado con allowlist estricta (T-041):
+      // Solo 'account' es un ID válido. Campos permitidos:
+      //   email: string <= 320 chars
+      //   fcmToken: string <= 4096 chars
+      // Ningún otro campo (role, verified, basura) se permite.
+      match /private/{privateId} {
+        allow read: if signedIn() && uid() == userId && privateId == 'account';
+        allow create: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (request.resource.data.get('email', '') == ''
+              || (request.resource.data.email is string && request.resource.data.email.size() <= 320))
+          && (request.resource.data.get('fcmToken', '') == ''
+              || (request.resource.data.fcmToken is string && request.resource.data.fcmToken.size() <= 4096));
+        allow update: if signedIn() && uid() == userId
+          && privateId == 'account'
+          && request.resource.data.keys().hasOnly(['email', 'fcmToken'])
+          && (request.resource.data.get('email', '') == ''
+              || (request.resource.data.email is string && request.resource.data.email.size() <= 320))
+          && (request.resource.data.get('fcmToken', '') == ''
+              || (request.resource.data.fcmToken is string && request.resource.data.fcmToken.size() <= 4096));
+        allow delete: if signedIn() && uid() == userId && privateId == 'account';
+      }
+
       // Notificaciones: el receptor las lee/marca/borra; cualquier usuario
       // puede CREAR una, pero solo firmada con su propio uid como actor.
       match /notifications/{notificationId} {
         allow read: if signedIn() && uid() == userId;
         allow create: if signedIn()
           && uid() != userId
+          && !blockBetween(userId)
+          && noPrivateFields(request.resource.data)
           && request.resource.data.actorId == uid()
           && request.resource.data.keys().hasAll(['type', 'title', 'body', 'createdAt'])
-          && request.resource.data.read == false;
+          && request.resource.data.read == false
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 200
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 1000;
         allow update: if signedIn() && uid() == userId
           && changedKeys().hasOnly(['read']);
         allow delete: if signedIn() && uid() == userId;
@@ -249,7 +347,8 @@ service cloud.firestore {
 
     // ───────────── Feedback ─────────────
     match /feedback/{docId} {
-      allow create: if signedIn() && request.resource.data.userId == uid();
+      allow create: if signedIn() && request.resource.data.userId == uid()
+        && noPrivateFields(request.resource.data);
       allow read: if isOwner(resource.data);
     }
 
@@ -259,11 +358,13 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if false;
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['reporterId', 'targetType', 'targetId', 'reason', 'createdAt'])
         && request.resource.data.reporterId == uid()
-        && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario']
+        && request.resource.data.targetType in ['reflexion', 'peticion', 'debate', 'usuario', 'comentario']
         && request.resource.data.targetId is string
         && request.resource.data.reason is string
-        && request.resource.data.reason.size() <= 500;
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
 
@@ -297,6 +398,7 @@ service cloud.firestore {
       // Reordenar `participantIds` es válido (el emisor reenvía la lista con
       // su uid primero), pero nunca cambiar quiénes participan.
       allow update: if isParticipant(resource.data)
+        && !chatBlocked(resource.data.participantIds)
         && changedKeys().hasOnly(['participantIds', 'lastMessage', 'lastSenderId', 'lastUpdate', 'participantNames'])
         && (!changedKeys().hasAny(['participantIds'])
             || (sameMembers('participantIds')
@@ -309,6 +411,7 @@ service cloud.firestore {
         allow read: if signedIn() && uid() in chatParticipants(chatId);
         allow create: if signedIn()
           && uid() in chatParticipants(chatId)
+          && !chatBlocked(chatParticipants(chatId))
           && request.resource.data.senderId == uid()
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 4000;

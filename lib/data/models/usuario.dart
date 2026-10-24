@@ -17,6 +17,7 @@ class Usuario {
   final int nivel;
   final List<String> progresoLectura;
   final int maxStreak;
+  final List<String> temasSeguidos;
 
   String get displayName {
     var n = nombre.trim();
@@ -47,6 +48,7 @@ class Usuario {
     this.nivel = 1,
     this.progresoLectura = const [],
     this.maxStreak = 0,
+    this.temasSeguidos = const [],
   }) : fechaCreacion = fechaCreacion ?? DateTime.now();
 
   factory Usuario.fromFirestore(DocumentSnapshot doc) {
@@ -68,6 +70,7 @@ class Usuario {
       nivel: data['nivel'] ?? 1,
       progresoLectura: List<String>.from(data['progresoLectura'] ?? []),
       maxStreak: data['maxStreak'] ?? 0,
+      temasSeguidos: List<String>.from(data['temasSeguidos'] ?? []),
     );
   }
 
@@ -89,12 +92,12 @@ class Usuario {
       nivel: data['nivel'] ?? 1,
       progresoLectura: List<String>.from(data['progresoLectura'] ?? []),
       maxStreak: data['maxStreak'] ?? 0,
+      temasSeguidos: List<String>.from(data['temasSeguidos'] ?? []),
     );
   }
 
   Map<String, dynamic> toMap() => {
         'nombre': nombre,
-        'email': email,
         'fotoUrl': fotoUrl,
         'bio': bio,
         'fechaCreacion': fechaCreacion.toIso8601String(),
@@ -108,6 +111,11 @@ class Usuario {
         'nivel': nivel,
         'progresoLectura': progresoLectura,
         'maxStreak': maxStreak,
+        'temasSeguidos': temasSeguidos,
+      };
+
+  Map<String, dynamic> get privateAccountMap => {
+        if (email.isNotEmpty) 'email': email,
       };
 
   static DateTime _readDate(Object? value) {

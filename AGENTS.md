@@ -37,6 +37,29 @@ romper algo que alguien usa hoy.
 - [ ] CHANGELOG actualizado
 - [ ] Ningún archivo nuevo supera 400 líneas; ningún widget privado supera 150
 
+### 1c. Varias sesiones a la vez (obligatorio)
+
+Si hay más de una sesión en el repo (lo normal: orquestadora + implementadora + auditora):
+
+1. **Un worktree por sesión.** Dos sesiones en el mismo directorio acaban en un
+   `reset --hard`, un `checkout -B` o un `stash` cruzado, y el trabajo de una
+   desaparece sin que nadie se entere. `git worktree list` antes de empezar.
+2. **`git fetch origin` y cita el SHA de `origin/main`** en todo informe
+   ("validado en `<sha>`"). Nunca valides ni decidas sobre un `main` local desfasado.
+3. **Se trabaja desde `origin/main`, no desde `main` local.** Rama nueva:
+   `git checkout -B mi-rama origin/main`. El `main` local no lo mantiene nadie y por
+   eso envejece: si lo necesitas al día, `scripts/sync-main.sh` (solo fast-forward).
+4. **Un solo merger.** Solo la sesión orquestadora mergea y escribe el roadmap.
+5. **Máximo 2 PRs abiertos por sesión**; antes de abrirlos, `git merge origin/main`
+   y mira `git diff --stat origin/main` (si aparecen ficheros que no tocaste, estás
+   desfasado y ese PR revertiría trabajo ajeno).
+6. **Todo lo no empujado no existe**: push de la rama aunque sea WIP y tu fichero
+   `roadmap/sesiones/<id>.md` al día.
+7. Prohibido `push --force`, `reset --hard` y rebase de ramas con PR abierto.
+
+Protocolo completo, plantillas y casos reales: `docs/SESIONES.md`.
+Orientación en 30 segundos: `scripts/session-check.sh`.
+
 ## 2. Stack
 
 | Capa | Tecnología | Notas |
@@ -79,6 +102,19 @@ Código existente se migra feature a feature, una por PR, sin mezclar refactor
 con funcionalidad nueva. No crear providers nuevos en `app_providers.dart`;
 crearlos en `lib/features/<feature>/providers/`.
 
+### 3b. Grafo de conocimiento versionado
+
+`.opencode/knowledge-graph.jsonl` es documentación derivada de los contratos y
+**lo escribe únicamente el CI** (`.github/workflows/graph-sync.yml`), que abre
+un PR tras cada merge en `main`. En local es **de solo lectura**: el MCP
+`knowledge-graph-memory` arranca con `kg-server.mjs` (config global), que
+trabaja sobre una copia temporal. Aunque el agente escriba, el repo no se
+ensucia.
+
+- Consultar (`search_nodes`, `open_nodes`, `read_graph`): sí, antes de explorar.
+- Mutar (`create_entities`, `create_relations`, `delete_*`): no sobre este grafo.
+- Si falta contexto, se lee el código. Nunca se edita el grafo a mano.
+
 ## 4. Convenciones
 
 | Qué | Convención | Ejemplo |
@@ -118,6 +154,21 @@ crearlos en `lib/features/<feature>/providers/`.
 - Nada de `print`; usa `debugPrint` o el logger de observabilidad.
 - Pantallas sociales: comprobar `isGuestUserProvider` al inicio de `build()` y
   renderizar `GuestAccessRestrictedWidget` o esconder acciones.
+
+### UI/UX (obligatorio)
+- Antes de escribir o refactorizar interfaz, lee `DESIGN.md` y usa los tokens de
+  `lib/core/theme/app_theme.dart`. Prohibido el `Color(0x…)` suelto en un widget,
+  el `EdgeInsets` numérico arbitrario y cualquier valor fuera de la escala
+  4/8/12/16/24/32/48.
+- Toda vista que consulte datos remotos declara los **cuatro** estados: datos,
+  carga (skeleton no bloqueante), error (mensaje humano + reintento) y vacío
+  (icono + texto + acción inicial). `AsyncValue.when` no exime del vacío.
+- Touch target ≥ 48×48 dp; contraste WCAG AA (4.5:1 texto, 3:1 gráficos);
+  un solo CTA primario por vista, el resto outlined o text.
+- Microcopia sin jerga técnica: cada error dice qué pasó y qué hacer. Nunca
+  `Exception`, `null`, `PERMISSION_DENIED` ni códigos de estado en la interfaz.
+- Revisa el resultado con el skill `frontend-design` antes de darlo por terminado
+  (teclado que no tapa campos, overflow, `textScaler` al 200%).
 
 ### Seguridad (no negociable)
 - Nunca commitear `.env`, `google-services.json`, `GoogleService-Info.plist`, keystores.
@@ -186,6 +237,7 @@ usa el MCP `roadmap` (`get_state`, `next_task`, `start_task`, `complete_task`,
 
 | Archivo | Para qué |
 |---|---|
+| `DESIGN.md` | Design system: tokens, tipografía, estados obligatorios y microcopia |
 | `roadmap/tasks.yaml` · `roadmap/STATE.md` | Backlog ejecutable y panel de progreso (vía MCP) |
 | `roadmap/BITACORA.md` | Qué hizo cada ciclo autónomo |
 | `docs/ROADMAP.md` | Visión por fases (narrativa; las tareas concretas están en roadmap/tasks.yaml) |

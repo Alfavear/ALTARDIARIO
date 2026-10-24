@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/note.dart';
+import '../../features/biblioteca/data/exportador_biblioteca.dart';
+import '../../features/biblioteca/presentation/hoja_exportar_biblioteca.dart';
 import '../providers/app_providers.dart';
 import 'note_editor_screen.dart';
+import 'publicar_reflexion_screen.dart';
 
 class NotesScreen extends ConsumerWidget {
   const NotesScreen({super.key});
@@ -35,6 +39,11 @@ class NotesScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share, color: AppTheme.textSecondary),
+            tooltip: 'Exportar mi biblioteca',
+            onPressed: () => _exportar(context, ref),
+          ),
           IconButton(
             icon: const Icon(Icons.search, color: AppTheme.textSecondary),
             onPressed: () {
@@ -76,6 +85,34 @@ class NotesScreen extends ConsumerWidget {
       ),
     );
   }
+
+  /// Exporta la biblioteca solo cuando el usuario lo pide: el texto se copia al
+  /// portapapeles y nada sale del dispositivo por su cuenta.
+  Future<void> _exportar(BuildContext context, WidgetRef ref) async {
+    final notas = await ref.read(storageProvider).getNotes();
+    if (!context.mounted) return;
+    final texto = exportarBiblioteca(notas);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => HojaExportarBiblioteca(
+        texto: texto,
+        onCopiar: () {
+          Clipboard.setData(ClipboardData(text: texto));
+          Navigator.pop(sheetContext);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Biblioteca copiada al portapapeles'),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _NotesBody extends ConsumerStatefulWidget {
@@ -100,6 +137,9 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return _buildErrorState();
         }
         final notes = snapshot.data ?? [];
         final filtered = _selectedFilter == 'Todas'
@@ -141,6 +181,21 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
                     'Reflexiones y momentos compartidos con Dios.',
                     style:
                         TextStyle(color: AppTheme.textSecondary, fontSize: 15),
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.lock_outline,
+                          size: 13, color: AppTheme.completedGreen),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Tus notas son privadas: solo tú puedes verlas.',
+                          style: TextStyle(
+                              fontSize: 11, color: AppTheme.completedGreen),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -191,6 +246,45 @@ class _NotesBodyState extends ConsumerState<_NotesBody> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Estado de error: las notas son locales, así que no bloqueamos la lectura y
+  /// ofrecemos reintentar sin conexión.
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_outlined,
+                size: 44, color: AppTheme.textSecondary),
+            const SizedBox(height: 14),
+            const Text(
+              'No pudimos leer tus notas guardadas',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Siguen en este dispositivo. Puedes reintentar o seguir leyendo; '
+              'no necesitas conexión.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 14),
+            TextButton.icon(
+              onPressed: () => setState(() {}),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -289,13 +383,24 @@ class _NoteCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.favorite_outline,
+                  const Icon(Icons.favorite_outline,
                       size: 18, color: AppTheme.textSecondary),
-                  SizedBox(width: 12),
-                  Icon(Icons.share_outlined,
-                      size: 18, color: AppTheme.textSecondary),
+                  const SizedBox(width: 12),
+                  Semantics(
+                    button: true,
+                    label: 'Convertir esta nota en una reflexión para publicar',
+                    child: InkWell(
+                      onTap: () => _convertirEnReflexion(context, note),
+                      borderRadius: BorderRadius.circular(8),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(Icons.ios_share,
+                            size: 18, color: AppTheme.primaryBlue),
+                      ),
+                    ),
+                  ),
                 ],
               ),
               GestureDetector(
@@ -316,6 +421,25 @@ class _NoteCard extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Lleva la nota a la pantalla de publicar con el texto ya puesto: el usuario
+  /// convierte su nota en publicación sin copiar y pegar.
+  void _convertirEnReflexion(BuildContext context, Note note) {
+    final partes = [
+      if (note.title.trim().isNotEmpty) note.title.trim(),
+      if (note.content.trim().isNotEmpty) note.content.trim(),
+    ];
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicarReflexionScreen(
+          pasajeDia:
+              note.title.trim().isEmpty ? 'Reflexión personal' : note.title,
+          textoInicial: partes.join('\n\n'),
+        ),
       ),
     );
   }

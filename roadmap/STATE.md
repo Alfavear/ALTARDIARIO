@@ -1,61 +1,56 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 5 · **Fase actual:** 1 · **Progreso global:** █████░░░░░░░░░░░░░░░ 5/21 (24%)
+**Ciclo:** 10 · **Fase actual:** 1 · **Progreso global:** ████████░░░░░░░░░░░░ 22/53 (42%)
 
 | Fase | Progreso |
 |---|---|
-| 1. Estabilizar (seguridad, observabilidad, CI) | █████████░░░░░░░░░░░ 5/11 |
-| 2. Andamiaje IA y tests | ░░░░░░░░░░░░░░░░░░░░ 0/2 |
-| 3. Arquitectura feature-first y backend | ░░░░░░░░░░░░░░░░░░░░ 0/5 |
-| 4. Producto | ░░░░░░░░░░░░░░░░░░░░ 0/3 |
+| 1. Estabilizar (seguridad, observabilidad, CI) | ███████████░░░░░░░░░ 17/32 |
+| 2. Andamiaje IA y tests | ██████████░░░░░░░░░░ 1/2 |
+| 3. Arquitectura feature-first y backend | ███░░░░░░░░░░░░░░░░░ 1/8 |
+| 4. Producto | █████░░░░░░░░░░░░░░░ 3/11 |
 
 **En curso:** —
-**Siguiente:** T-018 · Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos (P0, M)
+**Siguiente:** T-041 · Privacidad: documento privado con allowlist de campos, tipos y tamanos (P1, S)
 
-**Conteo:** backlog=15 · ready=0 · in_progress=0 · review=0 · done=5 · blocked=1 · dropped=0
+**Conteo:** backlog=30 · ready=0 · in_progress=0 · review=0 · done=22 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
 
 
 ## Últimos ciclos
-
-sendMessage ahora distingue creación de chat (participantIds + participantNames, exactamente 2) de envío a chat existente (solo lastUpdate/lastMessage/lastSenderId). La UI dejó de pasar participantes, hace await con try/catch, conserva el texto si falla y ofrece REINTENTAR; el guard _isSending evita dobles envíos. Se añadió un constructor opcional FirestoreService({firestore}) para inyectar FakeFirebaseFirestore en tests. check.sh --fast: 122/122 tests, analyze limpio.
-
-**Problemas:**
-- El ciclo 4 se interrumpió por el timeout de 40 min del runner durante la fase de revisión; el trabajo quedó sin commitear. Se verificó y cerró manualmente vía MCP.
-- Los subagentes planner/implementer/tester/reviewer no tienen shell; el orquestador ejecutó check.sh y las verificaciones.
-- scripts/loop.sh sigue terminando con exit 1 por SIGPIPE del `state | head` final; no afecta al ciclo pero confunde.
-
-**Decisiones:**
-- No se reescriben participantIds/participantNames en chats existentes: se ignoran aunque el llamador los pase.
-- El camino caliente de la UI no hace get() extra: llama sendMessage sin participantes y usa update().
-- Se inyecta FirebaseFirestore opcional para tests con fake_cloud_firestore.
-- No se tocó firestore.rules en este ciclo; T-015 queda para la allowlist de campos en /chats.
-
-**Siguiente:** Siguiente elegible: T-015 (allowlist de campos en /chats y create sin duplicados) o T-017; revisar/mergear la pila auto/*. Pendiente humano: mergear T-002 a main para desplegar firestore.rules.
-
----
-## ## Ciclo 5 — 2026-10-21T02:36:45.758Z
-- **Tarea:** T-015 · Reglas: allowlist de campos actualizables en /chats y rechazar create con participantes duplicados
-- **Resultado:** done
-- **Rama/commit:** auto/T-015-rules-chats-allowlist @ 1469b62
+## Ciclo 8 — 2026-10-23T01:35:57.115Z
+- **Tarea:** T-019, T-044, T-022 · Bloqueo de usuarios, limites en reglas y filtrado de bloqueados
+- **Resultado:** mergeado en main (PRs #31, #32, #33; #34 T-027 en la misma tanda)
+- **Rama/commit:** fix/lane-b-06-tamano-limites, fix/lane-b-07-bloquear-usuarios, fix/lane-b-08-filtrar-bloqueados, auto/T-027-inicio-hoy @ 068f2db, fa7d0a4, 90ea33c, c0aa2b3
 - **check.sh:** ✅ verde
-- **Reviewer:** APROBAR (diff revisado a mano: allowlist exacta, duplicados denegados y ningun write legitimo de sendMessage bloqueado)
+- **Reviewer:** CI 4/4 en cada PR. Conflictos resueltos a mano: CHANGELOG (#31), firestore_service duplicado + llave perdida (#33, #36).
 
-El update de /chats ahora exige changedKeys().hasOnly(['participantIds','lastMessage','lastSenderId','lastUpdate','participantNames']) y el create rechaza participantIds duplicados con participantIds.toSet().size() == 2. Verificado contra el codigo de la app: sendMessage escribe solo lastUpdate/lastMessage/lastSenderId en el update y participantIds/participantNames en el create, asi que ninguna escritura legitima queda bloqueada. Suite de reglas 30/30 (2 tests nuevos) y 123/123 tests de Dart. Se registro ademas en el backlog el trabajo que la auditoria dejo fuera: migracion de privacidad (bloquea el PR #21), bloqueo de usuarios, paginacion por cursor y flujo de eliminacion de cuenta.
+Tanda de merges de la noche. La otra sesion (carril B) produce rama+PR y esta sesion mergea. Se resolvieron conflictos en serie sin reescribir historia y se detecto que el auto-merge de #36 rompia el fichero (metodos duplicados y una llave sin cerrar): corregido antes de pushear.
 
 **Problemas:**
-- En un worktree nuevo `flutter pub get` falla: Windows sin symlinks (Developer Mode desactivado) y "Building with plugins requires symlink support". Se resolvio copiando .dart_tool/package_config.json del workspace principal y parcheando el rootUri al worktree; con eso `scripts/check.sh` corre entero. Sin ese apano, ningun worktree limpio puede pasar la puerta.
-- El workspace principal lo tiene Codex ocupado con cambios sin commitear, por eso este ciclo corre en un worktree aislado sobre origin/main.
+…
 
-**Decisiones:**
-- La allowlist de /chats incluye participantNames porque asi lo fija el criterio de aceptacion, aunque la app solo lo escribe en el create.
-- No se restringe el create con hasOnly: T-015 pedia allowlist de update y rechazo de duplicados. Ampliarlo se deja como tarea aparte para no crecer el alcance.
-- No se tocan /usuarios ni /reports: el stack de auditoria (#21 privacidad, #22 moderacion) modifica el mismo archivo; T-015 se limita a /chats para minimizar conflictos.
-- El plan de auditoria no estaba en el backlog: sus secciones 2 a 5 se registran ahora como tareas con source=audit, sin duplicar T-004, T-006, T-007 ni T-008.
+## Ciclo 9 — 2026-10-23T02:22:27.129Z
+- **Tarea:** T-028, T-033, T-036, T-038 · Reflexion guiada, biblioteca personal, eventos sin datos y indice de chats
+- **Resultado:** mergeado en main (PRs #35, #37, #40, #39)
+- **Rama/commit:** auto/T-028-reflexion-guiada, auto/T-033-biblioteca-personal, auto/T-036-eventos-producto, fix/lane-b-11-chats-indice @ 4471a39, 3586e4b, 227604e, 6faec67
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Se encontraron y corrigieron dos fallos de integracion que los tests no cubrian: reports no permitia targetType comentario y firestore.indexes.json era invalido (rompia el deploy de main).
 
-**Siguiente:** Siguiente elegible: T-017 (markAllNotificationsAsRead: no commitear un batch vacio) y T-018 (migracion de privacidad, P0) que desbloquea el PR #21. T-004 esta en curso en el PR #22 de la auditoria. Pendiente humano: mergear el stack de auditoria (#21/#22) cuando la migracion este lista, y revisar el resto de trabajo de Codex (restos sin commitear que debilitaban la allowlist de /reports ya restaurados en el commit de relevo 0ebf7cb).
+Segunda tanda de merges. Ademas del codigo de cada tarea: (1) #38 necesitaba tests y una regla que no existia (targetType comentario) y se resolvio en su propia rama; (2) el indice de chats se subio con JSON invalido y tumbo el deploy de main, detectado al verificar los workflows y corregido en #44 con un test que valida el fichero en cada PR; (3) se detecto el desajuste entre los limites de las reglas y los topes del cliente (T-047).
 
----
+**Problemas:**
+…
 
+## Ciclo 10 — 2026-10-23T02:46:41.406Z
+- **Tarea:** T-024, T-005, T-017 · Tanda 3: reportar, filtrar bloqueos, tests de interacción y batch vacío
+- **Resultado:** mergeado en main
+- **Rama/commit:** fix/lane-b-10-reportar-reflexiones, fix/lane-b-09-filtrar-chats-notif, fix/lane-b-15-tests-firestore-service, fix/lane-b-16-notificaciones-batch @ 31b6610, 0a568f2, 15d4cb8
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. La revisión de la orquestadora encontró dos fallos que los tests no cubrían: el add/add del diálogo de reportar (resuelto quedándose con la versión con tests) y que #47 estaba sobre una base vieja que habría revertido el arreglo del índice.
+
+Tercera tanda de merges. Entró el CI nuevo (#48): el job Build APK pasó de ~6 min a 6 s en los PRs que no tocan Android ni dependencias, así que un PR de Dart/UI queda en ~1,5 min. Se publicó en ops/estado la regla de mergear main antes de abrir PR y el tope de 2 PRs abiertos. Una auditoría externa sobre un checkout atrasado acertó en dos puntos que sí están en main y se convierten en T-048 (P1) y T-049 (P2).
+
+**Problemas:**
+…

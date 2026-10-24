@@ -130,3 +130,112 @@ El update de /chats ahora exige changedKeys().hasOnly(['participantIds','lastMes
 **Siguiente:** Siguiente elegible: T-017 (markAllNotificationsAsRead: no commitear un batch vacio) y T-018 (migracion de privacidad, P0) que desbloquea el PR #21. T-004 esta en curso en el PR #22 de la auditoria. Pendiente humano: mergear el stack de auditoria (#21/#22) cuando la migracion este lista, y revisar el resto de trabajo de Codex (restos sin commitear que debilitaban la allowlist de /reports ya restaurados en el commit de relevo 0ebf7cb).
 
 ---
+## Ciclo 6 — 2026-10-21T02:58:42.091Z
+- **Tarea:** T-018 · Privacidad: migrar email/fcmToken a private/account y ventana de compatibilidad con clientes antiguos
+- **Resultado:** done
+- **Rama/commit:** auto/T-018-migracion-privacidad @ abddd55
+- **check.sh:** ✅ verde
+- **Reviewer:** APROBAR la parte de migracion; la parte de reglas y la ventana de compatibilidad quedan para el PR #21 y para decision humana
+
+Herramienta administrativa de migracion: logica pura (planMigracion, 6 tests) + script admin por lotes con --apply explicito (npm run migrate:private-account). Mueve email/fcmToken de usuarios/{uid} a usuarios/{uid}/private/account; si el documento privado ya tiene el campo gana el privado (no se pisa el token de FCM mas reciente) y el campo publico se borra siempre. Es idempotente. Se documento en docs/SECURITY.md el orden de operaciones (app nueva -> migrar -> endurecer reglas -> repetir hasta 0). Ademas se integro el roadmap funcional de Codex (docs/PRODUCT_EVOLUTION_ROADMAP.md) como tareas: 16 unidades nuevas, y se registraron los hallazgos de los tres revisores (indice de chats, noPrivateFields, allowlist del doc privado, deadlock de limpieza del token, topes de tamano, job de functions en CI).
+
+**Problemas:**
+- En un worktree nuevo `flutter pub get` falla: Windows sin symlinks (Developer Mode desactivado). Workaround: copiar .dart_tool/package_config.json del workspace principal y parchear el rootUri al worktree. Sin eso, scripts/check.sh no arranca en worktrees limpios.
+- La parte de REGLAS de la privacidad (noPrivateFields, privateOnlyRemoved, allowlist del documento privado y sus tests) NO va en esta rama: el fichero firestore.rules del PR #21 esta basado en un commit anterior a T-015 y mergearlo tal cual revertiria T-015. Hay que portar los cambios sobre el fichero actual.
+- La ventana de compatibilidad con los clientes antiguos es una decision de producto, no tecnica. La auditoria recomienda la opcion A: subir config/app_info.minVersion (el dialogo bloqueante ya existe en update_service.dart) para forzar la actualizacion, luego migrar, y solo despues endurecer las reglas. Con las reglas endurecidas sin mas, el alta de cuenta de las versiones publicadas se rompe.
+- functions/ no corre en CI: su script de test usaba node --test lib/**/*.test.js, que con bash sin globstar solo cubre un nivel y se saltaba gamification.test.js. Corregido en esta rama (node --test lib); el job de CI queda como tarea.
+
+**Decisiones:**
+- La herramienta vive en functions/src/migration/ y NO se exporta desde index.ts: no se despliega como Cloud Function, se ejecuta a mano con la cuenta de servicio.
+- Nunca escribe sin --apply: por defecto solo genera informe.
+- Gana el documento privado: la migracion no pisa un valor privado ya existente.
+- Las reglas de privacidad no se tocan en esta rama para no colisionar con el PR #21 y con T-015; su especificacion queda en los hallazgos de rules-auditor.
+- El roadmap funcional de Codex entra como tareas del backlog (source: audit docs/PRODUCT_EVOLUTION_ROADMAP.md) y el documento se incorpora con cherry-pick, sin duplicar T-004, T-006, T-007 ni T-008.
+
+**Siguiente:** Pendiente inmediato: revision humana y merge del PR #23 (T-015, 4/4 checks) y del PR de T-018. En paralelo, la otra sesion corrige el stack de Codex (#21 privacidad, #22 moderacion) con los hallazgos de los tres revisores. Desbloqueo del stack: decision humana sobre la ventana de compatibilidad (Opcion A: minVersion) y ejecutar la migracion en produccion. Siguiente elegible del backlog: T-038 (indice de chats: la lista de chats falla en produccion con FAILED_PRECONDITION) y T-039 (noPrivateFields en contenido publico).
+
+---
+## Ciclo 7 — 2026-10-23T00:52:11.900Z
+- **Tarea:** T-012, T-013, T-046 y T-027 · Roadmap sin reformateo, STATE.md, SIGPIPE de loop.sh e Inicio "Hoy"
+- **Resultado:** done
+- **Rama/commit:** auto/T-013-estado-roadmap (PR #28) y auto/T-027-inicio-hoy @ 1f85a74 y 8357e8c
+- **check.sh:** ✅ verde
+- **Reviewer:** pendiente (PR del Inicio en revision)
+
+El MCP del roadmap ya no puede reformatear tasks.yaml en masa: dos tests de regresion lo impiden y el fichero canonico se mantiene byte a byte. STATE.md deja de duplicar encabezados de ciclo. loop.sh sale con 0. La tarjeta de Inicio se extrae a dos widgets con los cuatro estados (cargando, sin conexion, pendiente, completado), se abre con un toque y ofrece la siguiente lectura del plan.
+
+**Problemas:**
+- El PR #26 (roadmap de 45 tareas) no estaba en main: las tareas nuevas solo existian en la rama. Se mergeo antes de cerrar nada para no perderlas.
+- La proteccion de main exige rama al dia: cada merge deja BEHIND a los demas PR, asi que hay que actualizar rama y esperar checks otra vez.
+- Un test de integracion del Inicio con dia completado se colgo 10 minutos en pumpAndSettle; se retiro y la cobertura queda en los 5 widget tests de la tarjeta.
+
+**Decisiones:**
+- El roadmap (tasks.yaml, STATE.md, BITACORA.md) lo escribe solo la orquestadora; el carril B anota en ESTADO-B.md para evitar conflictos.
+- La tarjeta de la lectura vive en lib/presentation/widgets/lectura_hoy_card.dart + lectura_hoy_estados.dart, ninguno supera 400 lineas.
+
+**Siguiente:** Carril A: T-028 (reflexion guiada), T-033 (biblioteca personal), T-036 y T-037. Carril B: B1 = T-040 asignada por comentario en sus PRs.
+
+---
+## Ciclo 8 — 2026-10-23T01:35:57.115Z
+- **Tarea:** T-019, T-044, T-022 · Bloqueo de usuarios, limites en reglas y filtrado de bloqueados
+- **Resultado:** mergeado en main (PRs #31, #32, #33; #34 T-027 en la misma tanda)
+- **Rama/commit:** fix/lane-b-06-tamano-limites, fix/lane-b-07-bloquear-usuarios, fix/lane-b-08-filtrar-bloqueados, auto/T-027-inicio-hoy @ 068f2db, fa7d0a4, 90ea33c, c0aa2b3
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Conflictos resueltos a mano: CHANGELOG (#31), firestore_service duplicado + llave perdida (#33, #36).
+
+Tanda de merges de la noche. La otra sesion (carril B) produce rama+PR y esta sesion mergea. Se resolvieron conflictos en serie sin reescribir historia y se detecto que el auto-merge de #36 rompia el fichero (metodos duplicados y una llave sin cerrar): corregido antes de pushear.
+
+**Problemas:**
+- La proteccion de main exige los 4 checks sobre el head actual: cada merge deja BEHIND a los demas y hay que update-branch + esperar otra ronda (~15 min por PR).
+- Los CHANGELOG de PRs simultaneos chocan en el mismo ancla; se estandarizo el bloque de [Unreleased] en las ramas abiertas.
+
+**Decisiones:**
+- Solo esta sesion mergea a main; el carril B nunca mergea ni toca el roadmap.
+- El stack de privacidad (#29, #30) queda abierto a proposito hasta publicar la app y subir minVersion.
+
+**Siguiente:** T-023, T-024, T-038, T-028, T-033, T-036 en cola de merge; despues carril A: T-037 y T-035.
+
+---
+## Ciclo 9 — 2026-10-23T02:22:27.129Z
+- **Tarea:** T-028, T-033, T-036, T-038 · Reflexion guiada, biblioteca personal, eventos sin datos y indice de chats
+- **Resultado:** mergeado en main (PRs #35, #37, #40, #39)
+- **Rama/commit:** auto/T-028-reflexion-guiada, auto/T-033-biblioteca-personal, auto/T-036-eventos-producto, fix/lane-b-11-chats-indice @ 4471a39, 3586e4b, 227604e, 6faec67
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. Se encontraron y corrigieron dos fallos de integracion que los tests no cubrian: reports no permitia targetType comentario y firestore.indexes.json era invalido (rompia el deploy de main).
+
+Segunda tanda de merges. Ademas del codigo de cada tarea: (1) #38 necesitaba tests y una regla que no existia (targetType comentario) y se resolvio en su propia rama; (2) el indice de chats se subio con JSON invalido y tumbo el deploy de main, detectado al verificar los workflows y corregido en #44 con un test que valida el fichero en cada PR; (3) se detecto el desajuste entre los limites de las reglas y los topes del cliente (T-047).
+
+**Problemas:**
+- Cada merge deja BEHIND a los demas PRs y obliga a update-branch + otra ronda de checks (~7,6 min con el build de Android en la ruta critica).
+- El build de APK se ejecuta en todos los PRs aunque un PR de Dart/UI no pueda romper Android.
+
+**Decisiones:**
+- El job Build APK se ejecuta siempre pero solo compila si el PR toca android/, pubspec.* o .github/workflows/; se anade cache de Gradle y una sola ABI (PR #48).
+- Los conflictos se resuelven en la rama del PR, sin reescribir historia y sin tocar main por otra via.
+
+**Siguiente:** T-023 (#36), T-024 (#38), T-025 (#42), T-005 (#43), #45 y #46 en cola de merge; despues #41 cierra el ciclo.
+
+---
+## Ciclo 10 — 2026-10-23T02:46:41.406Z
+- **Tarea:** T-024, T-005, T-017 · Tanda 3: reportar, filtrar bloqueos, tests de interacción y batch vacío
+- **Resultado:** mergeado en main
+- **Rama/commit:** fix/lane-b-10-reportar-reflexiones, fix/lane-b-09-filtrar-chats-notif, fix/lane-b-15-tests-firestore-service, fix/lane-b-16-notificaciones-batch @ 31b6610, 0a568f2, 15d4cb8
+- **check.sh:** ✅ verde
+- **Reviewer:** CI 4/4 en cada PR. La revisión de la orquestadora encontró dos fallos que los tests no cubrían: el add/add del diálogo de reportar (resuelto quedándose con la versión con tests) y que #47 estaba sobre una base vieja que habría revertido el arreglo del índice.
+
+Tercera tanda de merges. Entró el CI nuevo (#48): el job Build APK pasó de ~6 min a 6 s en los PRs que no tocan Android ni dependencias, así que un PR de Dart/UI queda en ~1,5 min. Se publicó en ops/estado la regla de mergear main antes de abrir PR y el tope de 2 PRs abiertos. Una auditoría externa sobre un checkout atrasado acertó en dos puntos que sí están en main y se convierten en T-048 (P1) y T-049 (P2).
+
+**Problemas:**
+- Se acumularon 9 PRs abiertos y cada merge invalidaba los checks de los demás: la cola crecía más rápido de lo que drenaba.
+- #47 se construyó sobre un main viejo y habría revertido #44 y borrado product_events.dart.
+- La Function de moderación solo mapea reflexion, peticion y debate: los reportes de comentarios (#38) y de perfiles se guardan y nadie los procesa. Detectado al revisar un informe externo.
+
+**Decisiones:**
+- Tope de 2 PRs abiertos por carril y merge obligatorio de main antes de abrir PR (roadmap/BANDEJA.md).
+- Los conflictos se resuelven en la rama del PR tomando la versión de main que tenga tests.
+- Un PR que revierte un arreglo reciente no se mergea aunque sus checks estén verdes.
+- No se cierra una tarea cuyo PR solo cubre la UI (T-025 sigue abierta: falta la Function).
+
+**Siguiente:** #42 (conflicto resuelto), #49 (evento reflexion_publicada) y #41 (este cierre). En espera: #46 (requiere decisión humana) y #47 (tests + base al día).
+
+---

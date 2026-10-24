@@ -13,7 +13,7 @@ class ChatListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUid = ref.watch(effectiveUserUidProvider);
     final chatsAsync = currentUid != null
-        ? ref.watch(chatListProvider(currentUid))
+        ? ref.watch(chatListFiltradoProvider(currentUid))
         : const AsyncLoading<List<Map<String, dynamic>>>();
 
     return Scaffold(
