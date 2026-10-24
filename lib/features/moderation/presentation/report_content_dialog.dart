@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../presentation/providers/app_providers.dart';
+import '../providers/moderation_providers.dart';
 
 class ReportContentDialog extends ConsumerStatefulWidget {
   final String targetType;
@@ -54,7 +55,7 @@ class _ReportContentDialogState extends ConsumerState<ReportContentDialog> {
       _errorMessage = null;
     });
     try {
-      await ref.read(firestoreServiceProvider).reportarContenido(
+      await ref.read(moderationRepositoryProvider).reportarContenido(
             reporterId: uid,
             targetType: widget.targetType,
             targetId: widget.targetId,

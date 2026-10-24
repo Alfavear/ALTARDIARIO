@@ -1024,23 +1024,4 @@ class FirestoreService {
         .snapshots()
         .map((s) => s.docs.map((d) => d.id).toList());
   }
-
-  /// EnvÃ­a un reporte para revisiÃ³n por la funciÃ³n de moderaciÃ³n.
-  Future<void> reportarContenido({
-    required String reporterId,
-    required String targetType,
-    required String targetId,
-    required String reason,
-  }) async {
-    if (!_available) {
-      throw StateError('Firestore no estÃ¡ disponible para enviar el reporte.');
-    }
-    await _firestore!.collection('reports').add({
-      'reporterId': reporterId,
-      'targetType': targetType,
-      'targetId': targetId,
-      'reason': reason,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
 }

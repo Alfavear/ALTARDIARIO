@@ -1,13 +1,17 @@
 import 'package:altar_diario/data/services/firestore_service.dart';
+import 'package:altar_diario/features/moderation/data/moderation_repository.dart';
 import 'package:altar_diario/features/moderation/presentation/report_content_dialog.dart';
+import 'package:altar_diario/features/moderation/providers/moderation_providers.dart';
 import 'package:altar_diario/presentation/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _MockFirestoreService extends FirestoreService {
+class _MockModerationRepository extends ModerationRepository {
   final reportes = <Map<String, String>>[];
   bool falla = false;
+
+  _MockModerationRepository() : super(FirestoreService());
 
   @override
   Future<void> reportarContenido({
@@ -27,11 +31,11 @@ class _MockFirestoreService extends FirestoreService {
 }
 
 Future<void> _abrirDialogo(
-    WidgetTester tester, _MockFirestoreService mock) async {
+    WidgetTester tester, _MockModerationRepository mock) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        firestoreServiceProvider.overrideWithValue(mock),
+        moderationRepositoryProvider.overrideWithValue(mock),
         effectiveUserUidProvider.overrideWithValue('uid-1'),
       ],
       child: MaterialApp(
@@ -63,7 +67,7 @@ Future<void> _abrirDialogo(
 void main() {
   testWidgets('no deja enviar sin motivo y no llama al servicio',
       (tester) async {
-    final mock = _MockFirestoreService();
+    final mock = _MockModerationRepository();
     await _abrirDialogo(tester, mock);
 
     final boton = find.widgetWithText(FilledButton, 'Enviar reporte');
@@ -72,7 +76,7 @@ void main() {
   });
 
   testWidgets('envía el motivo elegido y avisa al usuario', (tester) async {
-    final mock = _MockFirestoreService();
+    final mock = _MockModerationRepository();
     await _abrirDialogo(tester, mock);
 
     await tester.tap(find.text('Spam'));
@@ -91,7 +95,7 @@ void main() {
   });
 
   testWidgets('si el envío falla lo dice y deja reintentar', (tester) async {
-    final mock = _MockFirestoreService()..falla = true;
+    final mock = _MockModerationRepository()..falla = true;
     await _abrirDialogo(tester, mock);
 
     await tester.tap(find.text('Acoso o intimidación'));
@@ -110,7 +114,7 @@ void main() {
   });
 
   testWidgets('con "Otro" exige el motivo y recorta espacios', (tester) async {
-    final mock = _MockFirestoreService();
+    final mock = _MockModerationRepository();
     await _abrirDialogo(tester, mock);
 
     await tester.tap(find.text('Otro'));
