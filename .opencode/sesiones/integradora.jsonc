@@ -1,0 +1,30 @@
+// Sesión INTEGRADORA (rama i/…, app altardiario-integradora). Ver docs/CAPACIDADES.md.
+// Plantilla: scripts/nueva-sesion.sh la copia a <carpeta-de-la-sesion>/opencode.jsonc.
+// Sintaxis V2: en `policies` gana la última regla que coincide, así que primero se niega
+// en bloque y después se permite lo que esta sesión necesita.
+{
+  "policies": [
+    // ── Skills: solo las de integrar, revisar, documentar y planificar ──
+    { "action": "integration.use", "resource": "skill:*", "effect": "deny" },
+    { "action": "integration.use", "resource": "skill:autonomous-loop", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:architecture", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:release", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:testing", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:code-reviewer", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:code-documenter", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:spec-miner", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:feature-forge", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:the-fool", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:architecture-designer", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:domain-modeling", "effect": "allow" },
+
+    // ── MCP: roadmap (única sesión que escribe tasks.yaml), documentación y memoria ──
+    { "action": "integration.use", "resource": "mcp:*", "effect": "deny" },
+    { "action": "integration.use", "resource": "mcp:roadmap", "effect": "allow" },
+    { "action": "integration.use", "resource": "mcp:context7", "effect": "allow" },
+    { "action": "integration.use", "resource": "mcp:knowledge-graph-memory", "effect": "allow" },
+
+    // ── Plugins: ninguno (el flujo lo define AGENTS.md + docs/FLUJO.md) ──
+    { "action": "integration.use", "resource": "plugin:superpowers", "effect": "deny" }
+  ]
+}
