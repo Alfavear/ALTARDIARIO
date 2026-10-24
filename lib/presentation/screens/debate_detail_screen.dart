@@ -6,6 +6,7 @@ import '../../data/models/debate.dart';
 import '../../data/models/debate_reply.dart';
 import '../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
+import '../widgets/estados/index.dart';
 import 'public_profile_screen.dart';
 
 class DebateDetailScreen extends ConsumerStatefulWidget {
@@ -62,8 +63,12 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
         title:
             const Text('Debate', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: debatesAsync.when(
-        data: (debates) {
+      body: AsyncStateBuilder<Debate>(
+        isLoading: debatesAsync.isLoading,
+        error: debatesAsync.error,
+        items: debatesAsync.value,
+        onRetry: () => ref.refresh(debatesStreamProvider(null).future),
+        builder: (context, debates) {
           final debate =
               debates.where((d) => d.id == widget.debateId).firstOrNull;
           if (debate == null) {
@@ -109,19 +114,15 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
-                    repliesAsync.when(
-                      data: (replies) {
-                        if (replies.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 32),
-                            child: Center(
-                              child: Text(
-                                'SÃ© el primero en responder.',
-                                style: TextStyle(color: AppTheme.textSecondary),
-                              ),
-                            ),
-                          );
-                        }
+                    AsyncStateBuilder<DebateReply>(
+                      isLoading: repliesAsync.isLoading,
+                      error: repliesAsync.error,
+                      items: repliesAsync.value,
+                      onRetry: () => ref.refresh(
+                          debateRepliesStreamProvider(widget.debateId).future),
+                      emptyTitle: 'Aún no hay respuestas',
+                      emptyDescription: 'Sé el primero en responder.',
+                      builder: (context, replies) {
                         final topLevel =
                             replies.where((r) => r.parentId == null).toList();
                         final children = <String, List<DebateReply>>{};
@@ -146,9 +147,6 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
                           }).toList(),
                         );
                       },
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text('Error: $e')),
                     ),
                   ],
                 ),
@@ -209,8 +207,6 @@ class _DebateDetailScreenState extends ConsumerState<DebateDetailScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
       ),
     );
   }
