@@ -35,6 +35,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Observabilidad: al publicar una reflexión se envía `reflexion_publicada` con la longitud del texto y si lleva pasaje; el texto en sí nunca sale del dispositivo.
 - `DESIGN.md` (antes `design.md`): escala espacial cerrada, CTA único por vista y estados obligatorios de vista (datos/carga/error/vacío) con microcopia UX.
 - Coordinación entre sesiones: `docs/SESIONES.md` (worktree por sesión, un solo merger, máximo 2 PRs, validar contra `origin/main` citando SHA), registro en `roadmap/sesiones/` y scripts `session-check.sh` / `sync-main.sh` (el `main` local no se usa para trabajar y solo se alinea por fast-forward).
+- Borrado de cuenta desde Perfil con reautenticación (Google/Apple/email): borra perfil y cuenta privada de Firestore, elimina el usuario de Auth y vuelve a login (T-054).
 
 ### Cambiado
 - Feed, oración (feature `lib/features/oracion/`) y debates (listado y detalle) adoptan `AsyncStateBuilder` y los widgets de estados (`LoadingStateView`, `ErrorStateView`, `EmptyStateView`): carga no bloqueante, error en lenguaje humano con botón Reintentar y vacío con microcopia propia, en sustitución de `when` con `Center(Text('Error: …'))` y estados vacíos duplicados por pantalla; de paso se corrige un texto con acentos corruptos ('SÃ© el primero en responder.') en el detalle de debate. (T-059)

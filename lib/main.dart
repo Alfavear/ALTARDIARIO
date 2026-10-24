@@ -11,6 +11,7 @@ import 'core/theme/app_theme.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/storage_service.dart';
 import 'firebase_options.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'presentation/providers/app_providers.dart';
 import 'presentation/screens/splash_screen.dart';
 
@@ -79,6 +80,8 @@ class AltarDiarioApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       navigatorObservers: Observability.navigatorObservers,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: const SplashScreen(),
     );
   }
