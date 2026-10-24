@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Nivel 1: si el diff toca reglas, corre el emulador; siempre, check.sh --fast.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+git fetch --quiet origin main 2> /dev/null || true
+cambios=$(git diff --name-only origin/main...HEAD 2> /dev/null || true)
+if echo "$cambios" | grep -qE '^(firestore\.rules|firestore-tests/)'; then
+  echo "▶ El diff toca reglas: corriendo el emulador"
+  scripts/rules_test.sh
+fi
+scripts/check.sh --fast

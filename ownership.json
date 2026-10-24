@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "_doc": "Propiedad de rutas por carril. Lo valida scripts/check-ownership.mjs (CI: ownership.yml). Ver docs/FLUJO.md.",
+  "lanes": {
+    "a": {
+      "nombre": "Plataforma / Seguridad",
+      "owns": [
+        "firestore.rules", "firestore.indexes.json", "firestore-tests/**", "functions/**",
+        ".github/**", "scripts/**", "tools/**", "lib/core/**", "lib/firebase_options.dart",
+        "pubspec.yaml", "pubspec.lock", "android/**", "ios/**", "web/**",
+        ".opencode/**", "opencode.jsonc", "ownership.json"
+      ]
+    },
+    "b": {
+      "nombre": "Producto",
+      "owns": ["lib/features/**", "lib/presentation/**", "lib/l10n/**", "assets/**"]
+    },
+    "i": {
+      "nombre": "Integradora",
+      "owns": ["roadmap/**", "docs/**", "AGENTS.md", "SYSTEM.md", "BITACORA.md"]
+    }
+  },
+  "shared": [
+    "lib/data/**", "test/**", "CHANGELOG.md", "README.md",
+    "lib/presentation/providers/app_providers.dart"
+  ],
+  "humanRequired": [
+    "firestore.rules", "firestore-tests/**", ".github/**", "pubspec.yaml",
+    "lib/firebase_options.dart", "ownership.json"
+  ]
+}

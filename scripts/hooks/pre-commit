@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Nivel 0 (<30 s): formato + análisis. Los tests van en pre-push y en CI.
+cd "$(git rev-parse --show-toplevel)"
+node scripts/fast-lint.mjs
