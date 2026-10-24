@@ -98,7 +98,6 @@ class Usuario {
 
   Map<String, dynamic> toMap() => {
         'nombre': nombre,
-        'email': email,
         'fotoUrl': fotoUrl,
         'bio': bio,
         'fechaCreacion': fechaCreacion.toIso8601String(),
@@ -113,6 +112,10 @@ class Usuario {
         'progresoLectura': progresoLectura,
         'maxStreak': maxStreak,
         'temasSeguidos': temasSeguidos,
+      };
+
+  Map<String, dynamic> get privateAccountMap => {
+        if (email.isNotEmpty) 'email': email,
       };
 
   static DateTime _readDate(Object? value) {

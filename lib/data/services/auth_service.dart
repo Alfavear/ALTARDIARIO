@@ -271,10 +271,12 @@ class AuthService {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
-        await FirebaseFirestore.instance.collection('usuarios').doc(uid).set(
-          {'fcmToken': token},
-          SetOptions(merge: true),
-        );
+        await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .collection('private')
+            .doc('account')
+            .set({'fcmToken': token}, SetOptions(merge: true));
         debugPrint('FCM Token guardado para $uid');
       }
     } catch (e) {
