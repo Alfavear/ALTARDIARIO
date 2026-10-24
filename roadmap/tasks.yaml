@@ -1417,3 +1417,60 @@ tasks:
       - .opencode/sesiones/
     source: auditoria:2026-10-24
     created_at: 2026-10-24T02:27:15.202Z
+  - id: T-064
+    title: "Widget test de PublicarReflexionScreen: flujo completo borrador → vista previa → publicar"
+    type: test
+    phase: 4
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - Abrir PublicarReflexionScreen con textoInicial muestra SnackBar 'Borrador recuperado' y precarga el
+        texto
+      - Escribir texto, tocar 'Guardar' abre VistaPreviaReflexion con pasaje y texto exactos
+      - Tocar 'Publicar' en vista previa navega atrás y muestra SnackBar '¡Reflexión compartida!'
+      - Tocar 'Seguir editando' en vista previa cierra el bottom sheet y permite seguir escribiendo
+      - Test usa overrides de providers (firestoreService, storage, userProfile, auth) sin Firebase real
+    files:
+      - test/screens/publicar_reflexion_screen_test.dart
+      - lib/presentation/screens/publicar_reflexion_screen.dart
+    source: auditoria-auto:2026-10-23
+    created_at: 2026-10-24T04:39:15.912Z
+  - id: T-065
+    title: "Oración: índice compuesto de Firestore para peticiones_oracion"
+    type: infra
+    phase: 4
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "firestore.indexes.json declara índice: collectionGroup='peticiones_oracion', fields: oculto (ASC),
+        fecha (DESC), respondida (ASC)"
+      - Deploy de índices pasa en CI (firebase deploy --only firestore:indexes)
+      - Test de reglas verifica que la query con filtro respondida se ejecuta sin FAILED_PRECONDITION en
+        emulador
+    files:
+      - firestore.indexes.json
+      - firestore-tests/rules.test.mjs
+    source: auditoria-auto:2026-10-23
+    created_at: 2026-10-24T04:39:15.912Z
+  - id: T-066
+    title: "Reglas: allowlist explícita para campos respondida/fechaRespondida en peticiones_oracion"
+    type: security
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - ownerEditOk() o nueva helper permite changedKeys().hasOnly(['respondida', 'fechaRespondida']) cuando
+        isOwner
+      - "Test de reglas: usuario ajeno NO puede escribir respondida/fechaRespondida (denegado)"
+      - "Test de reglas: autor SÍ puede escribir respondida:true + fechaRespondida: timestamp"
+    files:
+      - firestore.rules
+      - firestore-tests/rules.test.mjs
+    source: auditoria-auto:2026-10-23
+    created_at: 2026-10-24T04:39:15.912Z
