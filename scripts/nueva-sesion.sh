@@ -89,10 +89,10 @@ bloque="$(awk -v id="$tarea" '$0 ~ "^  - id: "id"$" {on=1; next} on && /^  - id:
 excl="$(git -C "$repo" rev-parse --git-path info/exclude)"
 grep -qx 'TAREA.md' "$excl" 2>/dev/null || echo 'TAREA.md' >> "$excl"
 
-# La Integradora usa el MCP roadmap: necesita sus dependencias en el worktree nuevo.
-if [ "$sesion" = integradora ] && [ -f "$wt/tools/roadmap-mcp/package-lock.json" ]; then
-  echo "▶ Instalando dependencias del MCP roadmap…"
-  (cd "$wt/tools/roadmap-mcp" && npm ci --silent) || echo "⚠ npm ci falló en tools/roadmap-mcp: el MCP roadmap no arrancará"
+# scripts/board.mjs (todas las sesiones) y el MCP roadmap (Integradora) usan estas dependencias.
+if [ -f "$wt/tools/roadmap-mcp/package-lock.json" ]; then
+  echo "▶ Instalando dependencias de tools/roadmap-mcp (tablero y MCP roadmap)…"
+  (cd "$wt/tools/roadmap-mcp" && npm ci --silent) || echo "⚠ npm ci falló en tools/roadmap-mcp: node scripts/board.mjs y el MCP roadmap no funcionarán"
 fi
 
 cat <<EOF
@@ -104,8 +104,7 @@ cat <<EOF
   ABRE LA APP DE OPENCODE EN ESTA CARPETA:
     $wt_win
 
-  Token de esta sesión (compruébalo: no debe salir vacío):
-    T=\$(node scripts/gh-app-token.mjs $sesion); [ -n "\$T" ] || echo "TOKEN VACÍO: gh usaría la cuenta del Owner"
+  GitHub: usa siempre  node scripts/gh-app.mjs $sesion gh …  y  node scripts/gh-app.mjs $sesion push  (el token nunca se imprime).
   Reserva la tarea con un PR en borrador que lleve $tarea en el título.
   Al terminar: borra la rama y el worktree (git worktree remove "$wt").
 EOF
