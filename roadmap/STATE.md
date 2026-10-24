@@ -1,10 +1,10 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 11 · **Fase actual:** 1 · **Progreso global:** █████████████░░░░░░░ 39/61 (64%)
+**Ciclo:** 11 · **Fase actual:** 1 · **Progreso global:** ████████████░░░░░░░░ 39/63 (62%)
 
 | Fase | Progreso |
 |---|---|
-| 1. Estabilizar (seguridad, observabilidad, CI) | ██████████████░░░░░░ 28/40 |
+| 1. Estabilizar (seguridad, observabilidad, CI) | █████████████░░░░░░░ 28/42 |
 | 2. Andamiaje IA y tests | ██████████░░░░░░░░░░ 1/2 |
 | 3. Arquitectura feature-first y backend | ████████░░░░░░░░░░░░ 3/8 |
 | 4. Producto | █████████████░░░░░░░ 7/11 |
@@ -12,7 +12,7 @@
 **En curso:** —
 **Siguiente:** T-007 · Paginación real del feed con startAfterDocument e infinite scroll (P1, M)
 
-**Conteo:** backlog=16 · ready=5 · in_progress=0 · review=0 · done=39 · blocked=1 · dropped=0
+**Conteo:** backlog=18 · ready=5 · in_progress=0 · review=0 · done=39 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
