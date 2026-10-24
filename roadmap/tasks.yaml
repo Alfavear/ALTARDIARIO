@@ -1571,3 +1571,21 @@ tasks:
       - test/screens/oracion_screen_test.dart
     source: auditoria-auto:2026-10-24
     created_at: 2026-10-24T11:55:11.852Z
+  - id: T-071
+    title: Script de migración del campo oculto en documentos anteriores a T-026
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "scripts/migrar-oculto.mjs usa firebase-admin (de functions/node_modules) con GOOGLE_APPLICATION_CREDENTIALS; por defecto solo cuenta (simulacro) y con --aplicar escribe"
+      - "Recorre reflexiones, debates y peticiones_oracion (colecciones raíz) y comentarios y respuestas (collectionGroup); pone oculto=false en los que no tienen el campo, u oculto=true si tenían hidden:true; idempotente"
+      - "Lotes de 400 escrituras; imprime cuántos documentos por colección; no toca documentos que ya tienen oculto"
+      - "Sin workflows ni secretos en el repositorio: lo ejecuta el Owner en su máquina; documentar el comando de uso en la cabecera del propio script"
+      - "Motivo: where('oculto', isEqualTo: false) excluye los documentos sin el campo y el feed puede quedar vacío"
+    files:
+      - scripts/migrar-oculto.mjs
+    source: auditoria-claude:2026-10-24
+    created_at: 2026-10-24T14:20:00.000Z
