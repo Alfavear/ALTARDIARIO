@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/debate.dart';
 import '../../data/services/bible_service.dart';
 import '../providers/app_providers.dart';
+import '../widgets/estados/index.dart';
 import 'crear_debate_screen.dart';
 import 'debate_detail_screen.dart';
 
@@ -21,6 +22,19 @@ class _ForoScreenState extends ConsumerState<ForoScreen> {
   final _bibleService = BibleService();
 
   List<String> get _libros => _bibleService.getBookNames();
+
+  List<Debate> _filterDebates(List<Debate> debates) {
+    var filtered = debates;
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      filtered = filtered
+          .where((d) =>
+              d.titulo.toLowerCase().contains(query) ||
+              d.contenido.toLowerCase().contains(query))
+          .toList();
+    }
+    return filtered;
+  }
 
   @override
   void dispose() {
@@ -49,32 +63,23 @@ class _ForoScreenState extends ConsumerState<ForoScreen> {
         children: [
           _buildFilters(),
           Expanded(
-            child: debatesAsync.when(
-              data: (debates) {
-                var filtered = debates;
-                final query = _searchController.text.trim().toLowerCase();
-                if (query.isNotEmpty) {
-                  filtered = filtered
-                      .where((d) =>
-                          d.titulo.toLowerCase().contains(query) ||
-                          d.contenido.toLowerCase().contains(query))
-                      .toList();
-                }
-                if (filtered.isEmpty) {
-                  return _buildEmptyState();
-                }
-                return RefreshIndicator(
-                  onRefresh: () =>
-                      ref.refresh(debatesStreamProvider(_selectedLibro).future),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) => _DebateCard(debate: filtered[i]),
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+            child: AsyncStateBuilder<Debate>(
+              isLoading: debatesAsync.isLoading,
+              error: debatesAsync.error,
+              items: _filterDebates(debatesAsync.value ?? const []),
+              onRetry: () =>
+                  ref.refresh(debatesStreamProvider(_selectedLibro).future),
+              emptyTitle: 'Aún no hay debates',
+              emptyDescription: '¡Sé el primero en iniciar un debate bíblico!',
+              builder: (context, debates) => RefreshIndicator(
+                onRefresh: () =>
+                    ref.refresh(debatesStreamProvider(_selectedLibro).future),
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  itemCount: debates.length,
+                  itemBuilder: (_, i) => _DebateCard(debate: debates[i]),
+                ),
+              ),
             ),
           ),
         ],
@@ -161,38 +166,6 @@ class _ForoScreenState extends ConsumerState<ForoScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlueLight.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.forum,
-                  size: 40, color: AppTheme.primaryBlue),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Aún no hay debates',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '¡Sé el primero en iniciar un debate bíblico!',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
-          ],
-        ),
       ),
     );
   }
