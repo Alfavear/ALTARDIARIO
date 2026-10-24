@@ -13,6 +13,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 ### Añadido
 - Compartir versículo como imagen (T-010): botón Compartir en lector genera texto con versículo, referencia y marca AltarDiario; usa share_plus para Android/iOS/Web.
 - Compartir versículo como imagen (T-010): botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario; usa share_plus para Android/iOS/Web.
+- Paginacion real del feed con startAfterDocument e infinite scroll: feedPageSize=30, getReflexionesPage con cursor, FeedPaginationNotifier. (T-007)
 - Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel, reglas comunitarias visibles, cerrar debate por autor, reportar debate. (T-031)
 - Búsqueda y temas seguidos en la comunidad: campo temasSeguidos en Usuario, método toggleTemaSeguido en FirestoreService, provider temasSeguidosProvider, y sección Mis temas seguidos en FeedScreen para seguir/dejar de seguir temas.
 - Suite de tests de reglas de Firestore con emulador (`firestore-tests/`).

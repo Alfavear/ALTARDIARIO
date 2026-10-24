@@ -302,6 +302,106 @@ test('perfil: set merge del propio doc (config, FCM, racha, XP) y deleteField de
   await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE), { modoEnfoque: false }, { merge: true }));
 });
 
+// T-040: noPrivateFields helper - email/fcmToken no pueden estar en contenido público
+test('noPrivateFields: contenido público rechaza email y fcmToken', async () => {
+  // Reflexión con email: denegado
+  await assertFails(setDoc(doc(as(ALICE), 'reflexiones', 'r1'), {
+    userId: ALICE, userName: 'Alice', texto: 'Hola', fecha: new Date(),
+    pasajeDia: 'Gn 1', likes: 0, likedBy: [], commentCount: 0, reactions: {}, tags: [],
+    email: 'alice@example.com',
+  }));
+
+  // Petición con fcmToken: denegado
+  await assertFails(setDoc(doc(as(ALICE), 'peticiones_oracion', 'p1'), {
+    userId: ALICE, userName: 'Alice', motivo: 'Salud', fecha: new Date(),
+    oracionesCount: 0, fcmToken: 'token',
+  }));
+
+  // Debate con email: denegado
+  await assertFails(setDoc(doc(as(ALICE), 'debates', 'd1'), {
+    userId: ALICE, userName: 'Alice', titulo: 'T', contenido: 'C',
+    libroId: '', libroNombre: '', fecha: new Date(), upvotes: 0, votedBy: [], replyCount: 0,
+    email: 'alice@example.com',
+  }));
+
+  // Respuesta de debate con fcmToken: denegado
+  await admin((db) => setDoc(doc(db, 'debates', 'd2'), {
+    userId: ALICE, userName: 'Alice', titulo: 'T', contenido: 'C',
+    libroId: '', libroNombre: '', fecha: new Date(), upvotes: 0, votedBy: [], replyCount: 0,
+  }));
+  await assertFails(setDoc(doc(as(ALICE), 'debates', 'd2', 'respuestas', 'r1'), {
+    userId: ALICE, userName: 'Alice', contenido: 'R', fecha: new Date(),
+    upvotes: 0, votedBy: [], fcmToken: 'token',
+  }));
+
+  // Comentario de reflexión con email: denegado
+  await admin((db) => setDoc(doc(db, 'reflexiones', 'r2'), {
+    userId: ALICE, userName: 'Alice', texto: 'R', fecha: new Date(),
+    pasajeDia: 'Gn 1', likes: 0, likedBy: [], commentCount: 0, reactions: {}, tags: [],
+  }));
+  await assertFails(setDoc(doc(as(ALICE), 'reflexiones', 'r2', 'comentarios', 'c1'), {
+    userId: ALICE, userName: 'Alice', texto: 'C', fecha: new Date(),
+    likes: 0, likedBy: [], email: 'alice@example.com',
+  }));
+
+  // Notificación con email: denegado
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'notifications', 'n1'), {
+    actorId: BOB, type: 'follow', title: 'Nuevo seguidor', body: 'Bob te sigue',
+    data: {}, read: false, createdAt: new Date(), email: 'alice@example.com',
+  }));
+
+  // Feedback con fcmToken: denegado
+  await assertFails(setDoc(doc(as(ALICE), 'feedback', 'f1'), {
+    userId: ALICE, texto: 'Feedback', fecha: new Date(), fcmToken: 'token',
+  }));
+
+  // Update de reflexión añadiendo email: denegado
+  await admin((db) => setDoc(doc(db, 'reflexiones', 'r3'), {
+    userId: ALICE, userName: 'Alice', texto: 'R', fecha: new Date(),
+    pasajeDia: 'Gn 1', likes: 0, likedBy: [], commentCount: 0, reactions: {}, tags: [],
+  }));
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r3'), { email: 'alice@example.com' }));
+});
+
+// T-042: privateOnlyRemoved permite borrar email/fcmToken del perfil público
+test('privateOnlyRemoved: perfil público permite borrar email/fcmToken sin bloqueo', async () => {
+  // Perfil legacy con email y fcmToken
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE), {
+    nombre: 'Alice', seguidores: [], siguiendo: [],
+    email: 'alice@example.com', fcmToken: 'token-antiguo',
+  }));
+
+  // Borrar email (dejar fcmToken): permitido
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE), { email: '' }));
+
+  // Borrar fcmToken (dejar email): permitido
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE), { fcmToken: '' }));
+
+  // Borrar ambos: permitido
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    email: '', fcmToken: '',
+  }));
+
+  // Cambiar email a otro valor válido: permitido (privateOnlyRemoved permite '' o mismo valor)
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    email: 'nuevo@example.com', fcmToken: '',
+  }));
+
+  // Cambiar fcmToken a otro valor válido: permitido
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE), {
+    email: 'nuevo@example.com', fcmToken: 'nuevo-token',
+  }));
+
+  // Transitorio: el dueño aún puede escribir fcmToken en su perfil público (la app
+  // lo hace hasta migrar a usuarios/{uid}/private/account). Cuando migre, restringir
+  // la rama del dueño a privateOnlyRemoved y añadir aquí los assertFails.
+
+  // Otro usuario no puede borrar email/fcmToken
+  await assertFails(updateDoc(doc(as(BOB), 'usuarios', ALICE), {
+    email: '', fcmToken: '',
+  }));
+});
+
 test('seguir: set merge sobre el propio siguiendo y el seguidores del otro', async () => {
   await admin(async (db) => {
     await setDoc(doc(db, 'usuarios', ALICE), { nombre: 'Alice', seguidores: [], siguiendo: [] });
@@ -391,6 +491,92 @@ test('bible_highlights, bible_notes y notes: escribir y borrar solo lo propio', 
 });
 
 // ───────────────────────── Notificaciones ─────────────────────────
+
+
+// Documento privado con allowlist (T-041): /usuarios/{uid}/private/account
+test('private/account: solo email y fcmToken con límites de tamaño', async () => {
+  // Crear documento privado válido: permitido
+  await assertSucceeds(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    fcmToken: 'token123',
+  }));
+
+  // Leer el propio documento: permitido
+  await assertSucceeds(getDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account')));
+
+  // Actualizar email válido: permitido
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice.nueva@example.com',
+  }));
+
+  // Actualizar fcmToken válido: permitido
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    fcmToken: 'nuevo-token-valido',
+  }));
+
+  // Campo extra 'role': denegado (allowlist estricta)
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    role: 'admin',
+  }));
+
+  // Campo extra 'verified': denegado
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    verified: true,
+  }));
+
+  // Campo extra 'basura': denegado
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    basura: 'cualquier cosa',
+  }));
+
+  // Email demasiado largo (>320): denegado
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'x'.repeat(321) + '@example.com',
+    fcmToken: 'token',
+  }));
+
+  // fcmToken demasiado largo (>4096): denegado
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    fcmToken: 'x'.repeat(4097),
+  }));
+
+  // Email válido pero fcmToken demasiado largo: denegado
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    fcmToken: 'x'.repeat(4097),
+  }));
+
+  // ID de documento diferente a 'account': denegado
+  await assertFails(setDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'other'), {
+    email: 'alice@example.com',
+    fcmToken: 'token',
+  }));
+
+  // Otro usuario no puede leer: denegado
+  await assertFails(getDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
+
+  // Otro usuario no puede crear: denegado
+  await assertFails(setDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'alice@example.com',
+    fcmToken: 'token',
+  }));
+
+  // Otro usuario no puede actualizar: denegado
+  await admin((db) => setDoc(doc(db, 'usuarios', ALICE, 'private', 'account'), { email: 'alice@example.com' }));
+  await assertFails(updateDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account'), {
+    email: 'hack@example.com',
+  }));
+
+  // Otro usuario no puede borrar: denegado
+  await assertFails(deleteDoc(doc(as(BOB), 'usuarios', ALICE, 'private', 'account')));
+
+  // Borrar el propio documento: permitido
+  await assertSucceeds(deleteDoc(doc(as(ALICE), 'usuarios', ALICE, 'private', 'account')));
+});
 
 test('REGRESIÓN: nadie puede crear notificaciones suplantando a otro actor', async () => {
   const ok = { type: 'follow', title: 'Nuevo seguidor', body: 'Bob te sigue', data: {}, actorId: BOB, read: false, createdAt: new Date() };
@@ -594,6 +780,21 @@ test('reportes: se crean con el uid propio y nadie los lee desde el cliente', as
   // Un motivo gigante se rechaza (coste y spam).
   await assertFails(setDoc(doc(as(BOB), 'reports', 'rep5'), { ...r, reason: 'x'.repeat(501) }));
   await assertFails(getDoc(doc(as(BOB), 'reports', 'rep1')));
+});
+
+// T-049: reports exige keys().hasOnly con exactamente los 5 campos permitidos
+test('reportes: rechaza campos extra (status, severity, etc.)', async () => {
+  const base = { reporterId: BOB, targetType: 'reflexion', targetId: 'r1', reason: 'spam', createdAt: new Date() };
+  // Campo extra 'status': denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_status'), { ...base, status: 'pending' }));
+  // Campo extra 'severity': denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_sev'), { ...base, severity: 'high' }));
+  // Campo extra 'basura': denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_basura'), { ...base, basura: 'cualquier cosa' }));
+  // Falta createdAt: denegado (keys().hasOnly exige todos los campos)
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_no_ts'), { reporterId: BOB, targetType: 'reflexion', targetId: 'r1', reason: 'spam' }));
+  // createdAt no es timestamp: denegado
+  await assertFails(setDoc(doc(as(BOB), 'reports', 'rep_bad_ts'), { ...base, createdAt: 'no-es-timestamp' }));
 });
 
 // ───────────────────────── Config / catch-all ─────────────────────────
