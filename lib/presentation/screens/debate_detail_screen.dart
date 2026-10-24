@@ -299,7 +299,7 @@ class _DebateHeader extends ConsumerWidget {
                   style: const TextStyle(
                       fontSize: 13, color: AppTheme.textSecondary)),
               const Spacer(),
-              if (uid != null && uid != debate.userId)
+              if (uid != null && uid != debate.userId) ...[
                 IconButton(
                   icon: const Icon(Icons.flag_outlined,
                       size: 18, color: AppTheme.textSecondary),
@@ -315,6 +315,41 @@ class _DebateHeader extends ConsumerWidget {
                     );
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.block_outlined,
+                      size: 18, color: AppTheme.textSecondary),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Bloquear usuario'),
+                        content: Text(
+                            '¿Seguro que quieres bloquear a ${debate.userName}? No podrás ver su contenido ni interactuar con él.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Bloquear'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await ref
+                          .read(firestoreServiceProvider)
+                          .bloquearUsuario(uid!, debate.userId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Usuario bloqueado')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
               if (uid == debate.userId && !debate.cerrado)
                 TextButton(
                   onPressed: () {
@@ -441,6 +476,61 @@ class _ReplyTile extends ConsumerWidget {
                       style: const TextStyle(
                           fontSize: 10, color: AppTheme.textSecondary),
                     ),
+                    if (uid != null && uid != reply.userId) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.flag_outlined,
+                            size: 16, color: AppTheme.textSecondary),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => ReportContentDialog(
+                              targetType: 'debate',
+                              targetId: reply.id,
+                              targetTitle: reply.texto.length > 50
+                                  ? '${reply.texto.substring(0, 50)}...'
+                                  : reply.texto,
+                              targetAuthor: reply.userName,
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.block_outlined,
+                            size: 16, color: AppTheme.textSecondary),
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Bloquear usuario'),
+                              content: Text(
+                                  '¿Seguro que quieres bloquear a ${reply.userName}? No podrás ver su contenido ni interactuar con él.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Bloquear'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await ref
+                                .read(firestoreServiceProvider)
+                                .bloquearUsuario(uid!, reply.userId);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Usuario bloqueado')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
