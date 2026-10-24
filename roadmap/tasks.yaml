@@ -1184,7 +1184,7 @@ tasks:
     phase: 1
     priority: P2
     effort: M
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
       - snapshot.hasError y connectionState.waiting tienen estado propio (mensaje y reintento), distinto de la
@@ -1195,6 +1195,12 @@ tasks:
       - lib/presentation/screens/perfil_screen.dart
     source: audit
     created_at: 2026-10-23T03:00:12.536Z
+    started_at: 2026-10-24T16:21:29.336Z
+    done_at: 2026-10-24T16:21:29.336Z
+    evidence: "Mergeado en main por el PR #116 (rama b/T-051-bloqueados-el-dialogo-confunde-carga-y-e) con el CI
+      en verde: format, analyze, tests y los demás checks obligatorios. Cierre automático
+      (.github/workflows/cerrar-tarea.yml)."
+    commit: 0eb518ba197e1047fa16176b4e299725d7e8bd71
   - id: T-052
     title: "Filtros de bloqueo: badge sin filtrar, actorId nulo descartado, límites antes del filtro y código
       muerto"
