@@ -30,7 +30,7 @@ void main() {
       expect(u.seguidores, []);
     });
 
-    test('toMap produce el mapa correcto', () {
+    test('toMap solo produce campos de perfil público', () {
       final u = Usuario(
         id: 'user_001',
         nombre: 'Carlos López',
@@ -41,9 +41,19 @@ void main() {
       );
       final map = u.toMap();
       expect(map['nombre'], 'Carlos López');
-      expect(map['email'], 'carlos@ejemplo.com');
+      expect(map.containsKey('email'), isFalse);
       expect(map.containsKey('siguiendo'), true);
       expect(map.containsKey('seguidores'), true);
+    });
+
+    test('privateAccountMap conserva el correo fuera del perfil público', () {
+      final u = Usuario(
+        id: 'user_001',
+        nombre: 'Carlos López',
+        email: 'carlos@ejemplo.com',
+      );
+
+      expect(u.privateAccountMap, {'email': 'carlos@ejemplo.com'});
     });
 
     test('crea usuario sin fotoUrl', () {
