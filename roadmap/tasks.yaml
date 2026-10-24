@@ -1380,3 +1380,40 @@ tasks:
       - functions/src/moderation.ts
     source: auditoria:2026-10-24
     created_at: 2026-10-24T01:52:21.122Z
+  - id: T-062
+    title: Adaptar el agente orchestrator y /cycle al marco de tres sesiones (sin escribir el roadmap por MCP
+      desde Plataforma/Producto)
+    type: infra
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - El ciclo reserva la tarea con un PR en borrador (T-xxx) y no usa start_task/complete_task fuera de la
+        Integradora
+      - orchestrator.md, autonomous-loop y /cycle describen el flujo nuevo y siguen sin poder mergear ni
+        desplegar
+      - Probado con una tarea P3 real de Producto
+    files:
+      - .opencode/agents/orchestrator.md
+      - .opencode/skills/autonomous-loop/SKILL.md
+      - .opencode/commands/cycle.md
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T02:27:15.200Z
+  - id: T-063
+    title: Verificar por ejecución las configuraciones de skills/MCPs por sesión y ajustar los IDs
+    type: infra
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - En cada una de las tres sesiones, la prueba de humo de docs/CAPACIDADES.md lista exactamente su columna
+      - Si algún ID de skill no existe o una policy se descarta, queda corregido en .opencode/sesiones/*.jsonc
+      - Resultado anotado en la bitácora
+    files:
+      - .opencode/sesiones/
+    source: auditoria:2026-10-24
+    created_at: 2026-10-24T02:27:15.202Z
