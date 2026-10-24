@@ -941,3 +941,19 @@ test('bloqueo real: no se puede seguir a quien te bloqueó (ni al revés)', asyn
     seguidores: arrayUnion(EVE),
   }, { merge: true }));
 });
+
+test('el autor no puede eludir el ocultamiento de moderación de su contenido', async () => {
+  await seedReflexion();
+  // La función de moderación (admin) oculta la reflexión.
+  await admin((db) => updateDoc(doc(db, 'reflexiones', 'r1'), {
+    oculto: true,
+    ocultoMotivo: 'Contenido inapropiado',
+    ocultoEn: serverTimestamp(),
+  }));
+  // El autor sigue pudiendo editar el texto de su propia reflexión.
+  await assertSucceeds(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { texto: 'editado por mí' }));
+  // Pero no puede quitar el ocultamiento ni tocar los campos de moderación.
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { oculto: false }));
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { ocultoMotivo: 'otro motivo' }));
+  await assertFails(updateDoc(doc(as(ALICE), 'reflexiones', 'r1'), { ocultoEn: serverTimestamp() }));
+});
