@@ -39,26 +39,17 @@ romper algo que alguien usa hoy.
 
 ### 1c. Varias sesiones a la vez (obligatorio)
 
-Si hay más de una sesión en el repo (lo normal: orquestadora + implementadora + auditora):
+El marco completo está en **`docs/FLUJO.md`** (una página; manda sobre cualquier otro texto). Resumen:
 
-1. **Un worktree por sesión.** Dos sesiones en el mismo directorio acaban en un
-   `reset --hard`, un `checkout -B` o un `stash` cruzado, y el trabajo de una
-   desaparece sin que nadie se entere. `git worktree list` antes de empezar.
-2. **`git fetch origin` y cita el SHA de `origin/main`** en todo informe
-   ("validado en `<sha>`"). Nunca valides ni decidas sobre un `main` local desfasado.
-3. **Se trabaja desde `origin/main`, no desde `main` local.** Rama nueva:
-   `git checkout -B mi-rama origin/main`. El `main` local no lo mantiene nadie y por
-   eso envejece: si lo necesitas al día, `scripts/sync-main.sh` (solo fast-forward).
-4. **Un solo merger.** Solo la sesión orquestadora mergea y escribe el roadmap.
-5. **Máximo 2 PRs abiertos por sesión**; antes de abrirlos, `git merge origin/main`
-   y mira `git diff --stat origin/main` (si aparecen ficheros que no tocaste, estás
-   desfasado y ese PR revertiría trabajo ajeno).
-6. **Todo lo no empujado no existe**: push de la rama aunque sea WIP y tu fichero
-   `roadmap/sesiones/<id>.md` al día.
-7. Prohibido `push --force`, `reset --hard` y rebase de ramas con PR abierto.
+- **Tres sesiones, tres carriles por rutas** (`ownership.json`): Integradora (`i/…`), Plataforma (`a/…`) y Producto (`b/…`). Cada una actúa con su GitHub App (`scripts/gh-app-token.mjs`).
+- **El estado vive en GitHub, no en ficheros**: `node scripts/board.mjs`. `roadmap/tasks.yaml` dice *qué*; un PR en borrador con `T-xxx` en el título es la reserva de la tarea.
+- **Un worktree por sesión**, siempre desde `origin/main` (cita su SHA en los informes). `git merge origin/main` antes de pedir revisión.
+- **Los PRs sobre rutas `humanRequired`** (reglas, workflows, `pubspec.yaml`…) los aprueba el Owner. El resto se auto-mergea con los checks en verde.
+- **Un bloqueo se reporta con la línea de log que lo prueba** (`gh run view <id> --log-failed`).
+- **Nada de scripts de parcheo en el repo** (`fix_*.py`, `apply_*.py`): se edita el código directamente.
+- **Borra tu rama y tu worktree al integrarte.** Prohibido `push --force`, `reset --hard` y rebase sobre ramas con PR abierto.
 
-Protocolo completo, plantillas y casos reales: `docs/SESIONES.md`.
-Orientación en 30 segundos: `scripts/session-check.sh`.
+Arranque de cada sesión: `docs/SESIONES_ARRANQUE.md`. Orientación en 30 segundos: `scripts/session-check.sh`.
 
 ## 2. Stack
 

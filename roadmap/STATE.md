@@ -1,36 +1,24 @@
 # Estado del roadmap (autogenerado — no editar)
 
-**Ciclo:** 10 · **Fase actual:** 1 · **Progreso global:** ████████░░░░░░░░░░░░ 22/53 (42%)
+**Ciclo:** 11 · **Fase actual:** 1 · **Progreso global:** █████████████░░░░░░░ 39/61 (64%)
 
 | Fase | Progreso |
 |---|---|
-| 1. Estabilizar (seguridad, observabilidad, CI) | ███████████░░░░░░░░░ 17/32 |
+| 1. Estabilizar (seguridad, observabilidad, CI) | ██████████████░░░░░░ 28/40 |
 | 2. Andamiaje IA y tests | ██████████░░░░░░░░░░ 1/2 |
-| 3. Arquitectura feature-first y backend | ███░░░░░░░░░░░░░░░░░ 1/8 |
-| 4. Producto | █████░░░░░░░░░░░░░░░ 3/11 |
+| 3. Arquitectura feature-first y backend | ████████░░░░░░░░░░░░ 3/8 |
+| 4. Producto | █████████████░░░░░░░ 7/11 |
 
 **En curso:** —
-**Siguiente:** T-041 · Privacidad: documento privado con allowlist de campos, tipos y tamanos (P1, S)
+**Siguiente:** T-007 · Paginación real del feed con startAfterDocument e infinite scroll (P1, M)
 
-**Conteo:** backlog=30 · ready=0 · in_progress=0 · review=0 · done=22 · blocked=1 · dropped=0
+**Conteo:** backlog=16 · ready=5 · in_progress=0 · review=0 · done=39 · blocked=1 · dropped=0
 
 **Bloqueadas:**
 - T-009 Desplegar Cloud Functions de gamificación en paralelo al cliente (ADR-0002 paso 1) — Requiere plan Blaze y decisión humana de desplegar
 
 
 ## Últimos ciclos
-## Ciclo 8 — 2026-10-23T01:35:57.115Z
-- **Tarea:** T-019, T-044, T-022 · Bloqueo de usuarios, limites en reglas y filtrado de bloqueados
-- **Resultado:** mergeado en main (PRs #31, #32, #33; #34 T-027 en la misma tanda)
-- **Rama/commit:** fix/lane-b-06-tamano-limites, fix/lane-b-07-bloquear-usuarios, fix/lane-b-08-filtrar-bloqueados, auto/T-027-inicio-hoy @ 068f2db, fa7d0a4, 90ea33c, c0aa2b3
-- **check.sh:** ✅ verde
-- **Reviewer:** CI 4/4 en cada PR. Conflictos resueltos a mano: CHANGELOG (#31), firestore_service duplicado + llave perdida (#33, #36).
-
-Tanda de merges de la noche. La otra sesion (carril B) produce rama+PR y esta sesion mergea. Se resolvieron conflictos en serie sin reescribir historia y se detecto que el auto-merge de #36 rompia el fichero (metodos duplicados y una llave sin cerrar): corregido antes de pushear.
-
-**Problemas:**
-…
-
 ## Ciclo 9 — 2026-10-23T02:22:27.129Z
 - **Tarea:** T-028, T-033, T-036, T-038 · Reflexion guiada, biblioteca personal, eventos sin datos y indice de chats
 - **Resultado:** mergeado en main (PRs #35, #37, #40, #39)
@@ -53,4 +41,16 @@ Segunda tanda de merges. Ademas del codigo de cada tarea: (1) #38 necesitaba tes
 Tercera tanda de merges. Entró el CI nuevo (#48): el job Build APK pasó de ~6 min a 6 s en los PRs que no tocan Android ni dependencias, así que un PR de Dart/UI queda en ~1,5 min. Se publicó en ops/estado la regla de mergear main antes de abrir PR y el tope de 2 PRs abiertos. Una auditoría externa sobre un checkout atrasado acertó en dos puntos que sí están en main y se convierten en T-048 (P1) y T-049 (P2).
 
 **Problemas:**
+…
+
+## Ciclo 11 — 2026-10-24T01:52:21.122Z
+- **Tarea:** — · Reconciliación del roadmap y migración al marco de tres sesiones
+- **Resultado:** tareas cerradas contra los PRs reales; repo movido a system-technology
+- **Rama/commit:** i/fase1-roadmap 
+- **check.sh:** ✅ verde
+- **Reviewer:** Auditoría externa 2026-10-24 (roadmap/audits/2026-10-24-arquitectura-y-proceso.md)
+
+Se cerraron 16 tareas que estaban mergeadas pero figuraban abiertas, se registraron 8 tareas nuevas surgidas de la auditoría y se archivaron los ficheros de coordinación manual.
+
+
 …

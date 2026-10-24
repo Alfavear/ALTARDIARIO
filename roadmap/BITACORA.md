@@ -239,3 +239,20 @@ Tercera tanda de merges. Entró el CI nuevo (#48): el job Build APK pasó de ~6 
 **Siguiente:** #42 (conflicto resuelto), #49 (evento reflexion_publicada) y #41 (este cierre). En espera: #46 (requiere decisión humana) y #47 (tests + base al día).
 
 ---
+## Ciclo 11 — 2026-10-24T01:52:21.122Z
+- **Tarea:** — · Reconciliación del roadmap y migración al marco de tres sesiones
+- **Resultado:** tareas cerradas contra los PRs reales; repo movido a system-technology
+- **Rama/commit:** i/fase1-roadmap 
+- **check.sh:** ✅ verde
+- **Reviewer:** Auditoría externa 2026-10-24 (roadmap/audits/2026-10-24-arquitectura-y-proceso.md)
+
+Se cerraron 16 tareas que estaban mergeadas pero figuraban abiertas, se registraron 8 tareas nuevas surgidas de la auditoría y se archivaron los ficheros de coordinación manual.
+
+
+**Decisiones:**
+- El estado de quién hace qué lo da GitHub (scripts/board.mjs), no ficheros
+- Una GitHub App por sesión; el Owner aprueba rutas humanRequired
+
+**Siguiente:** Arrancar las tres sesiones desde docs/FLUJO.md y docs/SESIONES_ARRANQUE.md
+
+---
