@@ -3,7 +3,7 @@
 //
 // La app escribe en `reports/{id}` { reporterId, targetType, targetId, reason }.
 // Esta función cuenta reportes y oculta automáticamente contenido con >= 3
-// reportes de usuarios distintos, marcándolo `hidden: true` para que el
+// reportes de usuarios distintos, marcándolo `oculto: true` para que el
 // cliente lo filtre. Un humano revisa en la consola (`reports` con estado).
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
@@ -60,7 +60,7 @@ export const onReporteCreado = onDocumentCreated('reports/{id}', async (event) =
 
   if (accion === 'ocultar_contenido' && col) {
     await db.collection(col).doc(targetId).set(
-      { hidden: true, hiddenReason: 'reports', hiddenAt: new Date() },
+      { oculto: true, ocultoMotivo: 'reports', ocultoEn: new Date() },
       { merge: true },
     );
   }
