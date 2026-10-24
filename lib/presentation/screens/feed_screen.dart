@@ -8,8 +8,8 @@ import '../../data/models/comment.dart';
 import '../../data/models/reflexion.dart';
 import '../../features/moderation/presentation/report_content_dialog.dart';
 import '../providers/app_providers.dart';
+import '../widgets/estados/index.dart';
 import '../widgets/guest_access_restricted_widget.dart';
-import '../widgets/shimmer_loading_widget.dart';
 import 'public_profile_screen.dart';
 import 'publicar_reflexion_screen.dart';
 
@@ -117,25 +117,22 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         children: [
           _buildSearchAndFilters(),
           Expanded(
-            child: reflexionesAsync.when(
-              data: (reflexiones) {
-                final filtered = _filterReflexiones(reflexiones);
-                if (filtered.isEmpty) {
-                  return _buildEmptyState();
-                }
-                return RefreshIndicator(
-                  onRefresh: () =>
-                      ref.refresh(reflexionesStreamProvider.future),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) =>
-                        _ReflexionCard(reflexion: filtered[index]),
-                  ),
-                );
-              },
-              loading: () => const ShimmerListLoading(itemCount: 4),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+            child: AsyncStateBuilder<Reflexion>(
+              isLoading: reflexionesAsync.isLoading,
+              error: reflexionesAsync.error,
+              items: _filterReflexiones(reflexionesAsync.value ?? const []),
+              onRetry: () => ref.refresh(reflexionesStreamProvider.future),
+              emptyTitle: 'Aún no hay reflexiones',
+              emptyDescription: '¡Sé el primero en compartir tu devocional!',
+              builder: (context, filtered) => RefreshIndicator(
+                onRefresh: () => ref.refresh(reflexionesStreamProvider.future),
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) =>
+                      _ReflexionCard(reflexion: filtered[index]),
+                ),
+              ),
             ),
           ),
         ],
@@ -342,38 +339,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.accentGoldLight.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.rss_feed,
-                  size: 40, color: AppTheme.accentGold),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Aún no hay reflexiones',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '¡Sé el primero en compartir tu devocional!',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
-          ],
-        ),
       ),
     );
   }
