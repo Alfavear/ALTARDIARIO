@@ -1474,3 +1474,41 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: auditoria-auto:2026-10-23
     created_at: 2026-10-24T04:39:15.912Z
+  - id: T-067
+    title: Validación cliente límite 5000 chars en reflexión + test integración nota→publicar
+    type: test
+    phase: 4
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - PublicarReflexionScreen muestra contador de caracteres (actual/total 5000) bajo el campo de texto
+      - Botón Publicar se deshabilita si texto > 5000 con mensaje inline 'Máximo 5000 caracteres'
+      - "Test widget: escribir 5001 chars → botón deshabilitado; borrar a 5000 → habilitado"
+      - "Test widget integración: nota con 200 chars → cerrar app (simulado) → reabrir → borrador recuperado →
+        vista previa → publicar → éxito"
+    files:
+      - lib/presentation/screens/publicar_reflexion_screen.dart
+      - test/features/reflexion/publicar_reflexion_integration_test.dart
+    source: auditoria-auto:2026-10-24
+    created_at: 2026-10-24T08:43:19.549Z
+  - id: T-068
+    title: "Tests de reglas para peticiones_oracion: paginación, actualizaciónAutor, apoyos subcolección"
+    type: test
+    phase: 1
+    priority: P2
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Test: query con respondida=true + fecha desc + limit(10) + startAfter funciona en emulador"
+      - "Test: autor puede actualizar respondida=true + actualizacionAutor='Dios sanó a mi madre'"
+      - "Test: no-autor NO puede escribir actualizacionAutor"
+      - "Test: crear documento en peticiones_oracion/{id}/apoyos/{uid} solo con uid propio"
+      - "Test: Function oracion_notifications (si existe) recibe trigger correcto"
+    files:
+      - firestore-tests/rules.test.mjs
+      - functions/src/oracion_notifications.test.ts
+    source: auditoria-auto:2026-10-24
+    created_at: 2026-10-24T08:43:19.549Z

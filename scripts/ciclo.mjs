@@ -239,7 +239,9 @@ async function puertas(wt, rama, t = null) {
   const motivos = []; let salida = '';
   const ficheros = git(wt, 'diff', '--name-only', 'origin/main...HEAD').salida.split('\n').filter(Boolean);
   if (!ficheros.length) return { ok: false, motivos: ['el ciclo no produjo ningún commit con cambios'], salida: '', ficheros };
-  const lineas = (git(wt, 'diff', '--shortstat', 'origin/main...HEAD').salida.match(/(\d+) insertion|(\d+) deletion/g) ?? []).reduce((n, x) => n + parseInt(x, 10), 0);
+  // Tamaño = lo mayor entre líneas añadidas y borradas: un refactor que MUEVE código cuenta una vez, no dos (T-016 sumaba 2165 por mover ~1000).
+  const estad = git(wt, 'diff', '--shortstat', 'origin/main...HEAD').salida;
+  const lineas = Math.max(Number((estad.match(/(\d+) insertion/) ?? [])[1] ?? 0), Number((estad.match(/(\d+) deletion/) ?? [])[1] ?? 0));
   if (ficheros.length > cfg.limites.maxFicheros) motivos.push(`demasiados ficheros (${ficheros.length} > ${cfg.limites.maxFicheros})`);
   if (lineas > cfg.limites.maxLineas) motivos.push(`demasiadas líneas (${lineas} > ${cfg.limites.maxLineas})`);
   for (const f of ficheros) for (const p of cfg.prohibidos) if (new RegExp(p).test(f)) motivos.push(`fichero prohibido: ${f}`);
