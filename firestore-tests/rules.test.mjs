@@ -16,7 +16,7 @@ import {
 import {
   doc, setDoc, updateDoc, deleteDoc, getDoc, addDoc, collection,
   arrayUnion, arrayRemove, increment, deleteField, serverTimestamp,
-  writeBatch,
+  writeBatch, getDocs, query, where, orderBy, limit,
 } from 'firebase/firestore';
 
 const PROJECT = 'altardiario-ec25f';
@@ -156,6 +156,76 @@ test('petición y feedback: se crean firmados con el uid propio', async () => {
   await assertFails(addDoc(collection(as(BOB), 'feedback'), { ...feedback, userId: ALICE }));
   await assertSucceeds(getDoc(doc(as(BOB), 'feedback', creado.id)));
   await assertFails(getDoc(doc(as(ALICE), 'feedback', creado.id)));
+});
+
+// T-065: índice compuesto para peticiones_oracion con filtro respondida + orderBy fecha
+test('peticiones_oracion: query con filtro respondida y orderBy fecha no falla por índice (T-065)', async () => {
+  // Sembrar datos con admin para evitar reglas de escritura
+  await admin(async (db) => {
+    const ahora = new Date();
+    const batch = writeBatch(db);
+    // Petición respondida = true, no oculta
+    batch.set(doc(db, 'peticiones_oracion', 'p1'), {
+      userId: ALICE, userName: 'Alice', motivo: 'Salud',
+      fecha: new Date(ahora.getTime() - 86400000), // ayer
+      oracionesCount: 5, oculto: false, respondida: true,
+    });
+    // Petición respondida = false, no oculta
+    batch.set(doc(db, 'peticiones_oracion', 'p2'), {
+      userId: ALICE, userName: 'Alice', motivo: 'Trabajo',
+      fecha: new Date(ahora.getTime() - 43200000), // hace 12h
+      oracionesCount: 3, oculto: false, respondida: false,
+    });
+    // Petición oculta (no debería aparecer en query oculto==false)
+    batch.set(doc(db, 'peticiones_oracion', 'p3'), {
+      userId: ALICE, userName: 'Alice', motivo: 'Oculta',
+      fecha: new Date(ahora.getTime() - 21600000), // hace 6h
+      oracionesCount: 1, oculto: true, respondida: false,
+    });
+    // Petición sin campo respondida (null), no oculta
+    batch.set(doc(db, 'peticiones_oracion', 'p4'), {
+      userId: ALICE, userName: 'Alice', motivo: 'Sin estado',
+      fecha: new Date(ahora.getTime() - 10800000), // hace 3h
+      oracionesCount: 0, oculto: false,
+    });
+    await batch.commit();
+  });
+
+  const peticionesCol = collection(as(ALICE), 'peticiones_oracion');
+
+  // Query: oculto == false + orderBy fecha DESC + respondida == true
+  const queryRespondidas = query(
+    peticionesCol,
+    where('oculto', '==', false),
+    orderBy('fecha', 'desc'),
+    where('respondida', '==', true),
+    limit(10)
+  );
+
+  // No debe lanzar FAILED_PRECONDITION (índice compuesto existe y orden correcto)
+  await assertSucceeds(getDocs(queryRespondidas));
+
+  // Query: oculto == false + orderBy fecha DESC + respondida == false
+  const queryPendientes = query(
+    peticionesCol,
+    where('oculto', '==', false),
+    orderBy('fecha', 'desc'),
+    where('respondida', '==', false),
+    limit(10)
+  );
+
+  await assertSucceeds(getDocs(queryPendientes));
+
+  // Query base sin filtro respondida (solo oculto + orderBy)
+  // Debe funcionar con el mismo índice compuesto (Firestore ignora respondida si no hay filtro)
+  const queryTodas = query(
+    peticionesCol,
+    where('oculto', '==', false),
+    orderBy('fecha', 'desc'),
+    limit(10)
+  );
+
+  await assertSucceeds(getDocs(queryTodas));
 });
 
 // ───────────────────────── Debates ─────────────────────────
