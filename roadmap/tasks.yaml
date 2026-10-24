@@ -1602,25 +1602,41 @@ tasks:
       (.github/workflows/cerrar-tarea.yml)."
     commit: 51bde30d42979810b85a99d8b08fdad699511a9a
   - id: T-072
-    title: migrar-oculto.mjs no se puede ejecutar (firebase-admin no resuelve e initializeApp/getFirestore mal enlazados)
+    title: migrar-oculto.mjs no se puede ejecutar (firebase-admin no resuelve e initializeApp/getFirestore mal
+      enlazados)
     type: bug
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: done
     depends_on: []
     acceptance:
-      - "node scripts/migrar-oculto.mjs --project altardiario-ec25f arranca (simulacro) con firebase-admin instalado solo en functions/node_modules: falla hoy con ERR_MODULE_NOT_FOUND porque el import estático/bare resuelve desde scripts/"
-      - "Cargar firebase-admin con createRequire(functions/package.json) o import() de la ruta absoluta de functions/node_modules/firebase-admin, no por nombre"
-      - "Probado con una ejecución real del script con --help y con un módulo firebase-admin simulado que prueba que se carga desde functions/node_modules"
-      - "Segundo fallo al ejecutarlo: adminApp = admin.initializeApp se llama sin su objeto (TypeError ... reading INTERNAL) y admin.getFirestore no existe en firebase-admin; usar admin.initializeApp(...) y admin.firestore() o los submódulos firebase-admin/app y firebase-admin/firestore"
-      - "Prueba que ejecuta de verdad main() con firebase-admin simulado (initializeApp y firestore con un doble) en simulacro y con --aplicar, no solo --help"
-      - "Tercer fallo: con --aplicar el contador «Actualizados» sale 0 aunque las escrituras se hacen (se verificó en producción: 32 documentos migrados y el simulacro posterior los da como omitidos); debe contar los documentos escritos en cada lote"
-      - "Mensaje de error claro si falta cd functions && npm ci"
+      - "node scripts/migrar-oculto.mjs --project altardiario-ec25f arranca (simulacro) con firebase-admin
+        instalado solo en functions/node_modules: falla hoy con ERR_MODULE_NOT_FOUND porque el import
+        estático/bare resuelve desde scripts/"
+      - Cargar firebase-admin con createRequire(functions/package.json) o import() de la ruta absoluta de
+        functions/node_modules/firebase-admin, no por nombre
+      - Probado con una ejecución real del script con --help y con un módulo firebase-admin simulado que
+        prueba que se carga desde functions/node_modules
+      - "Segundo fallo al ejecutarlo: adminApp = admin.initializeApp se llama sin su objeto (TypeError ...
+        reading INTERNAL) y admin.getFirestore no existe en firebase-admin; usar admin.initializeApp(...) y
+        admin.firestore() o los submódulos firebase-admin/app y firebase-admin/firestore"
+      - Prueba que ejecuta de verdad main() con firebase-admin simulado (initializeApp y firestore con un
+        doble) en simulacro y con --aplicar, no solo --help
+      - "Tercer fallo: con --aplicar el contador «Actualizados» sale 0 aunque las escrituras se hacen (se
+        verificó en producción: 32 documentos migrados y el simulacro posterior los da como omitidos); debe
+        contar los documentos escritos en cada lote"
+      - Mensaje de error claro si falta cd functions && npm ci
     files:
       - scripts/migrar-oculto.mjs
     source: auditoria-claude:2026-10-24
     created_at: 2026-10-24T15:40:00.000Z
+    started_at: 2026-10-24T16:10:47.611Z
+    done_at: 2026-10-24T16:10:47.611Z
+    evidence: "Mergeado en main por el PR #114 (rama a/T-072-migrar-oculto-mjs-no-se-puede-ejecutar-f) con el CI
+      en verde: format, analyze, tests y los demás checks obligatorios. Cierre automático
+      (.github/workflows/cerrar-tarea.yml)."
+    commit: fa7cc13d5f94dc2f0aee0bee9fb9fea4e75bbbc5
   - id: T-073
     title: Auditor autónomo del ciclo (scripts/auditor.mjs) que sustituye al auditor humano
     type: feature
@@ -1630,14 +1646,34 @@ tasks:
     status: backlog
     depends_on: []
     acceptance:
-      - "scripts/auditor.mjs es un proceso continuo como scripts/ciclo.mjs (node scripts/auditor.mjs), con latido en sesiones/auditor-auto/latido.txt, STOP global respetado, un ciclo cada auditor.minutosEntreCiclos (por defecto 90) y un registro sesiones/auditor-auto/ciclo.log"
-      - "Fase 1 DETERMINISTA (sin modelo) que recoge una instantánea JSON: estado y latido de cada supervisor (ciclo-estado), últimas líneas de ciclo.log y *-err.log, PRs abiertos con su mergeStateStatus y checks, git log de origin/main desde la última revisión, fallos seguidos, procesos opencode huérfanos"
-      - "Detectores deterministas con una regla cada uno y una prueba cada uno: supervisor sin latido más de 40 min; fallos seguidos mayor o igual que 2; PR con auto-merge BEHIND o DIRTY más de 2 h; PR con checks rojos; mismo ciclo «no hay tarea libre» 4 veces seguidas; errores de cuota o límite (429, Free usage limit, Invalid API Key, expired) repetidos; ficheros prohibidos, secretos (reutiliza scripts/escanear-secretos.mjs) o tests borrados en commits nuevos de main"
-      - "Acciones deterministas permitidas SOLO estas: reiniciar un supervisor caído (spawn desacoplado de node scripts/ciclo.mjs <carril> con la salida a sus proceso.log), crear sesiones/STOP ante secretos en main o fallos seguidos mayor o igual que 3 en ambos carriles, y escribir el informe; NUNCA aprobar, mergear, tocar secretos, protección de ramas ni .github (lista blanca comprobada por una prueba)"
-      - "Fase 2 con modelo (opencode run --auto como las demás sesiones, modelos de auditor.modelo en ciclo.config.json con respaldo en cascada) que lee la instantánea y los detectores y devuelve JSON: diagnóstico por problema y tareas propuestas; las tareas se validan con el mismo validador que la auditoría de roadmap (un solo carril, rutas existentes, criterios verificables) y se publican en un PR de roadmap con la app Integradora y auto-merge"
-      - "Cada ciclo añade una entrada breve y factual con la hora a sesiones/INFORME-AUDITOR.md citando la línea de log que prueba cada problema; si no hay novedades, una sola línea"
-      - "Escalada: si un problema persiste 3 ciclos seguidos sin resolverse o el auditor detecta algo que no puede resolver con sus acciones permitidas, escribe sesiones/ESCALADA.md con el problema, la evidencia y lo que necesita (Owner o auditor externo) y lo repite cada ciclo hasta que se resuelva"
-      - "Se ejecuta con node scripts/auditor.mjs --una-vez para un único ciclo y node scripts/auditor.mjs --simulacro para no actuar (solo informa); node --test scripts/auditor.test.mjs cubre detectores, lista blanca de acciones y validación de tareas propuestas con dobles de gh y git"
+      - scripts/auditor.mjs es un proceso continuo como scripts/ciclo.mjs (node scripts/auditor.mjs), con
+        latido en sesiones/auditor-auto/latido.txt, STOP global respetado, un ciclo cada
+        auditor.minutosEntreCiclos (por defecto 90) y un registro sesiones/auditor-auto/ciclo.log
+      - "Fase 1 DETERMINISTA (sin modelo) que recoge una instantánea JSON: estado y latido de cada supervisor
+        (ciclo-estado), últimas líneas de ciclo.log y *-err.log, PRs abiertos con su mergeStateStatus y
+        checks, git log de origin/main desde la última revisión, fallos seguidos, procesos opencode huérfanos"
+      - "Detectores deterministas con una regla cada uno y una prueba cada uno: supervisor sin latido más de
+        40 min; fallos seguidos mayor o igual que 2; PR con auto-merge BEHIND o DIRTY más de 2 h; PR con
+        checks rojos; mismo ciclo «no hay tarea libre» 4 veces seguidas; errores de cuota o límite (429, Free
+        usage limit, Invalid API Key, expired) repetidos; ficheros prohibidos, secretos (reutiliza
+        scripts/escanear-secretos.mjs) o tests borrados en commits nuevos de main"
+      - "Acciones deterministas permitidas SOLO estas: reiniciar un supervisor caído (spawn desacoplado de
+        node scripts/ciclo.mjs <carril> con la salida a sus proceso.log), crear sesiones/STOP ante secretos en
+        main o fallos seguidos mayor o igual que 3 en ambos carriles, y escribir el informe; NUNCA aprobar,
+        mergear, tocar secretos, protección de ramas ni .github (lista blanca comprobada por una prueba)"
+      - "Fase 2 con modelo (opencode run --auto como las demás sesiones, modelos de auditor.modelo en
+        ciclo.config.json con respaldo en cascada) que lee la instantánea y los detectores y devuelve JSON:
+        diagnóstico por problema y tareas propuestas; las tareas se validan con el mismo validador que la
+        auditoría de roadmap (un solo carril, rutas existentes, criterios verificables) y se publican en un PR
+        de roadmap con la app Integradora y auto-merge"
+      - Cada ciclo añade una entrada breve y factual con la hora a sesiones/INFORME-AUDITOR.md citando la
+        línea de log que prueba cada problema; si no hay novedades, una sola línea
+      - "Escalada: si un problema persiste 3 ciclos seguidos sin resolverse o el auditor detecta algo que no
+        puede resolver con sus acciones permitidas, escribe sesiones/ESCALADA.md con el problema, la evidencia
+        y lo que necesita (Owner o auditor externo) y lo repite cada ciclo hasta que se resuelva"
+      - Se ejecuta con node scripts/auditor.mjs --una-vez para un único ciclo y node scripts/auditor.mjs
+        --simulacro para no actuar (solo informa); node --test scripts/auditor.test.mjs cubre detectores,
+        lista blanca de acciones y validación de tareas propuestas con dobles de gh y git
     files:
       - scripts/auditor.mjs
       - scripts/auditor.test.mjs
@@ -1653,10 +1689,14 @@ tasks:
     depends_on:
       - T-073
     acceptance:
-      - "scripts/ciclo.config.json tiene un bloque auditor con minutosEntreCiclos, modelo (nvidia nemotron-3-ultra, opencode-go/kimi-k3.1-pro, opencode-go/qwen3.8-max en ese orden de preferencia con respaldo) y modeloRevisa distinto del que propone"
-      - "scripts/ciclo-estado.mjs muestra el auditor (latido, último ciclo, problemas abiertos y si existe sesiones/ESCALADA.md)"
-      - "scripts/ciclo-instalar.ps1 registra también una tarea programada para node scripts/auditor.mjs con reinicio automático ante fallo, como las de los supervisores"
-      - "El mismo ciclo-instalar.ps1 documenta en su cabecera cómo arrancar y parar los tres procesos"
+      - scripts/ciclo.config.json tiene un bloque auditor con minutosEntreCiclos, modelo (nvidia
+        nemotron-3-ultra, opencode-go/kimi-k3.1-pro, opencode-go/qwen3.8-max en ese orden de preferencia con
+        respaldo) y modeloRevisa distinto del que propone
+      - scripts/ciclo-estado.mjs muestra el auditor (latido, último ciclo, problemas abiertos y si existe
+        sesiones/ESCALADA.md)
+      - scripts/ciclo-instalar.ps1 registra también una tarea programada para node scripts/auditor.mjs con
+        reinicio automático ante fallo, como las de los supervisores
+      - El mismo ciclo-instalar.ps1 documenta en su cabecera cómo arrancar y parar los tres procesos
     files:
       - scripts/ciclo.config.json
       - scripts/ciclo-estado.mjs
@@ -1672,10 +1712,15 @@ tasks:
     status: backlog
     depends_on: []
     acceptance:
-      - "ciclo.mjs vuelve a leer scripts/ciclo.config.json al empezar cada ciclo, de modo que un cambio de modelos, límites o tareas excluidas se aplica sin reiniciar el supervisor (hoy exige reiniciarlo y hay que esperar a que acabe la tarea)"
-      - "El enfriamiento de la auditoría de roadmap se guarda por carril (sesiones/auditoria-auto/ultima-<carril>.json), no compartido: hoy una auditoría de un carril deja al otro ocioso 3 h"
-      - "El cerrojo para que no haya dos auditorías a la vez se mantiene"
-      - "Prueba de la lectura en caliente: se cambia un valor del config entre dos ciclos con un doble y el segundo ciclo lo usa"
+      - ciclo.mjs vuelve a leer scripts/ciclo.config.json al empezar cada ciclo, de modo que un cambio de
+        modelos, límites o tareas excluidas se aplica sin reiniciar el supervisor (hoy exige reiniciarlo y hay
+        que esperar a que acabe la tarea)
+      - "El enfriamiento de la auditoría de roadmap se guarda por carril
+        (sesiones/auditoria-auto/ultima-<carril>.json), no compartido: hoy una auditoría de un carril deja al
+        otro ocioso 3 h"
+      - El cerrojo para que no haya dos auditorías a la vez se mantiene
+      - "Prueba de la lectura en caliente: se cambia un valor del config entre dos ciclos con un doble y el
+        segundo ciclo lo usa"
     files:
       - scripts/ciclo.mjs
     source: auditoria-claude:2026-10-24
