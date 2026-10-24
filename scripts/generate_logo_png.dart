@@ -59,20 +59,35 @@ void main() {
   drawLog(430, 680, -25);
   drawLog(594, 680, 25);
   img.fillRect(image, x1: 410, y1: 660, x2: 614, y2: 704, color: wood);
-  img.drawRect(image, x1: 410, y1: 660, x2: 614, y2: 704, color: brown, thickness: 4);
+  img.drawRect(image,
+      x1: 410, y1: 660, x2: 614, y2: 704, color: brown, thickness: 4);
 
   // Book
   img.fillRect(image, x1: 340, y1: 740, x2: 684, y2: 870, color: wood);
-  img.drawRect(image, x1: 340, y1: 740, x2: 684, y2: 870, color: brown, thickness: 4);
+  img.drawRect(image,
+      x1: 340, y1: 740, x2: 684, y2: 870, color: brown, thickness: 4);
   img.fillRect(image, x1: 350, y1: 750, x2: 674, y2: 860, color: page);
-  img.drawLine(image, x1: h, y1: 740, x2: h, y2: 870, color: brown, thickness: 6);
+  img.drawLine(image,
+      x1: h, y1: 740, x2: h, y2: 870, color: brown, thickness: 6);
   // Book lines
   final lines = [770, 790, 810, 830];
   final leftEnds = [460, 470, 480, 490];
   final rightStarts = [554, 544, 534, 524];
   for (int i = 0; i < lines.length; i++) {
-    img.drawLine(image, x1: 370, y1: lines[i], x2: leftEnds[i], y2: lines[i], color: pageLine, thickness: 3);
-    img.drawLine(image, x1: rightStarts[i], y1: lines[i], x2: 644, y2: lines[i], color: pageLine, thickness: 3);
+    img.drawLine(image,
+        x1: 370,
+        y1: lines[i],
+        x2: leftEnds[i],
+        y2: lines[i],
+        color: pageLine,
+        thickness: 3);
+    img.drawLine(image,
+        x1: rightStarts[i],
+        y1: lines[i],
+        x2: 644,
+        y2: lines[i],
+        color: pageLine,
+        thickness: 3);
   }
 
   // Flame — layered circles from outer to inner
@@ -101,8 +116,10 @@ void main() {
   img.fillCircle(image, x: 540, y: 286, radius: 4, color: eyeWhite);
 
   // Eyebrows
-  img.drawLine(image, x1: 462, y1: 268, x2: 498, y2: 262, color: brown, thickness: 6);
-  img.drawLine(image, x1: 526, y1: 262, x2: 562, y2: 268, color: brown, thickness: 6);
+  img.drawLine(image,
+      x1: 462, y1: 268, x2: 498, y2: 262, color: brown, thickness: 6);
+  img.drawLine(image,
+      x1: 526, y1: 262, x2: 562, y2: 268, color: brown, thickness: 6);
 
   // Smile
   for (int x = -36; x <= 36; x++) {
@@ -119,7 +136,8 @@ void main() {
   // Save full-size PNG
   final png = img.encodePng(image);
   File('assets/logo_app.png').writeAsBytesSync(png);
-  print('Icono generado: assets/logo_app.png (${png.length} bytes, ${size}x$size)');
+  print(
+      'Icono generado: assets/logo_app.png (${png.length} bytes, ${size}x$size)');
 
   // Generate Android mipmap PNGs
   final sizes = <String, int>{
