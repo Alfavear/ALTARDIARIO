@@ -11,6 +11,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Bloqueo real: si un usuario te bloqueó (o tú a él), ninguno de los dos puede comentar, responder, escribir en el chat, notificar ni seguir al otro; las reglas lo comprueban con `exists()` sobre `usuarios/{uid}/blocked/{uid}`. Dejar de seguir sigue permitido para que el bloqueado pueda limpiar su rastro. 6 tests de reglas nuevos (41/41).
 
 ### Añadido
+- Componentes de estados asíncronos reutilizables (`lib/presentation/widgets/estados/`): carga, vacío, error con reintento y `AsyncStateBuilder`, con tests. Rescatados de la rama `rescate/main-local-20261022-2201`.
 - Compartir versículo como imagen (T-010): botón Compartir en lector genera texto con versículo, referencia y marca AltarDiario; usa share_plus para Android/iOS/Web.
 - Paginacion real del feed con startAfterDocument e infinite scroll: feedPageSize=30, getReflexionesPage con cursor, FeedPaginationNotifier. (T-007)
 - Debate biblico de calidad: etiquetas, respuestas anidadas de un nivel, reglas comunitarias visibles, cerrar debate por autor, reportar debate. (T-031)
