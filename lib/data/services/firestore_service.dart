@@ -63,7 +63,7 @@ class FirestoreService {
   /// TamaÃ±o de pÃ¡gina del feed. Sin lÃ­mite, cada apertura del feed leÃ­a TODA
   /// la colecciÃ³n (coste y latencia lineales con el nÃºmero de reflexiones).
   /// TODO(roadmap-fase-1): paginaciÃ³n real con startAfterDocument.
-  static const int feedPageSize = 100;
+  static const int feedPageSize = 30;
   static const int userReflectionsPageSize = 50;
   static const int commentsPageSize = 100;
   static const int debatePageSize = 50;
@@ -82,6 +82,25 @@ class FirestoreService {
         .map((s) => s.docs
             .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
             .toList());
+  }
+
+  /// Carga una página de reflexiones usando cursor (startAfterDocument).
+  Future<({List<Reflexion> items, DocumentSnapshot? lastDoc, bool hasMore})>
+      getReflexionesPage({DocumentSnapshot? lastDoc}) async {
+    if (!_available) {
+      return (items: <Reflexion>[], lastDoc: null, hasMore: false);
+    }
+    var query = _reflexiones.orderBy('fecha', descending: true);
+    if (lastDoc != null) {
+      query = query.startAfterDocument(lastDoc);
+    }
+    final snapshot = await query.limit(feedPageSize).get();
+    final items = snapshot.docs
+        .map((d) => Reflexion.fromMap({'id': d.id, ...d.data()}))
+        .toList();
+    final newLastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+    final hasMore = snapshot.docs.length >= feedPageSize;
+    return (items: items, lastDoc: newLastDoc, hasMore: hasMore);
   }
 
   Stream<List<Reflexion>> getUserReflexiones(String userId) {
