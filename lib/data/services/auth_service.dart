@@ -303,10 +303,8 @@ class AuthService {
       if (cred.user == null || cred.credential == null) {
         throw StateError('No se obtuvo credencial de Google');
       }
-      return GoogleAuthProvider.credential(
-        idToken: cred.credential!.idToken,
-        accessToken: cred.credential!.accessToken,
-      );
+      // cred.credential ya es un AuthCredential válido (OAuthCredential de Google).
+      return cred.credential!;
     }
     if (_googleSignIn == null) {
       throw StateError('Google Sign-In no está disponible en esta plataforma');
@@ -316,9 +314,12 @@ class AuthService {
       throw StateError('Autenticación con Google cancelada');
     }
     final googleAuth = await googleUser.authentication;
+    if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+      throw StateError('No se obtuvieron tokens de Google');
+    }
     return GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+      accessToken: googleAuth.accessToken!,
+      idToken: googleAuth.idToken!,
     );
   }
 

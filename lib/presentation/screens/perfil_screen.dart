@@ -10,8 +10,8 @@ import '../../core/services/gamification_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/badge.dart';
-import '../../l10n/generated/app_localizations.dart';
 import '../../data/models/usuario.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../providers/app_providers.dart';
 import 'followers_screen.dart';
 import 'login_screen.dart';
@@ -1730,7 +1730,8 @@ Future<bool?> _showDeleteAccountConfirmationDialog(
           onPressed: () => Navigator.pop(ctx, true),
           child: Text(
             l10n.deleteAccountConfirm,
-            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            style:
+                const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -1811,7 +1812,7 @@ Future<void> _reauthenticateAndDeleteAccount(
   final isGoogle = providers.contains('google.com');
   final isApple = providers.contains('apple.com');
   final isPassword = providers.contains('password');
-  final isAnonymous = user.isAnonymous;
+  final isAnonymous = user?.isAnonymous ?? false;
 
   AuthCredential? credential;
 
@@ -1879,8 +1880,7 @@ Future<void> _reauthenticateAndDeleteAccount(
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text(l10n.deleteAccountError),
-          backgroundColor: Colors.red),
+          content: Text(l10n.deleteAccountError), backgroundColor: Colors.red),
     );
   }
 }
@@ -1997,8 +1997,8 @@ class _MenuOptions extends ConsumerWidget {
               final confirm =
                   await _showDeleteAccountConfirmationDialog(context, ref);
               if (confirm != true) return;
-              await _reauthenticateAndDeleteAccount(
-                  context, ref, authState);
+              // ignore: use_build_context_synchronously
+              await _reauthenticateAndDeleteAccount(context, ref, authState);
             },
           ),
         ],
