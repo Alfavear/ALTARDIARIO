@@ -25,7 +25,6 @@ void main() {
             'motivo': 'Petición $i',
             'oculto': false,
             'fecha': DateTime.utc(2026, 1, i + 1),
-            'oculto': false,
           });
         }
         await batch.commit();
