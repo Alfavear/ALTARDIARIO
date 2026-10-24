@@ -131,13 +131,13 @@ service cloud.firestore {
     }
 
     // El dueño puede editar su contenido, pero nunca reasignar autoría
-    // ni manipular contadores sociales ni los campos de moderación (hidden*,
-    // oculto): solo la función de moderación (admin SDK) los fija.
+    // ni manipular contadores sociales ni los campos de moderación
+    // (oculto, ocultoMotivo, ocultoEn): solo la función de moderación (admin SDK) los fija.
     function ownerEditOk() {
       return isOwner(resource.data)
         && !changedKeys().hasAny([
           'userId', 'likes', 'likedBy', 'upvotes', 'votedBy', 'oracionesCount',
-          'hidden', 'hiddenReason', 'hiddenAt', 'oculto',
+          'oculto', 'ocultoMotivo', 'ocultoEn',
         ])
         && noPrivateFields(request.resource.data);
     }
