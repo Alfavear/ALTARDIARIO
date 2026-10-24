@@ -76,9 +76,9 @@ lo aprueba, `Información engañosa`.
 
 - Cada reporte escribe únicamente los cinco campos permitidos por la allowlist
   de `/reports`.
-- La Function registra y marca como `hidden` el contenido con tres reportantes
+- La Function registra y marca como `oculto` el contenido con tres reportantes
   distintos.
-- La app no muestra contenido `hidden` y el autor no puede eludirlo editando
+- La app no muestra contenido `oculto` y el autor no puede eludirlo editando
   el campo.
 - Se cubre cada `targetType` de la Function con pruebas de reglas y Function.
 
@@ -244,7 +244,7 @@ añadir dependencias.
 4. Filtrar bloqueos en chats y notificaciones; añadir desbloqueo en Ajustes.
 5. Añadir reporte para reflexiones y comentarios.
 6. Añadir reporte para peticiones, debates y respuestas; probar la Function.
-7. Filtrar contenido `hidden` en todos los providers y pantallas.
+7. Filtrar contenido `oculto` en todos los providers y pantallas.
 8. Implementar eliminación de cuenta en Cloud Function y UI.
 9. Añadir paginación por cursor al feed.
 10. Rediseñar Inicio con el flujo "Hoy" y sus tres estados principales.
