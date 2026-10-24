@@ -125,6 +125,15 @@ Future<void> pushPendingProgress(WidgetRef ref) async {
   } catch (_) {}
 }
 
+/// Provider de temas seguidos por el usuario actual.
+final temasSeguidosProvider = StreamProvider<List<String>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).getUsuario(uid).map(
+        (u) => u?.temasSeguidos ?? [],
+      );
+});
+
 /// Perfil del usuario autenticado en Firestore.
 final userProfileProvider = StreamProvider<Usuario?>((ref) {
   final uid = ref.watch(effectiveUserUidProvider);
@@ -199,12 +208,6 @@ final messagesStreamProvider =
 final isAuthorProvider = Provider.family<bool, String>((ref, authorId) {
   final uid = ref.watch(effectiveUserUidProvider);
   return uid == authorId;
-});
-
-/// Lista de chats del usuario.
-final chatListProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, userId) {
-  return ref.watch(firestoreServiceProvider).getUserChats(userId);
 });
 
 /// Lista de chats filtrando usuarios bloqueados.
@@ -624,9 +627,9 @@ final notificationsFiltradasProvider =
   });
 });
 
-/// Contador de notificaciones no leídas.
+/// Contador de notificaciones no leídas (sobre el stream filtrado).
 final unreadNotificationsCountProvider = Provider<int>((ref) {
-  final notificationsAsync = ref.watch(notificationsStreamProvider);
+  final notificationsAsync = ref.watch(notificationsFiltradasProvider);
   return notificationsAsync.when(
     data: (notifications) => notifications.where((n) => !n.read).length,
     loading: () => 0,
