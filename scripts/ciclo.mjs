@@ -208,6 +208,13 @@ async function fase(nombre, { wt, modelo, mensaje, t, esperado }) {
   return r;
 }
 const lista = (m) => [].concat(m).join(', ');
+// Crea el PR con la etiqueta «autonomo»; si la etiqueta no existe o no se puede añadir, reintenta sin ella (el PR es lo importante).
+function crearPr(ses, rama, titulo, cuerpo) {
+  const base = ['pr', 'create', '--repo', cfg.repo, '--base', 'main', '--head', rama, '--title', titulo, '--body', cuerpo];
+  let r = ghComo(ses, ...base, '--label', 'autonomo');
+  if (r.codigo !== 0 && /label/i.test(r.salida)) { log('la etiqueta «autonomo» no se pudo añadir: creo el PR sin ella'); r = ghComo(ses, ...base); }
+  return r;
+}
 // Si el agente dejó cambios sin commitear, el supervisor los recoge (las puertas posteriores los juzgan igual).
 function commitPendiente(wt, t) {
   if (!git(wt, 'status', '--porcelain').salida.trim()) return false;
@@ -266,8 +273,7 @@ function publicar(t, rama, wt, g) {
   const protegida = g.ficheros.filter((f) => own.humanRequired.map(aRegex).some((r) => r.test(f)));
   const cuerpo = `Generado por el ciclo autónomo del carril **${lane}** (modelos \`${lista(carril.modeloImplementa)}\`, revisor \`${lista(carril.modeloRevisa)}\`).\n\n## Resultado\n${resultado || '_sin RESULTADO.md_'}\n\n## Puertas superadas\n- scripts/check.sh --fast\n- límites de tamaño, ficheros prohibidos y carril (ownership.json)${g.ficheros.some((f) => /^(firestore\.rules|firestore-tests\/)/.test(f)) ? '\n- tests de reglas con emulador' : ''}\n${protegida.length ? `\n**Requiere aprobación del Owner** (rutas protegidas): ${protegida.join(', ')}\n` : ''}`;
   const titulo = `${TIPO[t.type] ?? 'chore'}(${lane}): ${t.title} (${t.id})`.slice(0, 200);
-  ghApp('label', 'create', 'autonomo', '--repo', cfg.repo, '--color', '5319e7', '--description', 'PR generado por el ciclo autónomo');
-  const c = ghApp('pr', 'create', '--repo', cfg.repo, '--base', 'main', '--head', rama, '--title', titulo, '--body', cuerpo, '--label', 'autonomo');
+  const c = crearPr(lane, rama, titulo, cuerpo);
   if (c.codigo !== 0) return { ok: false, detalle: 'pr create: ' + recorte(c.salida, 600) };
   const url = (c.salida.match(/https:\/\/github\.com\/\S+\/pull\/\d+/) ?? [])[0] ?? '';
   const m = ghApp('pr', 'merge', rama, '--repo', cfg.repo, '--auto', '--squash');
@@ -401,7 +407,7 @@ async function auditoria(libres) {
     const push = ejecutar(process.execPath, [join(aqui, 'gh-app.mjs'), 'integradora', 'push'], { cwd: wt });
     if (push.codigo !== 0) throw new Error('push de la auditoría: ' + recorte(push.salida, 500));
     const cuerpo = `Auditoría automática del ciclo autónomo: **${nuevas.length} tareas nuevas** (${nuevas.map((n) => n.id).join(', ')}). Informe en \`${informe}\`.\n\nSolo toca \`roadmap/**\`; las tareas entran con prioridad máxima ${cfg.auditoria.prioridadMaxima} y el Owner puede reordenarlas.`;
-    const pc = ghComo('integradora', 'pr', 'create', '--repo', cfg.repo, '--base', 'main', '--head', rama, '--title', `docs(roadmap): auditoría automática, ${nuevas.length} tareas nuevas (T-000)`, '--body', cuerpo, '--label', 'autonomo');
+    const pc = crearPr('integradora', rama, `docs(roadmap): auditoría automática, ${nuevas.length} tareas nuevas (T-000)`, cuerpo);
     if (pc.codigo !== 0) throw new Error('pr create de la auditoría: ' + recorte(pc.salida, 500));
     ghComo('integradora', 'pr', 'merge', rama, '--repo', cfg.repo, '--auto', '--squash');
     log(`auditoría publicada: ${(pc.salida.match(/https:\/\/\S+/) ?? [''])[0]} (${nuevas.length} tareas)`);
@@ -409,7 +415,8 @@ async function auditoria(libres) {
     return 'auditoria';
   } catch (e) {
     log(`la auditoría falló: ${e.message}`);
-    writeFileSync(fichUltima, JSON.stringify({ fecha: new Date().toISOString(), resultado: 'fallo', error: String(e.message).slice(0, 300) }));
+    // un fallo no debe bloquear la auditoría medio día: se reintenta en 1 h
+    writeFileSync(fichUltima, JSON.stringify({ fecha: new Date(Date.now() - (cfg.auditoria.enfriamientoHoras - 1) * 3600000).toISOString(), resultado: 'fallo', error: String(e.message).slice(0, 300) }));
     return 'auditoria-fallo';
   } finally {
     rmSync(join(dirAud, 'LOCK'), { force: true });

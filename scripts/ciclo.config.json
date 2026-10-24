@@ -42,8 +42,8 @@
         "opencode/nemotron-3-ultra-free"
       ],
       "modeloRevisa": [
-        "nvidia/z-ai/glm-5.3",
-        "opencode/glm-5.3-flash-free"
+        "opencode/glm-5.3-flash-free",
+        "nvidia/z-ai/glm-5.3"
       ]
     },
     "producto": {
@@ -58,8 +58,8 @@
         "opencode/nemotron-3.5-super-vl-free"
       ],
       "modeloRevisa": [
-        "nvidia/z-ai/glm-5.3",
-        "opencode/glm-5.3-flash-free"
+        "opencode/glm-5.3-flash-free",
+        "nvidia/z-ai/glm-5.3"
       ]
     }
   },
@@ -77,8 +77,8 @@
       "opencode/nemotron-3-ultra-free"
     ],
     "modeloRevisa": [
-      "nvidia/z-ai/glm-5.3",
-      "opencode/glm-5.3-flash-free"
+      "opencode/glm-5.3-flash-free",
+      "nvidia/z-ai/glm-5.3"
     ]
   },
   "_modelosNota": "Cada fase prueba los modelos en orden y pasa al siguiente si el anterior no produce lo esperado (agota el tiempo, 429, etc.): NVIDIA primero y los gratuitos de OpenCode como respaldo.",
