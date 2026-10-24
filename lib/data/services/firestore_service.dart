@@ -465,7 +465,6 @@ class FirestoreService {
       final data = doc.data();
       result[doc.id] = {
         'nombre': data['nombre'] ?? '',
-        'email': data['email'] ?? '',
         'fotoUrl': data['fotoUrl'] ?? '',
         'progresoLectura': List<String>.from(data['progresoLectura'] ?? []),
         'maxStreak': data['maxStreak'] ?? 0,
@@ -476,9 +475,14 @@ class FirestoreService {
 
   Future<void> crearOActualizarUsuario(Usuario usuario) async {
     if (!_available) return;
-    await _usuarios
-        .doc(usuario.id)
-        .set(usuario.toMap(), SetOptions(merge: true));
+    final userRef = _usuarios.doc(usuario.id);
+    await userRef.set(usuario.toMap(), SetOptions(merge: true));
+    if (usuario.privateAccountMap.isNotEmpty) {
+      await userRef
+          .collection('private')
+          .doc('account')
+          .set(usuario.privateAccountMap, SetOptions(merge: true));
+    }
   }
 
   /// Toggle un tema seguido por [uid]. Si [siguiendo] es true, agrega el tema;
@@ -553,7 +557,11 @@ class FirestoreService {
   /// Guarda el token FCM del usuario para push notifications.
   Future<void> saveFCMToken(String uid, String token) async {
     if (!_available) return;
-    await _usuarios.doc(uid).set({'fcmToken': token}, SetOptions(merge: true));
+    await _usuarios
+        .doc(uid)
+        .collection('private')
+        .doc('account')
+        .set({'fcmToken': token}, SetOptions(merge: true));
   }
 
   /// Elimina el token FCM del usuario (logout).
@@ -561,6 +569,8 @@ class FirestoreService {
     if (!_available) return;
     await _usuarios
         .doc(uid)
+        .collection('private')
+        .doc('account')
         .set({'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
   }
 
