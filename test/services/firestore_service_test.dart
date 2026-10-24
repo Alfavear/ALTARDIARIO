@@ -434,4 +434,40 @@ void main() {
       expect(doc.data()?['oracionesCount'], 6);
     });
   });
+
+  group('FirestoreService.borrarCuenta', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('borra el perfil público y el documento privado en una operación',
+        () async {
+      await fake
+          .doc('usuarios/u1/private/account')
+          .set({'email': 'u1@ejemplo.com'});
+      await fake
+          .doc('usuarios/u1')
+          .set({'nombre': 'Uno', 'email': 'u1@ejemplo.com'});
+
+      await service.borrarCuenta('u1');
+
+      final publico = await fake.doc('usuarios/u1').get();
+      final privado = await fake.doc('usuarios/u1/private/account').get();
+      expect(publico.exists, isFalse);
+      expect(privado.exists, isFalse);
+    });
+
+    test('borra el perfil aunque el privado no exista', () async {
+      await fake.doc('usuarios/u1').set({'nombre': 'Uno'});
+
+      await service.borrarCuenta('u1');
+
+      final publico = await fake.doc('usuarios/u1').get();
+      expect(publico.exists, isFalse);
+    });
+  });
 }
