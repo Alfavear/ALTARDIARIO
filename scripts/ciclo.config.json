@@ -1,0 +1,97 @@
+{
+  "_doc": "Configuración del ciclo autónomo (scripts/ciclo.mjs). Ver docs/CICLO.md.",
+  "repo": "system-technology/ALTARDIARIO",
+  "maxCiclosDia": 10,
+  "maxFallosSeguidos": 3,
+  "maxPrsAbiertos": 2,
+  "maxReparacionesPorPr": 2,
+  "pausaEntreCiclosSeg": 90,
+  "pausaSinTareaSeg": 900,
+  "minutosPorFase": 25,
+  "limites": {
+    "maxFicheros": 25,
+    "maxLineas": 900
+  },
+  "excluirTareas": [
+    "T-009",
+    "T-055",
+    "T-060",
+    "T-061",
+    "T-062",
+    "T-063"
+  ],
+  "_excluirNota": "T-009 bloqueada (plan Blaze); T-055 y T-061 exigen credenciales de producción; T-060 son saltos mayores que se revisan a mano; T-062 y T-063 configuran el propio ciclo/OpenCode.",
+  "prohibidos": [
+    "^(fix|apply|update)_[^/]*\\.(py|js|mjs|ps1|sh)$",
+    "^test_output\\.txt$",
+    "\\.apk$",
+    "\\.pem$",
+    "(^|/)\\.env$",
+    "^(TAREA|PLAN|RESULTADO|REVISION)\\.(md|json)$"
+  ],
+  "carriles": {
+    "plataforma": {
+      "prefijo": "a",
+      "modeloPlan": [
+        "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+        "opencode/nemotron-3-ultra-free"
+      ],
+      "modeloImplementa": [
+        "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/z-ai/glm-5.3",
+        "opencode/nemotron-3-ultra-free"
+      ],
+      "modeloRevisa": [
+        "nvidia/z-ai/glm-5.3",
+        "opencode/glm-5.3-flash-free"
+      ]
+    },
+    "producto": {
+      "prefijo": "b",
+      "modeloPlan": [
+        "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "opencode/nemotron-3.5-super-vl-free"
+      ],
+      "modeloImplementa": [
+        "nvidia/z-ai/glm-5.3",
+        "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "opencode/nemotron-3.5-super-vl-free"
+      ],
+      "modeloRevisa": [
+        "nvidia/z-ai/glm-5.3",
+        "opencode/glm-5.3-flash-free"
+      ]
+    }
+  },
+  "noPublicables": [
+    "^\\.github/workflows/"
+  ],
+  "_noPublicablesNota": "Las apps no pueden crear ni modificar workflows (GitHub exige el permiso 'workflows', que no se concede a propósito): esas tareas las hace una persona. El supervisor ni las elige ni las publica.",
+  "auditoria": {
+    "umbralTareasLibres": 2,
+    "enfriamientoHoras": 12,
+    "maxTareasNuevas": 8,
+    "prioridadMaxima": "P2",
+    "modelo": [
+      "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "opencode/nemotron-3-ultra-free"
+    ],
+    "modeloRevisa": [
+      "nvidia/z-ai/glm-5.3",
+      "opencode/glm-5.3-flash-free"
+    ]
+  },
+  "_modelosNota": "Cada fase prueba los modelos en orden y pasa al siguiente si el anterior no produce lo esperado (agota el tiempo, 429, etc.): NVIDIA primero y los gratuitos de OpenCode como respaldo.",
+  "minutosFaseRespaldo": 15,
+  "maxPrsProtegidos": 3,
+  "maxIntentosPorTarea": 2,
+  "objetivo": "Fase 2 — Hábito devocional diario (docs/PRODUCT_EVOLUTION_ROADMAP.md §2.1 Inicio «Hoy», §2.2 Reflexión guiada y privada por defecto, §2.3 Oración con seguimiento). Las tareas T-027, T-028 y T-029 figuran como hechas: comprueba, criterio por criterio, que el código las cumple de verdad.",
+  "minutosFase": {
+    "plan": 25,
+    "revision": 12,
+    "implementa": 45,
+    "reparar": 25,
+    "auditoria": 25,
+    "auditoria-revision": 12
+  }
+}
