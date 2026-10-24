@@ -232,12 +232,20 @@ tasks:
     phase: 3
     priority: P1
     effort: M
-    status: ready
+    status: done
     depends_on:
       - T-003
     acceptance:
       - feed carga 30 reflexiones y pide más al llegar al final
       - provider con estado de página testeado
+    started_cycle: 11
+    started_at: 2026-10-24T03:26:19.034Z
+    done_at: 2026-10-24T03:26:19.035Z
+    evidence: "T-007 ya implementado en main vía PR #61 (CI verde). getReflexionesPage existe en
+      lib/data/services/firestore_service.dart:89. CHANGELOG.md:16 referencia T-007 (feedPageSize=30,
+      getReflexionesPage con cursor, FeedPaginationNotifier). Verificado: scripts/board.mjs muestra T-007 con
+      código ya en main. Cierre reconciliado 2026-10-24 contra PRs de GitHub."
+    commit: "61"
   - id: T-008
     title: Partir perfil_screen.dart (1956 líneas) en widgets por sección
     type: refactor
@@ -1380,3 +1388,60 @@ tasks:
       - functions/src/moderation.ts
     source: auditoria:2026-10-24
     created_at: 2026-10-24T01:52:21.122Z
+  - id: T-062
+    title: GitHub Action que actualice las ramas de PRs con auto-merge activado cuando se mergea algo en main
+    type: infra
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - El workflow se dispara en push a main
+      - Detecta PRs abiertos con auto-merge activado (autoMergeRequest o cola de merge)
+      - Ejecuta gh pr update-branch en cada uno para traer los últimos cambios de main
+      - No actúa sobre PRs cerrados, merged o sin auto-merge
+      - scripts/check.sh --fast en verde tras añadir el workflow
+    files:
+      - .github/workflows/auto-merge-update.yml
+    source: integradora-ciclo-1
+    created_at: 2026-10-24T03:31:24.326Z
+  - id: T-063
+    title: GitHub Action que cierre en tasks.yaml la tarea T-xxx al mergearse su PR
+    type: infra
+    phase: 1
+    priority: P2
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Se dispara en pull_request cerrado con merged: true"
+      - Extrae el ID T-xxx del título o de la rama del PR (formato i|a|b/T-xxx-slug)
+      - Llama al MCP complete_task con evidence = número y URL del PR
+      - Valida que la tarea exista y no esté ya done; falla si el PR no referencia una T-xxx válida
+      - scripts/check.sh --fast en verde tras añadir el workflow
+    files:
+      - .github/workflows/close-task-on-merge.yml
+      - tools/roadmap-mcp/roadmap.mjs
+    source: integradora-ciclo-1
+    created_at: 2026-10-24T03:31:24.327Z
+  - id: T-064
+    title: .gitignore y escaneo de secretos (token*.txt, *.pem) en CI
+    type: security
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - .gitignore ignora token*.txt y *.pem
+      - CI job que escanea el repo por patrones de secreto (ghs_*, PRIVACY, BEGIN [A-Z ]*PRIVATE KEY, etc.)
+      - El job falla si encuentra coincidencias
+      - scripts/check.sh incluye el escaneo de secretos y está en verde
+      - Ningún token se escribe nunca a fichero
+    files:
+      - .gitignore
+      - .github/workflows/secrets-scan.yml
+      - scripts/check.sh
+    source: integradora-ciclo-1
+    created_at: 2026-10-24T03:31:24.327Z
