@@ -10,6 +10,7 @@ import '../../core/services/gamification_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/badge.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../data/models/usuario.dart';
 import '../providers/app_providers.dart';
 import 'followers_screen.dart';
@@ -1699,6 +1700,191 @@ void _showBloqueadosDialog(BuildContext context, WidgetRef ref) {
   );
 }
 
+// ═════════════════════════════════════════════════════════════════════
+// Borrado de cuenta (T-054): confirmación → reautenticación → borrado
+// de Firestore → borrado de Auth → limpieza local → login.
+// ═════════════════════════════════════════════════════════════════════
+
+/// Diálogo de confirmación antes de iniciar el borrado de cuenta.
+Future<bool?> _showDeleteAccountConfirmationDialog(
+    BuildContext context, WidgetRef ref) {
+  final l10n = AppLocalizations.of(context);
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          const Icon(Icons.delete_outline, color: Colors.red),
+          const SizedBox(width: 8),
+          Text(l10n.deleteAccountTitle),
+        ],
+      ),
+      content: Text(l10n.deleteAccountBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(
+            l10n.deleteAccountConfirm,
+            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Solicita correo y contraseña y retorna una credencial de reautenticación.
+Future<AuthCredential?> _promptEmailPasswordReauth(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  return showDialog<AuthCredential>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.reauthenticateTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: emailCtrl,
+            decoration: InputDecoration(hintText: l10n.reauthenticateEmail),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: passCtrl,
+            decoration: InputDecoration(hintText: l10n.reauthenticatePassword),
+            obscureText: true,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final cred = EmailAuthProvider.credential(
+                email: emailCtrl.text.trim(), password: passCtrl.text);
+            Navigator.pop(ctx, cred);
+          },
+          child: Text(l10n.reauthenticateButton),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Traduce códigos de Firebase Auth a microcopia humana.
+String _firebaseErrorHumano(String code, AppLocalizations l10n) {
+  switch (code) {
+    case 'requires-recent-login':
+      return 'Tu sesión ha expirado. Vuelve a iniciar sesión e inténtalo de nuevo.';
+    case 'user-not-found':
+    case 'wrong-password':
+      return 'Correo o contraseña incorrectos.';
+    case 'invalid-credential':
+      return 'Credenciales no válidas. Inténtalo de nuevo.';
+    default:
+      return l10n.deleteAccountError;
+  }
+}
+
+/// Reautentica según el proveedor del usuario, borra los datos de Firestore,
+/// elimina el usuario de Firebase Auth, limpia datos locales y vuelve a login.
+/// Si algún paso falla, muestra un error y no navega (para poder reintentar).
+Future<void> _reauthenticateAndDeleteAccount(
+    BuildContext context, WidgetRef ref, AsyncValue<User?> authState) async {
+  final l10n = AppLocalizations.of(context);
+  final user = authState.value;
+  final uid = user?.uid;
+  if (uid == null) return;
+
+  final providers =
+      user?.providerData.map((p) => p.providerId).toList() ?? <String>[];
+  final isGoogle = providers.contains('google.com');
+  final isApple = providers.contains('apple.com');
+  final isPassword = providers.contains('password');
+  final isAnonymous = user.isAnonymous;
+
+  AuthCredential? credential;
+
+  try {
+    if (!isAnonymous) {
+      if (isGoogle) {
+        credential =
+            await ref.read(authServiceProvider).reauthenticateWithGoogle();
+      } else if (isApple) {
+        credential =
+            await ref.read(authServiceProvider).reauthenticateWithApple();
+      } else if (isPassword) {
+        credential = await _promptEmailPasswordReauth(context);
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(l10n.deleteAccountError),
+              backgroundColor: Colors.red),
+        );
+        return;
+      }
+    }
+
+    // Reautenticar (requerido por Firebase antes de borrar la cuenta).
+    if (!isAnonymous) {
+      await ref.read(authServiceProvider).reauthenticate(credential!);
+    }
+
+    // 1. Borrar datos de Firestore (perfil público + cuenta privada).
+    await ref.read(firestoreServiceProvider).borrarCuenta(uid);
+
+    // 2. Eliminar el usuario de Firebase Auth.
+    await ref.read(authServiceProvider).deleteCurrentUser();
+
+    // 3. Limpiar datos locales y volver a login.
+    if (!context.mounted) return;
+    final storage = ref.read(storageProvider);
+    storage.setSwitchingAccount(true);
+    await storage.clearAllLocalData();
+    await ref.read(authServiceProvider).clearLocalUid();
+    ref.read(localUidProvider.notifier).setUid(null);
+    storage.setSwitchingAccount(false);
+    if (!context.mounted) return;
+    unawaited(
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      ),
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(l10n.accountDeleted),
+          backgroundColor: AppTheme.completedGreen),
+    );
+  } on FirebaseAuthException catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(_firebaseErrorHumano(e.code, l10n)),
+          backgroundColor: Colors.red),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(l10n.deleteAccountError),
+          backgroundColor: Colors.red),
+    );
+  }
+}
+
 class _MenuOptions extends ConsumerWidget {
   final AsyncValue<User?> authState;
   final WidgetRef ref;
@@ -1706,6 +1892,7 @@ class _MenuOptions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
@@ -1799,6 +1986,19 @@ class _MenuOptions extends ConsumerWidget {
                   (route) => false,
                 ),
               );
+            },
+          ),
+          const Divider(height: 1, indent: 56, color: AppTheme.pendingGrayDark),
+          _MenuTile(
+            icon: Icons.delete_outline,
+            label: l10n.deleteAccountTitle,
+            color: Colors.red,
+            onTap: () async {
+              final confirm =
+                  await _showDeleteAccountConfirmationDialog(context, ref);
+              if (confirm != true) return;
+              await _reauthenticateAndDeleteAccount(
+                  context, ref, authState);
             },
           ),
         ],

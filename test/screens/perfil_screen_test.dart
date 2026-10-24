@@ -6,6 +6,8 @@ import 'package:altar_diario/data/services/firestore_service.dart';
 import 'package:altar_diario/data/services/storage_service.dart';
 import 'package:altar_diario/presentation/providers/app_providers.dart';
 import 'package:altar_diario/presentation/screens/perfil_screen.dart';
+import 'package:altar_diario/l10n/generated/app_localizations.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -67,7 +69,11 @@ void main() {
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
-          child: const MaterialApp(home: PerfilScreen()),
+          child: const MaterialApp(
+            home: PerfilScreen(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
         ),
       );
 
@@ -101,7 +107,11 @@ void main() {
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
-          child: const MaterialApp(home: PerfilScreen()),
+          child: const MaterialApp(
+            home: PerfilScreen(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
         ),
       );
 
@@ -136,7 +146,11 @@ void main() {
             firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
             focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
           ],
-          child: const MaterialApp(home: PerfilScreen()),
+          child: const MaterialApp(
+            home: PerfilScreen(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
         ),
       );
 
@@ -149,6 +163,135 @@ void main() {
 
       expect(find.text('Editar Perfil'), findsOneWidget);
       expect(find.text('Nombre de usuario'), findsOneWidget);
+    });
+  });
+
+  group('PerfilScreen Borrado de cuenta', () {
+    late SharedPreferences prefs;
+    late StorageService mockStorage;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({
+        'completed_dates': ['2026-07-27'],
+        'max_streak': 1,
+        'notification_hour': 20,
+        'notification_minute': 0,
+        'focus_mode_enabled': false,
+      });
+      prefs = await SharedPreferences.getInstance();
+      mockStorage = StorageService(prefs);
+    });
+
+    final mockUsuario = Usuario(
+      id: 'u1',
+      nombre: 'Usuario Borrado',
+      email: 'borrar@test.com',
+      fotoUrl: '',
+      bio: '',
+      fechaCreacion: DateTime.now(),
+      siguiendo: [],
+      seguidores: [],
+      badges: [],
+      totalPuntos: 0,
+      nivel: 1,
+      modoEnfoque: false,
+      notifHour: 20,
+      notifMin: 0,
+    );
+
+    final authUser = User(
+      uid: 'u1',
+      providerData: const [UserInfo(providerId: 'google.com')],
+    );
+
+    Future<void> _abrirConfirmacionYBorrar(WidgetTester tester) async {
+      final eliminar = find.text('Eliminar mi cuenta');
+      expect(eliminar, findsOneWidget);
+      await tester.tap(eliminar);
+      await tester.pumpAndSettle();
+      final confirmar = find.text('Eliminar cuenta');
+      expect(confirmar, findsOneWidget);
+      await tester.tap(confirmar);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('borrado exitoso navega a LoginScreen', (tester) async {
+      tester.view.physicalSize = const Size(1000, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            storageProvider.overrideWithValue(mockStorage),
+            authStateProvider.overrideWithValue(AsyncValue.data(authUser)),
+            localUidProvider.overrideWith(() => _MockLocalUidNotifier('u1')),
+            effectiveUserUidProvider.overrideWithValue('u1'),
+            userProfileProvider.overrideWithValue(AsyncValue.data(mockUsuario)),
+            userReflexionesProvider('u1')
+                .overrideWithValue(const AsyncValue.data([])),
+            firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
+            authServiceProvider.overrideWithValue(MockAuthServiceOk()),
+            focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
+          ],
+          child: const MaterialApp(
+            home: PerfilScreen(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await _abrirConfirmacionYBorrar(tester);
+
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(find.text('Cuenta eliminada correctamente'), findsOneWidget);
+    });
+
+    testWidgets(
+        'reautenticación fallida no navega a login ni borra la cuenta',
+        (tester) async {
+      tester.view.physicalSize = const Size(1000, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            storageProvider.overrideWithValue(mockStorage),
+            authStateProvider.overrideWithValue(AsyncValue.data(authUser)),
+            localUidProvider.overrideWith(() => _MockLocalUidNotifier('u1')),
+            effectiveUserUidProvider.overrideWithValue('u1'),
+            userProfileProvider.overrideWithValue(AsyncValue.data(mockUsuario)),
+            userReflexionesProvider('u1')
+                .overrideWithValue(const AsyncValue.data([])),
+            firestoreServiceProvider.overrideWithValue(MockFirestoreService()),
+            authServiceProvider
+                .overrideWithValue(MockAuthServiceFallaReauth()),
+            focusModeProvider.overrideWith(() => _MockFocusModeNotifier(false)),
+          ],
+          child: const MaterialApp(
+            home: PerfilScreen(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await _abrirConfirmacionYBorrar(tester);
+
+      expect(find.byType(LoginScreen), findsNothing);
+      expect(
+        find.text(
+            'Tu sesión ha expirado. Vuelve a iniciar sesión e inténtalo de nuevo.'),
+        findsOneWidget,
+      );
     });
   });
 }
@@ -216,4 +359,25 @@ class MockFirestoreService extends FirestoreService {
 
   @override
   Future<List<Usuario>> getAllUsuarios() async => [];
+}
+
+/// AuthService mock donde la reautenticación y el borrado tienen éxito.
+class MockAuthServiceOk extends AuthService {
+  @override
+  Future<AuthCredential> reauthenticateWithGoogle() async =>
+      GoogleAuthProvider.credential(idToken: 'tok', accessToken: 'acc');
+
+  @override
+  Future<void> reauthenticate(AuthCredential credential) async {}
+
+  @override
+  Future<void> deleteCurrentUser() async {}
+}
+
+/// AuthService mock donde la reautenticación falla (p. ej. sesión expirada).
+class MockAuthServiceFallaReauth extends AuthService {
+  @override
+  Future<AuthCredential> reauthenticateWithGoogle() async {
+    throw FirebaseAuthException(code: 'requires-recent-login', message: 'req');
+  }
 }

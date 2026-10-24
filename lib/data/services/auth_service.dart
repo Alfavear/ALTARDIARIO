@@ -283,4 +283,88 @@ class AuthService {
       debugPrint('Error guardando FCM token: $e');
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // Reautenticación y borrado de cuenta (requerido por Firebase antes de
+  // user.delete(); ver criterio de aceptación T-054).
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  /// Devuelve una credencial fresh de Google para reautenticar (sin hacer
+  /// sign-in en Firebase). Se usa antes de [deleteCurrentUser].
+  Future<AuthCredential> reauthenticateWithGoogle() async {
+    if (!_firebaseAvailable) {
+      throw StateError('Firebase Auth no está disponible');
+    }
+    if (kIsWeb) {
+      final provider = GoogleAuthProvider()
+        ..addScope('email')
+        ..addScope('profile');
+      final cred = await _auth!.signInWithPopup(provider);
+      if (cred.user == null || cred.credential == null) {
+        throw StateError('No se obtuvo credencial de Google');
+      }
+      return GoogleAuthProvider.credential(
+        idToken: cred.credential!.idToken,
+        accessToken: cred.credential!.accessToken,
+      );
+    }
+    if (_googleSignIn == null) {
+      throw StateError('Google Sign-In no está disponible en esta plataforma');
+    }
+    final googleUser = await _googleSignIn!.signIn();
+    if (googleUser == null) {
+      throw StateError('Autenticación con Google cancelada');
+    }
+    final googleAuth = await googleUser.authentication;
+    return GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+  }
+
+  /// Devuelve una credencial fresh de Apple para reautenticar.
+  Future<AuthCredential> reauthenticateWithApple() async {
+    if (!_firebaseAvailable || kIsWeb) {
+      throw StateError('Apple Sign-In no está disponible en esta plataforma');
+    }
+    final rawNonce = _generateNonce();
+    final nonce = _sha256OfString(rawNonce);
+    final appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: nonce,
+    );
+    return OAuthProvider('apple.com').credential(
+      idToken: appleCredential.identityToken,
+      rawNonce: rawNonce,
+    );
+  }
+
+  /// Devuelve una credencial de email/contraseña para reautenticar.
+  AuthCredential reauthenticateWithEmailPassword(
+      String email, String password) {
+    return EmailAuthProvider.credential(email: email, password: password);
+  }
+
+  /// Reautentica al usuario actual con [credential] (requerido por Firebase
+  /// antes de operaciones sensibles como borrar la cuenta).
+  Future<void> reauthenticate(AuthCredential credential) async {
+    final user = _auth!.currentUser;
+    if (user == null) {
+      throw StateError('No hay sesión activa');
+    }
+    await user.reauthenticateWithCredential(credential);
+  }
+
+  /// Elimina el usuario actual de Firebase Auth. Requiere una
+  /// reautenticación previa reciente ([reauthenticate]).
+  Future<void> deleteCurrentUser() async {
+    final user = _auth!.currentUser;
+    if (user == null) {
+      throw StateError('No hay sesión activa');
+    }
+    await user.delete();
+  }
 }

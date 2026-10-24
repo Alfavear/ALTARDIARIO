@@ -34,6 +34,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Observabilidad: al publicar una reflexión se envía `reflexion_publicada` con la longitud del texto y si lleva pasaje; el texto en sí nunca sale del dispositivo.
 - `DESIGN.md` (antes `design.md`): escala espacial cerrada, CTA único por vista y estados obligatorios de vista (datos/carga/error/vacío) con microcopia UX.
 - Coordinación entre sesiones: `docs/SESIONES.md` (worktree por sesión, un solo merger, máximo 2 PRs, validar contra `origin/main` citando SHA), registro en `roadmap/sesiones/` y scripts `session-check.sh` / `sync-main.sh` (el `main` local no se usa para trabajar y solo se alinea por fast-forward).
+- Borrado de cuenta desde Perfil con reautenticación (Google/Apple/email): borra perfil y cuenta privada de Firestore, elimina el usuario de Auth y vuelve a login (T-054).
 
 ### Cambiado
 - CI: el job `Build APK (debug)` solo compila cuando el PR toca `android/`, `pubspec.*` o `.github/workflows/` (y siempre en `main`); añade caché de Gradle y compila una sola ABI. Los PRs de Dart/UI bajan de ~7,6 a ~1,5 min de checks; el nombre del check requerido no cambia.
