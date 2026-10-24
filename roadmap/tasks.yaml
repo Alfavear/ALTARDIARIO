@@ -166,7 +166,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on:
       - T-002
       - T-003
@@ -226,7 +226,7 @@ tasks:
     phase: 3
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on:
       - T-003
     acceptance:
@@ -260,7 +260,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: ready
     acceptance:
       - botón Compartir en lector genera PNG con versículo, referencia y marca AltarDiario
       - usa share_plus; funciona en Android/iOS/Web
@@ -619,7 +619,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - ningun provider devuelve contenido con hidden true
@@ -699,7 +699,7 @@ tasks:
     phase: 4
     priority: P3
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - la busqueda tiene minimo de caracteres, debounce y limites de consulta
@@ -715,7 +715,7 @@ tasks:
     phase: 4
     priority: P3
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - cada consulta esta indexada, limitada y paginada
@@ -731,7 +731,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - no se anula MediaQuery.textScaler
@@ -771,7 +771,7 @@ tasks:
     phase: 4
     priority: P2
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - el usuario controla cada categoria y puede desactivarla sin perder datos
@@ -884,7 +884,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - ningun documento publico (reflexiones, peticiones, debates, respuestas, comentarios, notificaciones,
@@ -902,7 +902,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: in_progress
     depends_on: []
     acceptance:
       - usuarios/{uid}/private/account solo admite email y fcmToken
@@ -913,13 +913,15 @@ tasks:
       - firestore-tests/rules.test.mjs
     source: "rules-auditor: allow read, write sin restriccion de contenido"
     created_at: 2026-10-21T02:56:57.770Z
+    started_cycle: 11
+    started_at: 2026-10-23T16:06:36.714Z
   - id: T-042
     title: "Privacidad: permitir borrar email/fcmToken del perfil publico sin bloqueo"
     type: security
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - el helper privateOnlyRemoved permite borrar los campos privados del perfil publico
@@ -937,7 +939,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - eliminar la cuenta borra tambien usuarios/{uid}/private/account (Firestore no cascada)
@@ -979,7 +981,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - la CI compila functions/ y ejecuta sus tests en cada push
@@ -1020,7 +1022,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - "ningun campo escrito por el usuario puede superar el limite de las reglas: debates (titulo<=200,
@@ -1041,7 +1043,7 @@ tasks:
     phase: 1
     priority: P1
     effort: M
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - Un reporte con targetType "comentario" resuelve su ruta real
@@ -1059,7 +1061,7 @@ tasks:
     phase: 1
     priority: P2
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - La creación en reports exige keys().hasAll y keys().hasOnly con reporterId, targetType, targetId,
@@ -1077,7 +1079,7 @@ tasks:
     phase: 1
     priority: P1
     effort: S
-    status: backlog
+    status: ready
     depends_on: []
     acceptance:
       - "Un usuario bloqueado con fotoUrl vacía se pinta con el icono por defecto: su nombre y el botón de
