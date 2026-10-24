@@ -6,6 +6,10 @@ updates:
     groups:
       firebase: { patterns: ["firebase_*", "cloud_firestore"] }
       flutter-minor: { update-types: ["minor", "patch"] }
+    # Los saltos mayores se hacen a mano (migración + tests), no como bump automático.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /firestore-tests
     schedule: { interval: monthly }
