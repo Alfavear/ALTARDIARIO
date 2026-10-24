@@ -4,3 +4,11 @@ firestore-tests/       @Alfavear
 .github/workflows/     @Alfavear
 lib/firebase_options.dart @Alfavear
 pubspec.yaml           @Alfavear
+
+# Marco de trabajo e identidad de las sesiones (ver ownership.json › humanRequired)
+.github/CODEOWNERS        @Alfavear
+ownership.json            @Alfavear
+opencode.jsonc            @Alfavear
+scripts/hooks/            @Alfavear
+scripts/gh-app-token.mjs  @Alfavear
+scripts/gh-apps.json      @Alfavear
