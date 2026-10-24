@@ -101,10 +101,11 @@
         "enabled": true
       },
       // Google Stitch: diseño → código. Requiere GOOGLE_STITCH_API_KEY en el entorno.
+      // Solo la sesión Producto lo usa: las otras lo bloquean en .opencode/sesiones/*.jsonc.
       "stitch": {
         "type": "remote",
         "url": "https://stitch.googleapis.com/mcp",
-        "enabled": false,
+        "enabled": true,
         "headers": { "X-Goog-Api-Key": "{env:GOOGLE_STITCH_API_KEY}" }
       }
     }

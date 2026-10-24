@@ -1,0 +1,44 @@
+// Sesión PRODUCTO / UX-UI (rama b/…, app altardiario-producto). Ver docs/CAPACIDADES.md.
+// Es la ÚNICA sesión de diseño: lleva las skills de UX, Stitch y Playwright.
+// Plantilla: scripts/nueva-sesion.sh la copia a <carpeta-de-la-sesion>/opencode.jsonc.
+// Sintaxis V2: en `policies` gana la última regla que coincide (negar en bloque, luego permitir).
+{
+  "policies": [
+    // ── Skills: UX/UI, Flutter, estado, i18n, funcionalidades sociales y pruebas visuales ──
+    { "action": "integration.use", "resource": "skill:*", "effect": "deny" },
+    // diseño y accesibilidad
+    { "action": "integration.use", "resource": "skill:frontend-design", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:web-design-guidelines", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:feature-forge", "effect": "allow" },
+    // Flutter
+    { "action": "integration.use", "resource": "skill:flutter-expert", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:flutter-screen", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:flutter-model", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:flutter-riverpod", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:flutter-performance", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:flutter-test", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:flutter-apply-architecture-best-practices", "effect": "allow" },
+    // producto
+    { "action": "integration.use", "resource": "skill:feature-scaffold", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:i18n", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:social-features", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:architecture", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:domain-modeling", "effect": "allow" },
+    // pruebas
+    { "action": "integration.use", "resource": "skill:testing", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:test-master", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:debugging-wizard", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:playwright-expert", "effect": "allow" },
+    { "action": "integration.use", "resource": "skill:webapp-testing", "effect": "allow" },
+
+    // ── MCP: Stitch (diseño → código), Playwright (revisión visual del build web), docs y memoria ──
+    { "action": "integration.use", "resource": "mcp:*", "effect": "deny" },
+    { "action": "integration.use", "resource": "mcp:stitch", "effect": "allow" },
+    { "action": "integration.use", "resource": "mcp:playwright", "effect": "allow" },
+    { "action": "integration.use", "resource": "mcp:context7", "effect": "allow" },
+    { "action": "integration.use", "resource": "mcp:knowledge-graph-memory", "effect": "allow" },
+
+    // ── Plugins: superpowers permitido (brainstorming y TDD ayudan a iterar UI) ──
+    { "action": "integration.use", "resource": "plugin:superpowers", "effect": "allow" }
+  ]
+}
