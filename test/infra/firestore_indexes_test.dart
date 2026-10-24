@@ -51,4 +51,70 @@ void main() {
       expect(index['fields'], isA<List>());
     }
   });
+
+  test('cada consulta con where oculto == false tiene su índice compuesto', () {
+    // Firestore exige un índice compuesto para «igualdad + orderBy sobre otro campo».
+    // Ni fake_cloud_firestore ni el emulador lo comprueban: sin el índice la consulta
+    // falla SOLO en producción (failed-precondition) y la pantalla queda en error.
+    final doc = jsonDecode(File('firestore.indexes.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final indexes = (doc['indexes'] as List).cast<Map<String, dynamic>>();
+
+    bool existe(String coleccion, List<String> campos, List<String> orden) {
+      return indexes.any((i) {
+        if (i['collectionGroup'] != coleccion) return false;
+        final f = (i['fields'] as List).cast<Map<String, dynamic>>();
+        if (f.length != campos.length) return false;
+        for (var k = 0; k < campos.length; k++) {
+          if (f[k]['fieldPath'] != campos[k] || f[k]['order'] != orden[k]) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    const asc = 'ASCENDING';
+    const desc = 'DESCENDING';
+    final requeridos = <String, bool>{
+      'reflexiones (oculto, fecha↓): feed': existe(
+        'reflexiones',
+        ['oculto', 'fecha'],
+        [asc, desc],
+      ),
+      'reflexiones (userId, oculto, fecha↓): reflexiones de un usuario': existe(
+        'reflexiones',
+        ['userId', 'oculto', 'fecha'],
+        [asc, asc, desc],
+      ),
+      'comentarios (oculto, fecha↑)': existe(
+        'comentarios',
+        ['oculto', 'fecha'],
+        [asc, asc],
+      ),
+      'debates (oculto, fecha↓)': existe(
+        'debates',
+        ['oculto', 'fecha'],
+        [asc, desc],
+      ),
+      'debates (libroId, oculto, fecha↓): debates de un libro': existe(
+        'debates',
+        ['libroId', 'oculto', 'fecha'],
+        [asc, asc, desc],
+      ),
+      'respuestas (oculto, fecha↑)': existe(
+        'respuestas',
+        ['oculto', 'fecha'],
+        [asc, asc],
+      ),
+      'peticiones_oracion (oculto, fecha↓)': existe(
+        'peticiones_oracion',
+        ['oculto', 'fecha'],
+        [asc, desc],
+      ),
+    };
+    final faltan =
+        requeridos.entries.where((e) => !e.value).map((e) => e.key).toList();
+    expect(faltan, isEmpty, reason: 'faltan índices compuestos: $faltan');
+  });
 }
