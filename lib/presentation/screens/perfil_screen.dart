@@ -1654,13 +1654,17 @@ void _showBloqueadosDialog(BuildContext context, WidgetRef ref) {
                           future: firestore.getUsuarioOnce(bloqueadoUid),
                           builder: (context, userSnapshot) {
                             final Usuario? usuario = userSnapshot.data;
-                            if (usuario == null || usuario.fotoUrl.isEmpty) {
+                            if (usuario == null) {
                               return const SizedBox.shrink();
                             }
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundImage: NetworkImage(usuario.fotoUrl),
-                                child: null,
+                                backgroundImage: usuario.fotoUrl.isNotEmpty
+                                    ? NetworkImage(usuario.fotoUrl)
+                                    : null,
+                                child: usuario.fotoUrl.isEmpty
+                                    ? const Icon(Icons.person)
+                                    : null,
                               ),
                               title: Text(usuario.nombre),
                               subtitle: Text(usuario.bio),

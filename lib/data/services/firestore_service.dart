@@ -75,6 +75,7 @@ class FirestoreService {
   Stream<List<Reflexion>> reflexionesStream() {
     if (!_available) return Stream.value([]);
     return _reflexiones
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: true)
         .limit(feedPageSize)
         .snapshots()
@@ -87,6 +88,7 @@ class FirestoreService {
     if (!_available) return Stream.value([]);
     return _reflexiones
         .where('userId', isEqualTo: userId)
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: true)
         .limit(userReflectionsPageSize)
         .snapshots()
@@ -120,6 +122,7 @@ class FirestoreService {
     if (!_available) return Stream.value([]);
     return _reflexiones
         .where('userId', isEqualTo: userId)
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: true)
         .limit(userReflectionsPageSize)
         .snapshots()
@@ -132,6 +135,7 @@ class FirestoreService {
     if (!_available) return [];
     final snapshot = await _reflexiones
         .where('userId', isEqualTo: userId)
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: true)
         .limit(50)
         .get();
@@ -147,6 +151,7 @@ class FirestoreService {
     return _reflexiones
         .doc(reflexionId)
         .collection('comentarios')
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: false)
         .limit(commentsPageSize)
         .snapshots()
@@ -212,7 +217,9 @@ class FirestoreService {
 
   Stream<List<Debate>> debatesStream({String? libroId}) {
     if (!_available) return Stream.value([]);
-    var query = _debates.orderBy('fecha', descending: true) as Query;
+    var query = _debates
+        .where('oculto', isEqualTo: false)
+        .orderBy('fecha', descending: true) as Query;
     if (libroId != null && libroId.isNotEmpty) {
       query = query.where('libroId', isEqualTo: libroId);
     }
@@ -261,6 +268,7 @@ class FirestoreService {
   Stream<List<DebateReply>> debateRepliesStream(String debateId) {
     if (!_available) return Stream.value([]);
     return _debateReplies(debateId)
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: false)
         .limit(debateRepliesPageSize)
         .snapshots()
@@ -665,6 +673,7 @@ class FirestoreService {
   Stream<List<PeticionOracion>> peticionesStream() {
     if (!_available) return Stream.value([]);
     return _peticiones
+        .where('oculto', isEqualTo: false)
         .orderBy('fecha', descending: true)
         .limit(prayerPageSize)
         .snapshots()
@@ -677,8 +686,10 @@ class FirestoreService {
   /// Si [respondida] es null, no filtra por estado.
   Stream<List<PeticionOracion>> peticionesStreamFiltrado({bool? respondida}) {
     if (!_available) return Stream.value([]);
-    Query query =
-        _peticiones.orderBy('fecha', descending: true).limit(prayerPageSize);
+    Query query = _peticiones
+        .where('oculto', isEqualTo: false)
+        .orderBy('fecha', descending: true)
+        .limit(prayerPageSize);
 
     if (respondida != null) {
       query = query.where('respondida', isEqualTo: respondida);
