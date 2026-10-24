@@ -1118,7 +1118,7 @@ tasks:
     title: "Moderación: la Function ignora los reportes de comentarios y de perfiles"
     type: bug
     phase: 1
-    priority: P1
+    priority: P0
     effort: M
     status: ready
     depends_on: []
@@ -1276,7 +1276,7 @@ tasks:
     title: Cerrar la regla transitoria de email/fcmToken en el perfil público y migrar datos
     type: security
     phase: 1
-    priority: P1
+    priority: P0
     effort: S
     status: backlog
     depends_on: []
@@ -1725,3 +1725,41 @@ tasks:
       - scripts/ciclo.mjs
     source: auditoria-claude:2026-10-24
     created_at: 2026-10-24T16:00:00.000Z
+  - id: T-076
+    title: Al eliminar la cuenta, borrar también lo que el usuario publicó (Cloud Function)
+    type: feature
+    phase: 1
+    priority: P0
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Una Cloud Function disparada al borrarse el usuario de Auth (firebase-functions/v1 auth.user().onDelete, porque v2 no tiene ese disparador) elimina con el Admin SDK todo lo del uid: usuarios/{uid} con recursiveDelete (private, notifications, bible_highlights, bible_notes y demás subcolecciones), sus reflexiones con sus comentarios, sus peticiones de oración, sus debates con sus respuestas, y sus comentarios y respuestas sueltas en contenido ajeno (collectionGroup por userId)"
+      - "Los chats donde participaba no se borran (son también de la otra persona): se sustituye su nombre por «Usuario eliminado» en participantNames"
+      - "Es idempotente, por lotes y no lanza si no hay nada que borrar; registra solo contadores, nunca contenido"
+      - "Si hace falta un índice de collectionGroup o fieldOverrides para consultar por userId en comentarios y respuestas, se añade a firestore.indexes.json"
+      - "Tests de la Function en functions/ (npm test) con dobles del Admin SDK que cubren los tipos de contenido, el caso vacío y un fallo parcial"
+      - "CHANGELOG en Seguridad: el borrado de cuenta elimina también el contenido publicado"
+    files:
+      - functions/src/accountDeletion.ts
+      - functions/src/index.ts
+      - functions/src/accountDeletion.test.ts
+      - firestore.indexes.json
+    source: auditoria-claude:2026-10-24
+    created_at: 2026-10-24T17:00:00.000Z
+  - id: T-077
+    title: Comprobar que la app publicada (v1.0.4) sigue funcionando con las reglas nuevas
+    type: security
+    phase: 1
+    priority: P1
+    effort: M
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "Un test lista las escrituras y lecturas que hacía el cliente v1.0.4 (git show v1.0.4:lib/data/services/firestore_service.dart y los repositorios de entonces): publicar reflexión, comentar, reaccionar, orar, crear petición y debate, chat, notificaciones, perfil, seguir y bloquear"
+      - "firestore-tests/compat-v1.0.4.test.mjs reproduce cada operación con los campos exactos que enviaba v1.0.4 y comprueba que las reglas actuales las permiten, salvo las que el endurecimiento rechaza a propósito"
+      - "Para cada operación rechazada a propósito, el test lo documenta con el motivo y la descripción del PR lista qué verá un usuario de v1.0.4 (pantalla o error) para decidir si hace falta forzar la actualización con config/app minVersion"
+    files:
+      - firestore-tests/compat-v1.0.4.test.mjs
+    source: auditoria-claude:2026-10-24
+    created_at: 2026-10-24T17:00:00.000Z
