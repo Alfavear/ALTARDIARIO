@@ -28,8 +28,10 @@ rama="$prefijo/$tarea-$slug"
 carpeta="$base/$sesion"
 wt="$carpeta/$tarea-$slug"
 plantilla="$repo/.opencode/sesiones/$sesion.jsonc"
+instrucciones="$repo/.opencode/sesiones/$sesion.AGENTS.md"
 
 [ -f "$plantilla" ] || { echo "Falta la plantilla $plantilla (¿estás en un checkout al día de main?)" >&2; exit 1; }
+[ -f "$instrucciones" ] || { echo "Falta $instrucciones" >&2; exit 1; }
 [ -e "$wt" ] && { echo "Ya existe $wt" >&2; exit 1; }
 git -C "$repo" show-ref --verify --quiet "refs/heads/$rama" && { echo "Ya existe la rama $rama" >&2; exit 1; }
 
@@ -46,21 +48,61 @@ if [ -f "$carpeta/opencode.jsonc" ] && ! cmp -s "$plantilla" "$carpeta/opencode.
 else
   cp "$plantilla" "$carpeta/opencode.jsonc"
 fi
+# Instrucciones de rol: OpenCode las lee desde la carpeta de la sesión hacia arriba.
+if [ -f "$carpeta/AGENTS.md" ] && ! cmp -s "$instrucciones" "$carpeta/AGENTS.md"; then
+  echo "⚠ $carpeta/AGENTS.md difiere de la plantilla del repo; se conserva. Compáralo con $instrucciones"
+else
+  cp "$instrucciones" "$carpeta/AGENTS.md"
+fi
 
 git -C "$repo" worktree add -q "$wt" -b "$rama" origin/main
 sha="$(git -C "$wt" rev-parse --short HEAD)"
+wt_win="$(cygpath -w "$wt" 2>/dev/null || echo "$wt")"
+carpeta_win="$(cygpath -w "$carpeta" 2>/dev/null || echo "$carpeta")"
 
 # Identidad de Git propia de este worktree (la de la app de la sesión)
 git -C "$repo" config extensions.worktreeConfig true
 git -C "$wt" config --worktree user.name "altardiario-$sesion[bot]"
 git -C "$wt" config --worktree user.email "$app_id+altardiario-$sesion[bot]@users.noreply.github.com"
 
+# TAREA.md: la tarea y sus criterios de aceptación, extraídos de roadmap/tasks.yaml
+bloque="$(awk -v id="$tarea" '$0 ~ "^  - id: "id"$" {on=1; next} on && /^  - id: / {exit} on {print}' "$wt/roadmap/tasks.yaml")"
+{
+  echo "# $tarea — tarea de esta sesión"
+  echo
+  if [ "$tarea" = "T-000" ]; then
+    echo "**T-000 es la tarea permanente de integración**: no está en el backlog. Tu trabajo es el ciclo descrito en \`$carpeta/AGENTS.md\` (board, merges, cierre de tareas, bloqueos con su línea de log)."
+  elif [ -n "$bloque" ]; then
+    echo "Extraído de \`roadmap/tasks.yaml\` (\`origin/main\` @ $sha). Los criterios de aceptación son lo que debes cumplir."
+    echo
+    echo '```yaml'
+    echo "- id: $tarea"
+    echo "$bloque" | sed 's/^  //'
+    echo '```'
+  else
+    echo "**$tarea no existe en \`roadmap/tasks.yaml\`.** Pide a la Integradora que la registre (MCP \`add_task\`) antes de empezar."
+  fi
+  echo
+  echo "Reserva la tarea con un PR en borrador que lleve \`$tarea\` en el título. Rama: \`$rama\`."
+  echo "Rol, reglas y límites de tu carril: \`$carpeta/AGENTS.md\` (OpenCode lo carga solo)."
+} > "$wt/TAREA.md"
+excl="$(git -C "$repo" rev-parse --git-path info/exclude)"
+grep -qx 'TAREA.md' "$excl" 2>/dev/null || echo 'TAREA.md' >> "$excl"
+
+# La Integradora usa el MCP roadmap: necesita sus dependencias en el worktree nuevo.
+if [ "$sesion" = integradora ] && [ -f "$wt/tools/roadmap-mcp/package-lock.json" ]; then
+  echo "▶ Instalando dependencias del MCP roadmap…"
+  (cd "$wt/tools/roadmap-mcp" && npm ci --silent) || echo "⚠ npm ci falló en tools/roadmap-mcp: el MCP roadmap no arrancará"
+fi
+
 cat <<EOF
 
 ✔ Sesión «$sesion» lista
-  worktree : $wt   (rama $rama desde origin/main @ $sha)
-  config   : $carpeta/opencode.jsonc
-  abre OpenCode en: $wt
+  worktree : $wt_win   (rama $rama desde origin/main @ $sha)
+  config   : $carpeta_win\opencode.jsonc  (+ AGENTS.md con el rol)
+  tarea    : $wt_win\TAREA.md
+  ABRE LA APP DE OPENCODE EN ESTA CARPETA:
+    $wt_win
 
   Token de esta sesión (compruébalo: no debe salir vacío):
     T=\$(node scripts/gh-app-token.mjs $sesion); [ -n "\$T" ] || echo "TOKEN VACÍO: gh usaría la cuenta del Owner"
