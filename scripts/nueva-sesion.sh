@@ -25,10 +25,12 @@ esac
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 base="${ALTARDIARIO_SESIONES:-$(cd "$repo/.." && pwd)/sesiones}"
 rama="$prefijo/$tarea-$slug"
-carpeta="$base/$sesion"
+# SESION_AUTO=1: modo del ciclo autónomo (scripts/ciclo.mjs): carpeta propia «<sesion>-auto» e instrucciones sin supervisión.
+modo_auto="${SESION_AUTO:-0}"
+if [ "$modo_auto" = 1 ]; then carpeta="$base/$sesion-auto"; else carpeta="$base/$sesion"; fi
 wt="$carpeta/$tarea-$slug"
 plantilla="$repo/.opencode/sesiones/$sesion.jsonc"
-instrucciones="$repo/.opencode/sesiones/$sesion.AGENTS.md"
+if [ "$modo_auto" = 1 ]; then instrucciones="$repo/.opencode/sesiones/$sesion.auto.AGENTS.md"; else instrucciones="$repo/.opencode/sesiones/$sesion.AGENTS.md"; fi
 
 [ -f "$plantilla" ] || { echo "Falta la plantilla $plantilla (¿estás en un checkout al día de main?)" >&2; exit 1; }
 [ -f "$instrucciones" ] || { echo "Falta $instrucciones" >&2; exit 1; }
@@ -88,6 +90,14 @@ bloque="$(awk -v id="$tarea" '$0 ~ "^  - id: "id"$" {on=1; next} on && /^  - id:
 } > "$wt/TAREA.md"
 excl="$(git -C "$repo" rev-parse --git-path info/exclude)"
 grep -qx 'TAREA.md' "$excl" 2>/dev/null || echo 'TAREA.md' >> "$excl"
+
+# Modo autónomo: el agente no tiene GitHub, ni red por shell, ni acceso a claves. Fichero local excluido de git.
+if [ "$modo_auto" = 1 ]; then
+  mkdir -p "$wt/.opencode"
+  cp "$repo/.opencode/sesiones/auto.permisos.jsonc" "$wt/.opencode/opencode.jsonc"
+  excl2="$(git -C "$repo" rev-parse --git-path info/exclude)"
+  for f in '.opencode/opencode.jsonc' 'PLAN.md' 'REVISION.json' 'RESULTADO.md' 'FASE.md'; do grep -qxF "$f" "$excl2" 2>/dev/null || echo "$f" >> "$excl2"; done
+fi
 
 # scripts/board.mjs (todas las sesiones) y el MCP roadmap (Integradora) usan estas dependencias.
 if [ -f "$wt/tools/roadmap-mcp/package-lock.json" ]; then
