@@ -11,6 +11,7 @@ import '../../core/services/notification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/badge.dart';
 import '../../data/models/usuario.dart';
+import '../../data/services/firestore_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../providers/app_providers.dart';
 import 'followers_screen.dart';
@@ -1640,64 +1641,192 @@ void _showBloqueadosDialog(BuildContext context, WidgetRef ref) {
     builder: (ctx) => StreamBuilder<List<String>>(
       stream: firestore.getUsuariosBloqueados(uid),
       builder: (context, snapshot) {
-        final List<String> bloqueados = snapshot.data ?? <String>[];
-        return AlertDialog(
-          title: const Text('Usuarios bloqueados'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: bloqueados.isEmpty
-                ? const Text('No tienes usuarios bloqueados.')
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      for (final String bloqueadoUid in bloqueados)
-                        FutureBuilder<Usuario?>(
-                          future: firestore.getUsuarioOnce(bloqueadoUid),
-                          builder: (context, userSnapshot) {
-                            final Usuario? usuario = userSnapshot.data;
-                            if (usuario == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundImage: usuario.fotoUrl.isNotEmpty
-                                    ? NetworkImage(usuario.fotoUrl)
-                                    : null,
-                                child: usuario.fotoUrl.isEmpty
-                                    ? const Icon(Icons.person)
-                                    : null,
-                              ),
-                              title: Text(usuario.nombre),
-                              subtitle: Text(usuario.bio),
-                              trailing: TextButton(
-                                onPressed: () async {
-                                  await firestore.desbloquearUsuario(
-                                      uid, bloqueadoUid);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text('Usuario desbloqueado')));
-                                  }
-                                },
-                                child: const Text('Desbloquear'),
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cerrar'),
+        // Estados de carga y error — distintos de lista vacía
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const _BloqueadosDialogContent(
+            title: 'Usuarios bloqueados',
+            child: _BloqueadosLoading(),
+          );
+        }
+        if (snapshot.hasError) {
+          return _BloqueadosDialogContent(
+            title: 'Usuarios bloqueados',
+            child: _BloqueadosError(
+              onRetry: () {
+                Navigator.of(ctx).pop();
+                _showBloqueadosDialog(context, ref);
+              },
             ),
-          ],
+          );
+        }
+
+        final List<String> bloqueados = snapshot.data ?? <String>[];
+        return _BloqueadosDialogContent(
+          title: 'Usuarios bloqueados',
+          child: _BloqueadosList(
+            bloqueados: bloqueados,
+            firestore: firestore,
+            uid: uid,
+          ),
         );
       },
     ),
   );
+}
+
+/// Contenedor común del diálogo para evitar reconstruir el AlertDialog entero.
+class _BloqueadosDialogContent extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _BloqueadosDialogContent({
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.7;
+    return AlertDialog(
+      title: Text(title),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(child: child),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cerrar'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Estado: cargando la lista de bloqueados.
+class _BloqueadosLoading extends StatelessWidget {
+  const _BloqueadosLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: double.maxFinite,
+      height: 120,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Cargando bloqueados…'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Estado: error al cargar — mensaje humano + botón Reintentar.
+class _BloqueadosError extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _BloqueadosError({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.maxFinite,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 12),
+          const Text(
+            'No se pudieron cargar los bloqueados.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Comprueba tu conexión e inténtalo de nuevo.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Estado: lista (vacía o con usuarios).
+class _BloqueadosList extends StatelessWidget {
+  final List<String> bloqueados;
+  final FirestoreService firestore;
+  final String uid;
+
+  const _BloqueadosList({
+    required this.bloqueados,
+    required this.firestore,
+    required this.uid,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (bloqueados.isEmpty) {
+      return const SizedBox(
+        width: double.maxFinite,
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text('No tienes usuarios bloqueados.'),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        for (final String bloqueadoUid in bloqueados)
+          FutureBuilder<Usuario?>(
+            future: firestore.getUsuarioOnce(bloqueadoUid),
+            builder: (context, userSnapshot) {
+              final Usuario? usuario = userSnapshot.data;
+              if (usuario == null) {
+                return const SizedBox.shrink();
+              }
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: usuario.fotoUrl.isNotEmpty
+                      ? NetworkImage(usuario.fotoUrl)
+                      : null,
+                  child:
+                      usuario.fotoUrl.isEmpty ? const Icon(Icons.person) : null,
+                ),
+                title: Text(usuario.nombre),
+                subtitle: Text(usuario.bio),
+                trailing: TextButton(
+                  onPressed: () async {
+                    await firestore.desbloquearUsuario(uid, bloqueadoUid);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Usuario desbloqueado')));
+                    }
+                  },
+                  child: const Text('Desbloquear'),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════
