@@ -1,3 +1,4 @@
+import 'package:altar_diario/data/models/usuario.dart';
 import 'package:altar_diario/data/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -23,6 +24,7 @@ void main() {
           batch.set(fake.collection('peticiones_oracion').doc('p$i'), {
             'userId': 'u1',
             'motivo': 'Petición $i',
+            'oculto': false,
             'fecha': DateTime.utc(2026, 1, i + 1),
           });
         }
@@ -33,6 +35,46 @@ void main() {
         expect(results, hasLength(FirestoreService.prayerPageSize));
       },
     );
+  });
+
+  group('FirestoreService perfiles privados', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('guarda el correo fuera del documento público del perfil', () async {
+      await service.crearOActualizarUsuario(
+        Usuario(
+          id: 'u1',
+          nombre: 'Ana',
+          email: 'ana@ejemplo.com',
+        ),
+      );
+
+      final perfil = (await fake.doc('usuarios/u1').get()).data()!;
+      final cuenta =
+          (await fake.doc('usuarios/u1/private/account').get()).data()!;
+
+      expect(perfil.containsKey('email'), isFalse);
+      expect(cuenta['email'], 'ana@ejemplo.com');
+    });
+
+    test('guarda y elimina el token FCM fuera del perfil público', () async {
+      await service.saveFCMToken('u1', 'token');
+
+      final cuenta =
+          (await fake.doc('usuarios/u1/private/account').get()).data()!;
+      expect(cuenta['fcmToken'], 'token');
+
+      await service.clearFCMToken('u1');
+      final cuentaSinToken =
+          (await fake.doc('usuarios/u1/private/account').get()).data()!;
+      expect(cuentaSinToken.containsKey('fcmToken'), isFalse);
+    });
   });
 
   group('FirestoreService.sendMessage', () {

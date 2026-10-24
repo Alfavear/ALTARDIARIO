@@ -74,6 +74,13 @@ final usuariosBloqueadosProvider =
   return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
 });
 
+/// UIDs bloqueados del usuario actual (versión no-familia para uso directo).
+final usuariosBloqueadosActualProvider = StreamProvider<List<String>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
+});
+
 /// Servicio de la Biblia (SQLite local).
 final bibleServiceProvider = Provider<BibleService>((ref) => BibleService());
 Future<void> syncProgressGuarded(
@@ -275,7 +282,7 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
         data != null ? List<String>.from(data['progresoLectura']) : <String>[];
     final racha = storage.calcularRacha(progreso);
     final maxS = data != null ? (data['maxStreak'] as int? ?? 0) : 0;
-    String deriveName(String n, String e) {
+    String deriveName(String n) {
       var trimmed = n.trim();
       if (trimmed.isNotEmpty && trimmed.toLowerCase() != 'anónimo') {
         if (trimmed.endsWith(' (Invitado)')) {
@@ -283,15 +290,11 @@ final friendStreaksProvider = FutureProvider<List<FriendStreak>>((ref) async {
         }
         return trimmed;
       }
-      if (e.isNotEmpty && e != 'invitado@altardiario.app') {
-        return e.split('@').first;
-      }
       return 'Invitado';
     }
 
     final rawName = data != null ? (data['nombre'] as String? ?? '') : '';
-    final email = data != null ? (data['email'] as String? ?? '') : '';
-    final nombre = data != null ? deriveName(rawName, email) : 'Tú';
+    final nombre = data != null ? deriveName(rawName) : 'Tú';
     final fotoUrl = data != null ? (data['fotoUrl'] as String? ?? '') : '';
     if (id == uid) {
       final localRacha = storage.calcularRacha();
@@ -476,8 +479,8 @@ final sugerenciasAmistadProvider = FutureProvider<List<Usuario>>((ref) async {
   final mappedUsers = allUsers
       .where((u) =>
           !excludeIds.contains(u.id) &&
-          u.email.isNotEmpty &&
-          u.email != 'invitado@altardiario.app')
+          u.nombre.trim().isNotEmpty &&
+          u.nombre.toLowerCase() != 'anónimo')
       .map((u) {
     return Usuario(
       id: u.id,

@@ -5,6 +5,14 @@ Actualizado: ciclo 10 del roadmap + tanda 4 de merges. **21/53 tareas cerradas (
 
 ## Ahora
 
+- **T-053 cerrada: el bloqueo es real.** Decisión de producto del humano. `blockBetween()` en
+  las reglas deniega comentarios, respuestas, mensajes, notificaciones y seguir cuando hay un
+  bloqueo en cualquier dirección (simétrico); dejar de seguir sigue permitido. 6 tests nuevos
+  (41/41) y reglas desplegadas en `main` (`360f7af`, deploy Firebase verde).
+- **PR #46 mergeado por el humano** (`a882d2b`): grafo de conocimiento sincronizado en CI. El
+  workflow nunca empuja a `main` (solo a su rama `chore/knowledge-graph-sync` con `--force`),
+  abre PR y sin `OPENAI_API_KEY` avisa y termina en verde. Desde ahora el grafo del repo es de
+  solo lectura para las sesiones (`AGENTS.md` §3b).
 - **Directrices de coordinación publicadas** (`docs/SESIONES.md`, PR #51): un worktree por
   sesión, un solo merger, máximo 2 PRs abiertos, validar siempre contra `origin/main`
   citando SHA, y registro por sesión en `roadmap/sesiones/`. `AGENTS.md` §1c las resume
@@ -47,6 +55,7 @@ Actualizado: ciclo 10 del roadmap + tanda 4 de merges. **21/53 tareas cerradas (
 | #49 | `reflexion_publicada` al publicar | `eecce3d` |
 | #41 | Cierre del ciclo 9 (7 tareas) | `410a6f7` |
 | #51 | Directrices de sesiones + T-050..T-053 | `dfb6ca9` |
+| #55 | Bloqueo real en reglas (T-053) | `360f7af` |
 
 ## Hallazgos de la noche (encontrados al verificar, no al escribir)
 

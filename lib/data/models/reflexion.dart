@@ -10,6 +10,7 @@ class Reflexion {
   final int commentCount;
   final Map<String, String> reactions; // userId -> emoji
   final List<String> tags;
+  final bool oculto;
 
   Reflexion({
     required this.id,
@@ -23,6 +24,7 @@ class Reflexion {
     this.commentCount = 0,
     this.reactions = const {},
     this.tags = const [],
+    this.oculto = false,
   });
 
   factory Reflexion.fromMap(Map<String, dynamic> map) => Reflexion(
@@ -42,6 +44,7 @@ class Reflexion {
             ? Map<String, String>.from(map['reactions'])
             : {},
         tags: map['tags'] != null ? List<String>.from(map['tags']) : [],
+        oculto: map['oculto'] ?? false,
       );
 
   Map<String, dynamic> toMap() => {
@@ -55,6 +58,7 @@ class Reflexion {
         'commentCount': commentCount,
         'reactions': reactions,
         'tags': tags,
+        'oculto': oculto,
       };
 
   bool isLikedBy(String userId) => likedBy.contains(userId);
@@ -72,6 +76,7 @@ class Reflexion {
     int? commentCount,
     Map<String, String>? reactions,
     List<String>? tags,
+    bool? oculto,
   }) {
     return Reflexion(
       id: id ?? this.id,
@@ -85,6 +90,7 @@ class Reflexion {
       commentCount: commentCount ?? this.commentCount,
       reactions: reactions ?? this.reactions,
       tags: tags ?? this.tags,
+      oculto: oculto ?? this.oculto,
     );
   }
 }
