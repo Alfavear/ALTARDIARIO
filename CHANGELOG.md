@@ -36,6 +36,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/1.1.0/). Versionado se
 - Coordinación entre sesiones: `docs/SESIONES.md` (worktree por sesión, un solo merger, máximo 2 PRs, validar contra `origin/main` citando SHA), registro en `roadmap/sesiones/` y scripts `session-check.sh` / `sync-main.sh` (el `main` local no se usa para trabajar y solo se alinea por fast-forward).
 
 ### Cambiado
+- Feed, oración (feature `lib/features/oracion/`) y debates (listado y detalle) adoptan `AsyncStateBuilder` y los widgets de estados (`LoadingStateView`, `ErrorStateView`, `EmptyStateView`): carga no bloqueante, error en lenguaje humano con botón Reintentar y vacío con microcopia propia, en sustitución de `when` con `Center(Text('Error: …'))` y estados vacíos duplicados por pantalla; de paso se corrige un texto con acentos corruptos ('SÃ© el primero en responder.') en el detalle de debate. (T-059)
 - Moderación: `reportarContenido` y `moderationRepositoryProvider` migrados a `lib/features/moderation/` (`data/`, `providers/`, `presentation/`). (T-035)
 - CI: el job `Build APK (debug)` solo compila cuando el PR toca `android/`, `pubspec.*` o `.github/workflows/` (y siempre en `main`); añade caché de Gradle y compila una sola ABI. Los PRs de Dart/UI bajan de ~7,6 a ~1,5 min de checks; el nombre del check requerido no cambia.
 - Feed de reflexiones limitado a 100 documentos por lectura (antes: colección completa).

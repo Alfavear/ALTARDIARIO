@@ -17,6 +17,7 @@ import 'package:altar_diario/presentation/providers/app_providers.dart'
         isGuestUserProvider,
         oracionRepositoryProvider,
         firestoreServiceProvider;
+import 'package:altar_diario/presentation/widgets/estados/index.dart';
 import 'package:altar_diario/presentation/widgets/guest_access_restricted_widget.dart'
     show GuestAccessRestrictedWidget;
 import 'package:flutter/material.dart';
@@ -239,21 +240,22 @@ class OracionScreen extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: peticionesAsync.when(
-              data: (peticiones) => peticiones.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.refresh(peticionesStreamProvider.future),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                        itemCount: peticiones.length,
-                        itemBuilder: (context, index) =>
-                            PeticionCard(peticion: peticiones[index]),
-                      ),
-                    ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+            child: AsyncStateBuilder<PeticionOracion>(
+              isLoading: peticionesAsync.isLoading,
+              error: peticionesAsync.error,
+              items: peticionesAsync.value,
+              onRetry: () => ref.refresh(peticionesStreamProvider.future),
+              emptyTitle: 'No hay peticiones activas.',
+              emptyDescription: '¡Sé el primero en pedir apoyo!',
+              builder: (context, peticiones) => RefreshIndicator(
+                onRefresh: () => ref.refresh(peticionesStreamProvider.future),
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                  itemCount: peticiones.length,
+                  itemBuilder: (context, index) =>
+                      PeticionCard(peticion: peticiones[index]),
+                ),
+              ),
             ),
           ),
         ],
@@ -266,41 +268,6 @@ class OracionScreen extends ConsumerWidget {
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.accentGoldLight.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.auto_awesome,
-                  size: 40, color: AppTheme.accentGold),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'No hay peticiones activas.',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '¡Sé el primero en pedir apoyo!',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
-          ],
-        ),
       ),
     );
   }
