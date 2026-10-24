@@ -14,6 +14,15 @@ node scripts/board.mjs                   # estado real: debe salir sin "Desfase"
 
 Comprueba que existen las claves `~/.altardiario-keys/{integradora,plataforma,producto}.pem` (fuera del repo).
 
+## Crear el espacio de una sesión
+
+```bash
+scripts/nueva-sesion.sh producto T-054 borrado-de-cuenta   # integradora | plataforma | producto
+```
+
+Crea la carpeta de la sesión con su configuración de skills/MCPs/plugins, un worktree desde `origin/main` y la identidad de Git de su app.
+Abre OpenCode **en el worktree**. La primera vez, haz la prueba de humo de `docs/CAPACIDADES.md`.
+
 ## Preámbulo común (primer mensaje de cada sesión)
 
 ```text
@@ -75,7 +84,7 @@ Mientras compartan máquina (hoy es el caso), se cumplen además estas reglas:
 
 | Recurso compartido | Regla |
 |---|---|
-| **Carpetas** | Un worktree por sesión **y por tarea**, fuera del checkout principal: `D:\Projects\AltarDiario\wt-<sesion>-<T-xxx>`. El checkout principal `ALTARDIARIO` queda limpio, en `main`, y nadie trabaja en él. |
+| **Carpetas** | Cada sesión tiene su carpeta con **su** `opencode.jsonc` y sus worktrees dentro: `D:\Projects\AltarDiario\sesiones\<sesion>\<T-xxx>-<slug>\`. Se crea con `scripts/nueva-sesion.sh <sesion> <T-xxx> [slug]` y **OpenCode se abre dentro del worktree**. El checkout principal `ALTARDIARIO` queda limpio, en `main`, y nadie trabaja en él. Herramientas de cada sesión: `docs/CAPACIDADES.md`. |
 | **Emulador de Firestore** (puerto 8080) | Solo corre **uno** a la vez. Lo usa casi siempre Plataforma (`scripts/rules_test.sh` y el pre-push cuando el diff toca reglas). Producto e Integradora usan `scripts/check.sh --fast`, que no lo necesita. Si otra sesión lo tiene, espera: no cambies puertos a mano. |
 | **CPU/RAM** | Los builds (`flutter build`, APK) y la suite completa de `flutter test` son pesados: no los lances los tres a la vez. Para iterar, `flutter test <fichero>`; la suite completa la corre el CI. |
 | **Claves de las apps** | Una sola carpeta `C:\Users\ALVEAR\.altardiario-keys\`, legible solo por el usuario. Cada sesión usa **únicamente su** `.pem`. El token se pide por comando (`GH_TOKEN=$(node scripts/gh-app-token.mjs <sesion>) gh …`) y no se exporta a toda la sesión. |
