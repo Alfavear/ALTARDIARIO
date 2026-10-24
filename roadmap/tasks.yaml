@@ -1601,3 +1601,20 @@ tasks:
       verde: format, analyze, tests y los demás checks obligatorios. Cierre automático
       (.github/workflows/cerrar-tarea.yml)."
     commit: 51bde30d42979810b85a99d8b08fdad699511a9a
+  - id: T-072
+    title: migrar-oculto.mjs no encuentra firebase-admin al ejecutarse desde scripts/
+    type: bug
+    phase: 1
+    priority: P1
+    effort: S
+    status: backlog
+    depends_on: []
+    acceptance:
+      - "node scripts/migrar-oculto.mjs --project altardiario-ec25f arranca (simulacro) con firebase-admin instalado solo en functions/node_modules: falla hoy con ERR_MODULE_NOT_FOUND porque el import estático/bare resuelve desde scripts/"
+      - "Cargar firebase-admin con createRequire(functions/package.json) o import() de la ruta absoluta de functions/node_modules/firebase-admin, no por nombre"
+      - "Probado con una ejecución real del script con --help y con un módulo firebase-admin simulado que prueba que se carga desde functions/node_modules"
+      - "Mensaje de error claro si falta cd functions && npm ci"
+    files:
+      - scripts/migrar-oculto.mjs
+    source: auditoria-claude:2026-10-24
+    created_at: 2026-10-24T15:40:00.000Z
