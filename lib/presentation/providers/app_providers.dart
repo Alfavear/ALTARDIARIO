@@ -74,6 +74,13 @@ final usuariosBloqueadosProvider =
   return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
 });
 
+/// UIDs bloqueados del usuario actual (versión no-familia para uso directo).
+final usuariosBloqueadosActualProvider = StreamProvider<List<String>>((ref) {
+  final uid = ref.watch(effectiveUserUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(firestoreServiceProvider).getUsuariosBloqueados(uid);
+});
+
 /// Servicio de la Biblia (SQLite local).
 final bibleServiceProvider = Provider<BibleService>((ref) => BibleService());
 Future<void> syncProgressGuarded(
