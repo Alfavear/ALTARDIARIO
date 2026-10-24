@@ -82,3 +82,10 @@ lib/l10n/generated/
 roadmap/audits/.last-cycle.log
 tools/roadmap-mcp/node_modules/
 roadmap/STOP
+
+# Secretos: nunca al repositorio
+token*.txt
+*.token
+*.pem
+.env.*
+!.env.example
