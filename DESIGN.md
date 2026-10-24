@@ -18,7 +18,8 @@
 8. [Pantallas Principales](#pantallas-principales)
 9. [Componentes de UI](#componentes-de-ui)
 10. [Estados de Interacción](#estados-de-interacción)
-11. [Guías de Implementación](#guías-de-implementación)
+11. [Estados Obligatorios por Vista](#estados-obligatorios-por-vista)
+12. [Guías de Implementación](#guías-de-implementación)
 
 ---
 
@@ -82,6 +83,17 @@ AltarDiario es una aplicación devocional social que combina:
 | **Text Secondary** | `#757575` | rgb(117, 117, 117) | Texto secundario, descripciones |
 | **Text on Primary** | `#FFFFFF` | rgb(255, 255, 255) | Texto sobre colores primarios |
 | **Text on Accent** | `#212121` | rgb(33, 33, 33) | Texto sobre colores de acento |
+
+### Reglas de Uso del Color
+
+- **Un solo CTA primario por vista.** El azul primario (`#1565C0`) se reserva para
+  la acción que el usuario debe tomar; no es color decorativo ni de énfasis.
+- **Acento dorado** solo para valor devocional/motivacional (rachas, logros), nunca
+  para acciones.
+- **Verde** = completado/éxito; **naranja** = racha; **rojo** = error con texto
+  explicativo obligatorio. Un color de estado nunca se usa sin su semántica.
+- Los fondos neutros (`scaffoldBg`, `cardBg`) no se saturan para "dar vida": la
+  jerarquía se construye con espacio, escala y contraste.
 
 ### Ejemplos de Uso
 
@@ -278,6 +290,14 @@ Compartir reflexión  <- Texto sin fondo
 | **lg** | 24px | Espaciado grande entre secciones |
 | **xl** | 32px | Espaciado muy grande, separación principal |
 | **xxl** | 48px | Espaciado máximo |
+
+**Regla de escala cerrada:** un valor fuera de esta tabla (`13px`, `18px`, `21px`) no
+se escribe inline en un widget; se usa el token más cercano. Si hace falta uno nuevo,
+se añade a `AppTheme` y se documenta aquí, con motivo.
+
+**Fuente de verdad:** los valores viven en `lib/core/theme/app_theme.dart`. Si este
+documento y el código difieren, gana el código y se corrige este archivo. Nunca se
+instancia un `Color(0x…)` ni un `EdgeInsets` numérico suelto en un widget.
 
 ### Border Radius
 
@@ -640,6 +660,62 @@ Tamaños:
 
 ---
 
+## 🧭 Estados Obligatorios por Vista
+
+Los estados de cada componente (botón, card, input) están en
+[Estados de Interacción](#estados-de-interacción). Esta sección cubre los estados
+**de vista completa**: toda pantalla que consulte datos remotos (Firestore, red,
+SQLite) declara los cuatro, sin excepción y sin deducirlos a medias.
+
+| Estado | Qué se muestra | Nunca |
+|---|---|---|
+| **Datos** | Contenido real paginado | — |
+| **Carga** | Skeleton con la forma del contenido real, no bloqueante | Spinner a pantalla completa que tapa el layout |
+| **Error** | Qué falló en lenguaje humano + botón `Reintentar` | Stack trace, código HTTP, "Error 500", "Exception" |
+| **Vacío** | Icono atenuado + una frase que explique la pantalla + CTA inicial | "No hay datos", pantalla en blanco |
+
+`AsyncValue.when` cubre `loading`/`error`/`data`; el **vacío es explícito** dentro de
+`data`, nunca implícito ni silencioso.
+
+```dart
+// Patrón de referencia: los colores y radios salen siempre de AppTheme.
+asyncValue.when(
+  data: (items) => items.isEmpty
+      ? EmptyStateWidget(
+          icono: Icons.menu_book_outlined,
+          mensaje: 'Aún no hay reflexiones hoy',
+          accion: FilledButton(
+            onPressed: () => context.push('/reflexion/nueva'),
+            child: const Text('Compartir la primera'),
+          ),
+        )
+      : ListaReflexiones(items: items),
+  loading: () => const SkeletonLista(),
+  error: (error, _) => ErrorStateWidget(
+    mensaje: 'No pudimos cargar el feed. Revisa tu conexión e inténtalo de nuevo.',
+    onReintentar: () => ref.invalidate(feedProvider),
+  ),
+);
+```
+
+### Microcopia (UX Writing)
+
+- Prohibido el vocabulario técnico en la interfaz: `Exception`, `null`,
+  `Firestore`, `PERMISSION_DENIED`, `Error 500`, identificadores de documento.
+- Cada error responde a **qué pasó + qué hacer**, en segunda persona.
+- Los botones llevan verbo concreto ("Guardar reflexión", "Reintentar"), no
+  "Aceptar", "OK" ni "Enviar" a secas.
+- Los estados vacíos venden la pantalla: qué es y cuál es el primer paso.
+
+| ❌ No | ✅ Sí |
+|---|---|
+| "Error al obtener documentos" | "No pudimos cargar tu feed. Revisa tu conexión e inténtalo de nuevo." |
+| "Sin datos" | "Todavía no has guardado reflexiones. Crea la primera." |
+| "PERMISSION_DENIED" | "Esta publicación es privada y no tienes acceso." |
+| "El campo es obligatorio" | "Escribe al menos una frase para publicar." |
+
+---
+
 ## 📚 Guías de Implementación
 
 ### Estructura de Carpetas
@@ -826,6 +902,6 @@ String number = NumberFormat('#,##0.00', 'es').format(1234.56);
 
 ---
 
-**Última actualización**: Junio 2026  
-**Versión de diseño**: 1.0  
+**Última actualización**: Octubre 2026  
+**Versión de diseño**: 1.1  
 **Compatibilidad**: Flutter 3.5+, Material Design 3
