@@ -68,3 +68,18 @@ Código escrito directamente en los ficheros: nada de fix_*.py, apply_*.py ni up
 1. PR mergeado → borra tu rama local y tu worktree (`git worktree remove`). El repo ya borra la remota.
 2. Si te quedaste a medias: push de la rama como `wip/…` y una nota en el PR en borrador. Lo no empujado no existe.
 3. La Integradora cierra la tarea en `tasks.yaml` por el MCP.
+
+## Las tres sesiones en el mismo PC
+
+Mientras compartan máquina (hoy es el caso), se cumplen además estas reglas:
+
+| Recurso compartido | Regla |
+|---|---|
+| **Carpetas** | Un worktree por sesión **y por tarea**, fuera del checkout principal: `D:\Projects\AltarDiario\wt-<sesion>-<T-xxx>`. El checkout principal `ALTARDIARIO` queda limpio, en `main`, y nadie trabaja en él. |
+| **Emulador de Firestore** (puerto 8080) | Solo corre **uno** a la vez. Lo usa casi siempre Plataforma (`scripts/rules_test.sh` y el pre-push cuando el diff toca reglas). Producto e Integradora usan `scripts/check.sh --fast`, que no lo necesita. Si otra sesión lo tiene, espera: no cambies puertos a mano. |
+| **CPU/RAM** | Los builds (`flutter build`, APK) y la suite completa de `flutter test` son pesados: no los lances los tres a la vez. Para iterar, `flutter test <fichero>`; la suite completa la corre el CI. |
+| **Claves de las apps** | Una sola carpeta `C:\Users\ALVEAR\.altardiario-keys\`, legible solo por el usuario. Cada sesión usa **únicamente su** `.pem`. El token se pide por comando (`GH_TOKEN=$(node scripts/gh-app-token.mjs <sesion>) gh …`) y no se exporta a toda la sesión. |
+| **Cuenta del Owner** | En esta máquina `gh` cae a la cuenta del Owner si `GH_TOKEN` está vacío. Antes de usar el token comprueba que no lo está. Las sesiones **no** actúan como el Owner. |
+| **Identidad en Git** | En cada worktree: `git config user.name "altardiario-<sesion>[bot]"` y `user.email "<app-id>+altardiario-<sesion>[bot]@users.noreply.github.com"` (IDs en `scripts/gh-apps.json`). |
+| **Procesos** | Al cerrar una sesión, termina sus procesos (MCPs, emuladores, `flutter`/`dart`). Un proceso colgado bloquea el borrado del worktree. |
+| **Hooks** | `core.hooksPath=scripts/hooks` es común a todos los worktrees (lo fija `bootstrap.sh`); no hace falta repetirlo. |
