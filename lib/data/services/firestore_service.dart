@@ -270,6 +270,18 @@ class FirestoreService {
     }
   }
 
+  /// Cierra un debate (solo el autor).
+  Future<void> cerrarDebate(String debateId) async {
+    if (!_available) return;
+    await _debates.doc(debateId).update({'cerrado': true});
+  }
+
+  /// Oculta un debate (moderación).
+  Future<void> ocultarDebate(String debateId) async {
+    if (!_available) return;
+    await _debates.doc(debateId).update({'oculto': true});
+  }
+
   // ââ Respuestas de Debates ââââââââââââââââââââââââââââââââââââââââââââââââ
 
   Stream<List<DebateReply>> debateRepliesStream(String debateId) {
@@ -423,6 +435,22 @@ class FirestoreService {
     await _usuarios
         .doc(usuario.id)
         .set(usuario.toMap(), SetOptions(merge: true));
+  }
+
+  /// Toggle un tema seguido por [uid]. Si [siguiendo] es true, agrega el tema;
+  /// si es false, lo elimina.
+  Future<void> toggleTemaSeguido(
+      String uid, String tema, bool siguiendo) async {
+    if (!_available) return;
+    if (siguiendo) {
+      await _usuarios.doc(uid).update({
+        'temasSeguidos': FieldValue.arrayUnion([tema]),
+      });
+    } else {
+      await _usuarios.doc(uid).update({
+        'temasSeguidos': FieldValue.arrayRemove([tema]),
+      });
+    }
   }
 
   Future<void> toggleFollow(
