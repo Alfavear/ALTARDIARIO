@@ -39,7 +39,10 @@ if (modo === 'gh') {
   if (!cmd) fallo('falta el comando de gh');
   if (BLOQUEADOS.includes(cmd)) fallo(`«gh ${cmd}» no está permitido desde una sesión`);
   if (cmd === 'repo' && ['delete', 'edit', 'transfer', 'archive', 'rename', 'deploy-key'].includes(sub)) fallo(`«gh repo ${sub}» no está permitido desde una sesión`);
-  if (cmd === 'pr' && sub === 'merge' && sesion !== 'integradora') fallo('solo la Integradora mergea PRs');
+  if (cmd === 'pr' && sub === 'merge' && sesion !== 'integradora') {
+    // Producto y Plataforma solo pueden ACTIVAR el auto-merge (GitHub espera checks y revisión del Owner); nunca mergear a mano.
+    if (!resto.includes('--auto') || resto.includes('--admin')) fallo('solo la Integradora mergea PRs; tú solo puedes activar el auto-merge con --auto');
+  }
   if (cmd === 'api') {
     const metodo = resto.findIndex((a) => a === '-X' || a === '--method');
     const m = metodo >= 0 ? String(resto[metodo + 1]).toUpperCase() : (resto.some((a) => a === '-f' || a === '-F' || a === '--field' || a === '--raw-field' || a === '--input') ? 'POST' : 'GET');
