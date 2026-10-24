@@ -53,7 +53,7 @@ const stopPedido = () => existsSync(join(base, 'STOP')) || existsSync(join(dir, 
 
 function leerEstado() {
   let e = { fecha: hoy(), ciclos: 0, fallosSeguidos: 0, intentosPR: {}, intentosTarea: {}, parado: null };
-  try { e = { ...e, ...JSON.parse(readFileSync(ficheroEstado, 'utf8')) }; } catch { /* primera vez */ }
+  try { e = { ...e, ...JSON.parse(readFileSync(ficheroEstado, 'utf8').replace(/^﻿/, '')) }; } catch { /* primera vez */ }
   if (e.fecha !== hoy()) { e.fecha = hoy(); e.ciclos = 0; }
   return e;
 }
@@ -120,7 +120,7 @@ function carrilDeTarea(t) {
 const prefijoCarril = { plataforma: 'a', producto: 'b' };
 
 function prsDelCarril() {
-  const r = ghApp('pr', 'list', '--repo', cfg.repo, '--state', 'all', '--limit', '200', '--json', 'number,title,headRefName,state,isDraft,author,statusCheckRollup,mergeStateStatus');
+  const r = ghApp('pr', 'list', '--repo', cfg.repo, '--state', 'all', '--limit', '200', '--json', 'number,title,headRefName,state,isDraft,author,statusCheckRollup,mergeStateStatus,autoMergeRequest');
   try { return JSON.parse(r.salida); } catch { return []; }
 }
 
@@ -137,10 +137,12 @@ function contarPrs(prs) {
 }
 
 function elegirTarea(prs, estado = leerEstado()) {
-  const tareas = YAML.parse(readFileSync(join(repoBase, 'roadmap/tasks.yaml'), 'utf8')).tasks;
+  // Se lee de origin/main, no de la carpeta del supervisor (puede estar en una rama antigua y no ver las tareas que entraron después).
+  const crudo = git(repoBase, 'show', 'origin/main:roadmap/tasks.yaml');
+  const tareas = YAML.parse(crudo.codigo === 0 ? crudo.salida : readFileSync(join(repoBase, 'roadmap/tasks.yaml'), 'utf8')).tasks;
   const hechas = new Set(tareas.filter((t) => t.status === 'done').map((t) => t.id));
   const reservadas = new Set();
-  for (const p of prs) for (const id of `${p.title} ${p.headRefName}`.match(/T-\d{3}/g) ?? []) reservadas.add(id);
+  for (const p of prs) for (const id of `${p.headRefName}`.match(/T-\d{3}/g) ?? []) reservadas.add(id);
   for (const l of git(repoBase, 'worktree', 'list', '--porcelain').salida.split('\n')) for (const id of l.match(/T-\d{3}/g) ?? []) reservadas.add(id);
   for (const l of git(repoBase, 'branch', '-r').salida.split('\n')) for (const id of l.match(/T-\d{3}/g) ?? []) reservadas.add(id);
   // Ficheros ya en juego (tareas reservadas y no terminadas): no se elige otra tarea que los toque.
@@ -229,19 +231,28 @@ const REGLAS = `Recuerda: trabajas sin supervisión (nadie te contestará), sin 
 
 const promptPlan = (t) => `# Fase PLANIFICAR — ${t.id}\n\nLee AGENTS.md (tu rol), TAREA.md y lo que necesites del repo. **No edites código en esta fase.**\nEscribe \`PLAN.md\` en la raíz del worktree con: (1) qué cambiar, fichero por fichero; (2) cómo cumple cada criterio de aceptación; (3) riesgos y qué verificaste (con el comando); (4) cómo se probará.\n\n${REGLAS}\n`;
 const promptRevision = (t) => `# Fase REVISAR EL PLAN — ${t.id}\n\nEres un revisor independiente. Lee TAREA.md y PLAN.md y **contrasta el plan con el repo real** (haz como mucho 10 comprobaciones puntuales, las de mayor riesgo: que los ficheros, dependencias, scripts y lockfiles que cita existen y dicen lo que afirma; no releas el repo entero: tu tiempo es limitado y, si dudas, decide con lo que tengas). **No edites código.**\nEscribe \`REVISION.json\` en la raíz con exactamente: {"veredicto":"aprobado"|"rechazado","problemas":["…"]}. Rechaza si el plan omite un criterio de aceptación, se sale del carril de AGENTS.md, afirma algo falso o es inseguro. Si apruebas, "problemas" puede ir vacío.\n`;
-const promptImplementa = (t, revision) => `# Fase IMPLEMENTAR — ${t.id}\n\nImplementa PLAN.md cumpliendo todos los criterios de TAREA.md, con tests. ${revision?.problemas?.length ? `El revisor señaló, y debes atender: ${JSON.stringify(revision.problemas)}.\n` : ''}Haz uno o varios commits locales con mensaje convencional que incluya ${t.id}. Antes de terminar ejecuta las comprobaciones relevantes (formato, analyze, tests) y arregla lo que falle.\nAl acabar escribe \`RESULTADO.md\` (qué hiciste, qué no pudiste hacer y por qué, cómo verificarlo). No hagas push ni uses gh.\n\n${REGLAS}\n`;
+const promptImplementa = (t, revision) => `# Fase IMPLEMENTAR — ${t.id}\n\nImplementa PLAN.md cumpliendo todos los criterios de TAREA.md, con tests. ${revision?.problemas?.length ? `El revisor señaló, y debes atender: ${JSON.stringify(revision.problemas)}.\n` : ''}Mantén el cambio DENTRO de los ficheros de TAREA.md y de tu carril, y de tamaño razonable (el supervisor descarta más de ${cfg.limites.maxFicheros} ficheros o ${cfg.limites.maxLineas} líneas): si un criterio exige más, implementa el núcleo, y anota en RESULTADO.md lo que queda para otra tarea; no reorganices ni dividas ficheros que no son tuyos. Haz uno o varios commits locales con mensaje convencional que incluya ${t.id}. Antes de terminar ejecuta las comprobaciones relevantes (formato, analyze, tests) y arregla lo que falle.\nAl acabar escribe \`RESULTADO.md\` (qué hiciste, qué no pudiste hacer y por qué, cómo verificarlo). No hagas push ni uses gh.\n\n${REGLAS}\n`;
 const promptRepara = (t, fallo) => `# Fase REPARAR — ${t.id}\n\nLas puertas de calidad fallaron con esto:\n\n\`\`\`\n${recorte(fallo, 6000)}\n\`\`\`\n\nCorrige la causa (no desactives ni saltes comprobaciones), haz commit local y actualiza \`RESULTADO.md\`. No hagas push ni uses gh.\n\n${REGLAS}\n`;
 
 // ───────────────────────── puertas de calidad ─────────────────────────
-async function puertas(wt, rama) {
+async function puertas(wt, rama, t = null) {
   const motivos = []; let salida = '';
   const ficheros = git(wt, 'diff', '--name-only', 'origin/main...HEAD').salida.split('\n').filter(Boolean);
   if (!ficheros.length) return { ok: false, motivos: ['el ciclo no produjo ningún commit con cambios'], salida: '', ficheros };
-  const lineas = (git(wt, 'diff', '--shortstat', 'origin/main...HEAD').salida.match(/(\d+) insertion|(\d+) deletion/g) ?? []).reduce((n, x) => n + parseInt(x, 10), 0);
+  // Tamaño = lo mayor entre líneas añadidas y borradas: un refactor que MUEVE código cuenta una vez, no dos (T-016 sumaba 2165 por mover ~1000).
+  const estad = git(wt, 'diff', '--shortstat', 'origin/main...HEAD').salida;
+  const lineas = Math.max(Number((estad.match(/(\d+) insertion/) ?? [])[1] ?? 0), Number((estad.match(/(\d+) deletion/) ?? [])[1] ?? 0));
   if (ficheros.length > cfg.limites.maxFicheros) motivos.push(`demasiados ficheros (${ficheros.length} > ${cfg.limites.maxFicheros})`);
   if (lineas > cfg.limites.maxLineas) motivos.push(`demasiadas líneas (${lineas} > ${cfg.limites.maxLineas})`);
   for (const f of ficheros) for (const p of cfg.prohibidos) if (new RegExp(p).test(f)) motivos.push(`fichero prohibido: ${f}`);
   for (const f of ficheros) if (cfg.noPublicables.some((r) => new RegExp(r).test(f))) motivos.push(`toca ${f}: una app no puede publicar workflows; lo hace una persona`);
+  if (t) {
+    // El agente debe haber terminado (RESULTADO.md) y haber trabajado en lo que se le pidió: un fichero de exploración suelto no es una entrega.
+    if (!existsSync(join(wt, 'RESULTADO.md'))) motivos.push('el agente no escribió RESULTADO.md (no terminó)');
+    const previstos = t.files ?? [];
+    const toca = (f) => previstos.some((g) => f === g || (g.endsWith('/') && f.startsWith(g)));
+    if (previstos.length && !ficheros.some(toca)) motivos.push(`el cambio no toca ninguno de los ficheros previstos de ${t.id} (${previstos.join(', ')})`);
+  }
   const oc = ejecutar(process.execPath, [join(aqui, 'check-ownership.mjs'), '--branch', rama, '--base', 'origin/main'], { cwd: wt });
   if (oc.codigo !== 0) motivos.push('cruza de carril:\n' + recorte(oc.salida, 800));
   if (motivos.length) return { ok: false, motivos, salida, ficheros };
@@ -283,6 +294,12 @@ function publicar(t, rama, wt, g) {
 // ───────────────────────── reparación de PRs propios ─────────────────────────
 async function repararPrs(estado, prs) {
   for (const p of prs) {
+    if (p.state === 'OPEN' && !p.isDraft && p.autoMergeRequest && p.mergeStateStatus === 'BEHIND' && (p.author?.login || '').includes('altardiario-')) {
+      const r = ghComo((p.author.login.match(/altardiario-(\w+)/) ?? [])[1] ?? lane, 'api', '-X', 'PUT', `repos/${cfg.repo}/pulls/${p.number}/update-branch`);
+      log(`PR #${p.number} (${p.author.login}) atrasado con auto-merge: ${r.codigo === 0 ? 'actualizado con main' : 'no se pudo actualizar (' + recorte(r.salida, 120).replace(/\s+/g, ' ') + ')'}`);
+    }
+  }
+  for (const p of prs) {
     if (p.state !== 'OPEN' || !(p.headRefName || '').startsWith(`${carril.prefijo}/`)) continue;
     if (!(p.author?.login || '').includes(`altardiario-${lane}`)) continue;
     const rojos = (p.statusCheckRollup ?? []).filter((c) => c.conclusion === 'FAILURE');
@@ -317,8 +334,8 @@ async function repararPrs(estado, prs) {
 // ───────────────────────── auditoría: la sesión auditora propone tareas ─────────────────────────
 const dirAud = join(base, 'auditoria-auto');
 const fichUltima = join(dirAud, 'ultima.json');
-function enfriada() {
-  try { const u = JSON.parse(readFileSync(fichUltima, 'utf8')); return Date.now() - new Date(u.fecha).getTime() < cfg.auditoria.enfriamientoHoras * 3600000; } catch { return false; }
+function enfriada(horas = cfg.auditoria.enfriamientoHoras) {
+  try { const u = JSON.parse(readFileSync(fichUltima, 'utf8')); return Date.now() - new Date(u.fecha).getTime() < horas * 3600000; } catch { return false; }
 }
 function bloquearAuditoria() {
   mkdirSync(dirAud, { recursive: true });
@@ -433,7 +450,7 @@ async function unCiclo(estado) {
 
   const { tarea: t, libres } = elegirTarea(prs);
   // Quedan pocas tareas libres: la sesión auditora propone tareas nuevas para que el ciclo no se quede sin trabajo.
-  if (AUDITAR || (!PRUEBA && !TAREA_FORZADA && libres <= cfg.auditoria.umbralTareasLibres && !enfriada())) {
+  if (AUDITAR || (!PRUEBA && !TAREA_FORZADA && libres <= cfg.auditoria.umbralTareasLibres && !enfriada(libres === 0 ? cfg.auditoria.enfriamientoSinTareasHoras : cfg.auditoria.enfriamientoHoras))) {
     log(`tareas libres del carril: ${libres} (umbral ${cfg.auditoria.umbralTareasLibres}) → lanzo la auditoría`);
     const r = await auditoria(libres);
     if (AUDITAR) return r;
@@ -461,14 +478,19 @@ async function unCiclo(estado) {
   if (revision.veredicto !== 'aprobado') return fallo(estado, t, wt, 'plan rechazado dos veces: ' + (revision.problemas ?? []).join(' | '));
 
   // 3) implementar → 4) puertas (con una ronda de reparación)
-  await fase('implementa', { wt, modelo: carril.modeloImplementa, mensaje: promptImplementa(t, revision), t, esperado: () => hayCommits(wt) });
+  await fase('implementa', { wt, modelo: carril.modeloImplementa, mensaje: promptImplementa(t, revision), t, esperado: () => hayCommits(wt) && existsSync(join(wt, 'RESULTADO.md')) });
   commitPendiente(wt, t);
-  let g = await puertas(wt, rama);
+  let g = await puertas(wt, rama, t);
+  if (!g.ok && g.motivos.some((m) => /demasiad|prohibido|cruza de carril|workflows|no toca ninguno|RESULTADO\.md/.test(m))) {
+    // Un exceso de tamaño, un cruce de carril o un fichero prohibido NO se arregla con otra ronda del modelo (la «reparación» amplía el cambio: así
+    // una tarea de 1159 líneas acabó en 45 ficheros y 8911 líneas). Se descarta; la tarea queda con un intento menos.
+    return fallo(estado, t, wt, 'puertas de estructura, sin reparación: ' + g.motivos.join('; '));
+  }
   if (!g.ok) {
     log(`puertas fallidas: ${g.motivos.join('; ')}. Una ronda de reparación.`);
     await fase('reparar', { wt, modelo: carril.modeloImplementa, mensaje: promptRepara(t, g.motivos.join('\n') + '\n' + g.salida), t });
     commitPendiente(wt, t);
-    g = await puertas(wt, rama);
+    g = await puertas(wt, rama, t);
   }
   if (!g.ok) return fallo(estado, t, wt, 'puertas: ' + g.motivos.join('; '));
   log(`puertas superadas: ${g.ficheros.length} ficheros`);
