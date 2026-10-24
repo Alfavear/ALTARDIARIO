@@ -48,7 +48,28 @@ bloqueo, es una hipótesis. Preguntas y bloqueos: comentario en el PR de la tare
 - Sin `push --force`, `reset --hard` ni `rebase` sobre ramas con PR abierto.
 - `--no-verify` solo con motivo escrito en el PR.
 - Máx. 2 PRs abiertos por sesión.
+- **Borra tu rama al integrarte.** El repo borra solo la rama remota al mergear; borra tú la local y quita tu worktree (`git worktree remove`). Una rama sin PR abierto ni commits propios pendientes no se conserva: `scripts/hygiene.sh` la detecta.
 - Un PR que toque rutas de otro carril se divide o lleva la etiqueta `override-lane` (la pone la Integradora).
+
+## Identidad de cada sesión
+
+El repo vive en la organización `system-technology`. Cada sesión actúa con **su propia GitHub App**, no con la cuenta del Owner:
+
+| Sesión | App | Quién aprueba |
+|---|---|---|
+| Integradora | `altardiario-integradora` | el Owner (humano) |
+| Plataforma | `altardiario-plataforma` | el Owner (humano) |
+| Producto | `altardiario-producto` | el Owner (humano) |
+
+```bash
+# token de instalación (~1 h) de tu sesión; úsalo solo en el comando que lo necesita
+GH_TOKEN=$(node scripts/gh-app-token.mjs producto) gh pr create ...
+```
+
+- Las claves `.pem` viven en `~/.altardiario-keys/` (fuera del repo, solo legibles por el usuario). **Nunca** en el repo, en un commit ni en un chat.
+- Las apps no tienen permiso `Administration`, no pueden aprobar PRs ni saltarse la protección de `main`.
+- Los PRs sobre rutas `humanRequired` (`ownership.json`) los aprueba el Owner; el autor (app) y el aprobador (humano) son identidades distintas.
+- Si una clave se filtra: en la app, *Key pairs → Delete* y generar otra. IDs en `scripts/gh-apps.json`.
 
 ## Herramientas
 

@@ -1,0 +1,9 @@
+{
+  "_doc": "App IDs de las GitHub Apps de cada sesión. No son secretos; las claves .pem viven fuera del repo (~/.altardiario-keys).",
+  "repo": "system-technology/ALTARDIARIO",
+  "apps": {
+    "integradora": 5449524,
+    "plataforma": 5449581,
+    "producto": 5449590
+  }
+}
