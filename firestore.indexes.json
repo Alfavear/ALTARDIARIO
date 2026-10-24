@@ -81,6 +81,15 @@
         { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "lastUpdate", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "peticiones_oracion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "oculto", "order": "ASCENDING" },
+        { "fieldPath": "respondida", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
