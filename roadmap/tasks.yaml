@@ -1615,6 +1615,7 @@ tasks:
       - "Probado con una ejecución real del script con --help y con un módulo firebase-admin simulado que prueba que se carga desde functions/node_modules"
       - "Segundo fallo al ejecutarlo: adminApp = admin.initializeApp se llama sin su objeto (TypeError ... reading INTERNAL) y admin.getFirestore no existe en firebase-admin; usar admin.initializeApp(...) y admin.firestore() o los submódulos firebase-admin/app y firebase-admin/firestore"
       - "Prueba que ejecuta de verdad main() con firebase-admin simulado (initializeApp y firestore con un doble) en simulacro y con --aplicar, no solo --help"
+      - "Tercer fallo: con --aplicar el contador «Actualizados» sale 0 aunque las escrituras se hacen (se verificó en producción: 32 documentos migrados y el simulacro posterior los da como omitidos); debe contar los documentos escritos en cada lote"
       - "Mensaje de error claro si falta cd functions && npm ci"
     files:
       - scripts/migrar-oculto.mjs
