@@ -23,6 +23,7 @@ void main() {
           batch.set(fake.collection('peticiones_oracion').doc('p$i'), {
             'userId': 'u1',
             'motivo': 'Petición $i',
+            'oculto': false,
             'fecha': DateTime.utc(2026, 1, i + 1),
           });
         }
@@ -246,6 +247,150 @@ void main() {
       final bloqueados = await service.getUsuariosBloqueados('u1').first;
       expect(bloqueados, containsAll(['u2', 'u3']));
       expect(bloqueados, hasLength(2));
+    });
+  });
+
+  group('FirestoreService.toggleLike', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('toggleLike da like a una reflexión', () async {
+      await fake.doc('reflexiones/r1').set({
+        'likes': 5,
+        'likedBy': ['u2', 'u3'],
+      });
+
+      await service.toggleLike('r1', 'u1', false);
+
+      final doc = await fake.doc('reflexiones/r1').get();
+      expect(doc.data()?['likes'], 6);
+      expect(List<String>.from(doc.data()?['likedBy'] ?? []), contains('u1'));
+    });
+
+    test('toggleLike quita like de una reflexión', () async {
+      await fake.doc('reflexiones/r1').set({
+        'likes': 5,
+        'likedBy': ['u1', 'u2'],
+      });
+
+      await service.toggleLike('r1', 'u1', true);
+
+      final doc = await fake.doc('reflexiones/r1').get();
+      expect(doc.data()?['likes'], 4);
+      expect(List<String>.from(doc.data()?['likedBy'] ?? []),
+          isNot(equals(contains('u1'))));
+    });
+  });
+
+  group('FirestoreService.toggleReaction', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('toggleReaction añade reacción nueva', () async {
+      await fake.doc('reflexiones/r1').set({
+        'reactions': {'u1': '❤️'}
+      });
+
+      await service.toggleReaction('r1', 'u1', '🔥', '❤️');
+
+      final doc = await fake.doc('reflexiones/r1').get();
+      final reactions = doc.data()?['reactions'] as Map<String, dynamic>?;
+      expect(reactions?['u1'], '🔥');
+    });
+
+    test('toggleReaction quita reacción si es la misma', () async {
+      await fake.doc('reflexiones/r1').set({
+        'reactions': {'u1': '❤️'}
+      });
+
+      await service.toggleReaction('r1', 'u1', '❤️', '❤️');
+
+      final doc = await fake.doc('reflexiones/r1').get();
+      final reactions = doc.data()?['reactions'] as Map<String, dynamic>?;
+      expect(reactions?.containsKey('u1'), isFalse);
+    });
+
+    test('toggleReaction cambia reacción a otra diferente', () async {
+      await fake.doc('reflexiones/r1').set({
+        'reactions': {'u1': '❤️'}
+      });
+
+      await service.toggleReaction('r1', 'u1', '🔥', '❤️');
+
+      final doc = await fake.doc('reflexiones/r1').get();
+      final reactions = doc.data()?['reactions'] as Map<String, dynamic>?;
+      expect(reactions?['u1'], '🔥');
+    });
+  });
+
+  group('FirestoreService.toggleFollow', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('toggleFollow sigue a un usuario', () async {
+      await fake.doc('usuarios/u1').set({'siguiendo': []});
+      await fake.doc('usuarios/u2').set({'seguidores': []});
+
+      await service.toggleFollow('u1', 'u2', false);
+
+      final u1Doc = await fake.doc('usuarios/u1').get();
+      final u2Doc = await fake.doc('usuarios/u2').get();
+      expect(
+          List<String>.from(u1Doc.data()?['siguiendo'] ?? []), contains('u2'));
+      expect(
+          List<String>.from(u2Doc.data()?['seguidores'] ?? []), contains('u1'));
+    });
+
+    test('toggleFollow deja de seguir a un usuario', () async {
+      await fake.doc('usuarios/u1').set({
+        'siguiendo': ['u2']
+      });
+      await fake.doc('usuarios/u2').set({
+        'seguidores': ['u1']
+      });
+
+      await service.toggleFollow('u1', 'u2', true);
+
+      final u1Doc = await fake.doc('usuarios/u1').get();
+      final u2Doc = await fake.doc('usuarios/u2').get();
+      expect(List<String>.from(u1Doc.data()?['siguiendo'] ?? []),
+          isNot(equals(contains('u2'))));
+      expect(List<String>.from(u2Doc.data()?['seguidores'] ?? []),
+          isNot(equals(contains('u1'))));
+    });
+  });
+
+  group('FirestoreService.apoyarPeticion', () {
+    late FakeFirebaseFirestore fake;
+    late FirestoreService service;
+
+    setUp(() {
+      fake = FakeFirebaseFirestore();
+      service = FirestoreService(firestore: fake);
+    });
+
+    test('apoyarPeticion incrementa oracionesCount', () async {
+      await fake.doc('peticiones_oracion/p1').set({'oracionesCount': 5});
+
+      await service.apoyarPeticion('p1');
+
+      final doc = await fake.doc('peticiones_oracion/p1').get();
+      expect(doc.data()?['oracionesCount'], 6);
     });
   });
 }

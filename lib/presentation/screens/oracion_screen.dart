@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../features/moderation/presentation/report_content_dialog.dart';
 import '../../core/services/community_policy_service.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -158,7 +159,8 @@ class OracionScreen extends ConsumerWidget {
       );
     }
 
-    final peticionesAsync = ref.watch(peticionesStreamProvider);
+    final filtro = ref.watch(peticionesFiltroProvider);
+    final peticionesAsync = ref.watch(peticionesFiltradasProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
@@ -179,6 +181,29 @@ class OracionScreen extends ConsumerWidget {
                     ?.copyWith(color: AppTheme.primaryBlue, fontSize: 20)),
           ],
         ),
+        actions: [
+          PopupMenuButton<bool?>(
+            initialValue: filtro,
+            tooltip: 'Filtrar peticiones',
+            icon: const Icon(Icons.filter_list, color: AppTheme.textPrimary),
+            onSelected: (value) =>
+                ref.read(peticionesFiltroProvider.notifier).setFiltro(value),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: null,
+                child: Text('Todas'),
+              ),
+              const PopupMenuItem(
+                value: false,
+                child: Text('Pendientes'),
+              ),
+              const PopupMenuItem(
+                value: true,
+                child: Text('Respondidas'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,6 +380,30 @@ class _PeticionCard extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ReportContentDialog(
+                      targetType: 'peticion',
+                      targetId: peticion.id,
+                      targetTitle: peticion.motivo.length > 50
+                          ? '${peticion.motivo.substring(0, 50)}...'
+                          : peticion.motivo,
+                      targetAuthor: authorName,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flag_outlined,
+                    size: 20, color: Colors.grey),
+                tooltip: 'Reportar',
+              ),
+              const SizedBox(width: 8),
+              // Botón "Marcar como respondida" solo para el autor y si no está respondida
+              if (!peticion.respondida)
+                _buildMarcarRespondidaButton(ref, context, peticion),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () {
                   HapticFeedback.mediumImpact();
@@ -388,6 +437,66 @@ class _PeticionCard extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // Método para construir el botón "Marcar como respondida"
+  Widget _buildMarcarRespondidaButton(
+      WidgetRef ref, BuildContext context, PeticionOracion peticion) {
+    final currentUid = ref.read(effectiveUserUidProvider);
+    final isAutor = currentUid == peticion.userId;
+
+    if (!isAutor) return const SizedBox.shrink();
+
+    return TextButton.icon(
+      onPressed: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Marcar como respondida'),
+            content: const Text('¿Marcar esta petición como respondida?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Marcar'),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          try {
+            await ref
+                .read(firestoreServiceProvider)
+                .marcarPeticionComoRespondida(
+                  peticion.id,
+                  ref.read(effectiveUserUidProvider)!,
+                );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Petición marcada como respondida ✨')),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $e')),
+              );
+            }
+          }
+        }
+      },
+      icon: const Icon(Icons.check_circle_outline,
+          size: 18, color: AppTheme.accentGold),
+      label: const Text('Respondida', style: TextStyle(fontSize: 12)),
+      style: TextButton.styleFrom(
+        foregroundColor: AppTheme.accentGold,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }

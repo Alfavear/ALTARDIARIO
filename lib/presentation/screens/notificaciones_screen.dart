@@ -15,7 +15,7 @@ class NotificacionesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(effectiveUserUidProvider);
     final isGuest = ref.watch(isGuestUserProvider);
-    final notificationsAsync = ref.watch(notificationsStreamProvider);
+    final notificationsAsync = ref.watch(notificationsFiltradasProvider);
 
     if (isGuest) {
       return Scaffold(
