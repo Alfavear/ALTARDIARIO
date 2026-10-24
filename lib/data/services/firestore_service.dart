@@ -179,6 +179,29 @@ class FirestoreService {
             .toList());
   }
 
+  /// Stream de comentarios con paginación por cursor.
+  /// [lastDocument] es el último documento de la página anterior (opcional).
+  Stream<List<Comment>> comentariosStreamCursor(String reflexionId,
+      {DocumentSnapshot? lastDocument}) {
+    if (!_available) return Stream.value([]);
+    Query query = _reflexiones
+        .doc(reflexionId)
+        .collection('comentarios')
+        .orderBy('fecha', descending: false)
+        .limit(commentsPageSize);
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+    return query.snapshots().map((s) => s.docs
+        .map((d) {
+          final data = d.data() as Map<String, dynamic>?;
+          if (data == null) return null;
+          return Comment.fromMap({'id': d.id, ...data});
+        })
+        .whereType<Comment>()
+        .toList());
+  }
+
   Future<void> publicarComentario(Comment comment) async {
     if (!_available) return;
     await _reflexiones
@@ -294,6 +317,27 @@ class FirestoreService {
         .map((s) => s.docs
             .map((d) => DebateReply.fromMap({'id': d.id, ...d.data()}))
             .toList());
+  }
+
+  /// Stream de respuestas de debates con paginación por cursor.
+  /// [lastDocument] es el último documento de la página anterior (opcional).
+  Stream<List<DebateReply>> debateRepliesStreamCursor(String debateId,
+      {DocumentSnapshot? lastDocument}) {
+    if (!_available) return Stream.value([]);
+    Query query = _debateReplies(debateId)
+        .orderBy('fecha', descending: false)
+        .limit(debateRepliesPageSize);
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+    return query.snapshots().map((s) => s.docs
+        .map((d) {
+          final data = d.data() as Map<String, dynamic>?;
+          if (data == null) return null;
+          return DebateReply.fromMap({'id': d.id, ...data});
+        })
+        .whereType<DebateReply>()
+        .toList());
   }
 
   Future<void> crearRespuesta(DebateReply reply) async {
@@ -813,7 +857,30 @@ class FirestoreService {
             .toList());
   }
 
-  /// EnvÃ­a un mensaje al chat [chatId].
+  /// Stream de mensajes con paginación por cursor.
+  /// [lastDocument] es el último documento de la página anterior (opcional).
+  Stream<List<Message>> getMessagesCursor(String chatId,
+      {DocumentSnapshot? lastDocument}) {
+    if (!_available) return Stream.value([]);
+    Query query = _chats
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(messagesPageSize);
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+    return query.snapshots().map((s) => s.docs
+        .map((d) {
+          final data = d.data() as Map<String, dynamic>?;
+          if (data == null) return null;
+          return Message.fromMap({'id': d.id, ...data});
+        })
+        .whereType<Message>()
+        .toList());
+  }
+
+  /// Envía un mensaje al chat [chatId].
   ///
   /// `participantIds`/`participantNames` son SOLO para crear el chat; en un
   /// chat existente se ignoran (solo se actualizan los metadatos). Si no se
